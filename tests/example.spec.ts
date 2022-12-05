@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('unitTests.html', async ({ page }) => {
+test.skip('unitTests.html', async ({ page }) => {
 	await page.goto('http://localhost:8080/test/unit/unitTests.qunit.html');
 	const result = await page.evaluate(() => {
 		var fnResolve;
@@ -44,20 +44,5 @@ test('unitTests.html', async ({ page }) => {
 
 	console.log(result)
 
-	await expect(result.failed);
-
-	// Expect a title "to contain" a substring.
-	await expect(page).toHaveTitle(/Playwright/);
-
-	// create a locator
-	const getStarted = page.getByRole('link', { name: 'Get started' });
-
-	// Expect an attribute "to be strictly equal" to the value.
-	await expect(getStarted).toHaveAttribute('href', '/docs/intro');
-
-	// Click the get started link.
-	await getStarted.click();
-
-	// Expects the URL to contain intro.
-	await expect(page).toHaveURL(/.*intro/);
+	await expect(result[0].failed).toBe(0);
 });

@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Sample of an OpenUI5 app",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "ui5 serve",
     "lint": "eslint webapp",
@@ -15,6 +16,7 @@
     "serve-dist": "ws --compress -d dist"
   },
   "devDependencies": {
+	"playwright": "^1.28.1",
     "@playwright/test": "^1.28.1",
     "@ui5/cli": "^2.14.16",
     "eslint": "^8.29.0",
@@ -23,6 +25,8 @@
     "karma-coverage": "^2.2.0",
     "karma-ui5": "^2.4.0",
     "local-web-server": "^5.2.1",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+	"typescript": "^4.9.3",
+	"@tsconfig/node18-strictest-esm": "^1.0.1"
   }
 }
