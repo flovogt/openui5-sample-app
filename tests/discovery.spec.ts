@@ -1,10 +1,6 @@
 import { chromium } from "playwright";
 import { test, expect } from "@playwright/test";
 
-const testPages = await discoverTests({
-	url: "/test/testsuite.qunit.html"
-});
-
 async function discoverTests({ url }: { url: String }) {
 	const browser = await chromium.launch();
 	const page = await browser.newPage();
@@ -57,22 +53,43 @@ function startWatching(page) {
 	});
 }
 
+function groupResults(results) {
+	const groups = [];
+	let currentGroup;
+	results.forEach((result) => {
+		if (!currentGroup) {
+			currentGroup = { module: result.module, results: [] };
+		}
+		if (currentGroup.module === result.module) {
+			currentGroup.results.push(result);
+		} else {
+			groups.push(currentGroup);
+			currentGroup = undefined;
+		}
+	});
+	if (currentGroup) {
+		groups.push(currentGroup);
+	}
+	return groups;
+}
+
+const testPages = await discoverTests({
+	url: "/test/testsuite.qunit.html"
+});
 testPages.forEach((testPage) => {
 	test(testPage, async ({page}) => {
 		await page.goto("http://localhost:8080" + testPage);
-		const result = await startWatching(page);
-		const modules = [...new Set(result.map((r) => {name: r.module, modules: []}))];
-		const groupedResult = [];
-		for (const testResult of result) {
-			const myModule = modules.find(module => module.name === testResult.module);
-			
-			await test.step(testResult.module + ": " + testResult.name, async () => {
-				for (const assertInfo of testResult.assertions) {
-					await test.step(assertInfo.message, async () => {
-						test.info(testResult.details);
-						expect(assertInfo.result).toBe(true);
+		const results = await startWatching(page);
+		
+		const groupedResults = groupResults(results);
+
+		for (const group of groupedResults) {
+			await test.step(group.module, async () => {
+				for (const result of group.results) {
+					await test.step(result.name, async () => {
+
 					});
-				};
+				}
 			});
 		}
 	});
