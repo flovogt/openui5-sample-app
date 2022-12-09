@@ -104,7 +104,6 @@ sap.ui.define([
 
 		// Assumption
 		assert.strictEqual(this.oJSONModelStub.getProperty("/itemsLeftCount"), 0, "There is no item left.");
-		assert.ok(false);
 	});
 
 });
