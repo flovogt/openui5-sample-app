@@ -1,0 +1,31 @@
+/* ============================ */
+/* CSS for control sap.m/Table  */
+/* Evening Horizon theme        */
+/* ============================ */
+
+@_sap_m_Table_SelNavColWidth: 2.75rem;
+@_sap_m_Table_CustomFocusMargin: 0;
+
+.sapMListBGTransparent .sapMListTblHeader,
+.sapMListBGTransparent .sapMListTblFooter {
+	background-color: fade(@sapUiListBackground, 0%);
+}
+
+.sapMListBGTranslucent .sapMListTblHeader,
+.sapMListBGTranslucent .sapMListTblFooter {
+	background-color: var(--sapList_Background);
+}
+
+.sapMListBGSolid .sapMListTblHeader,
+.sapMListBGSolid .sapMListTblFooter {
+	background-color: var(--sapList_Background);
+}
+
+/* make the focus visible on all sides */
+.sapMSticky .sapMLIBShowSeparator:first-child > td {
+	border-top-color: transparent;
+}
+
+.sapMListTblDummyCell:last-child {
+	background-color: var(--sapList_Background);
+}
