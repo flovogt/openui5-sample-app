@@ -1,28 +1,26 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
 sap.ui.define([
 	'./library',
 	'./SliderUtilities',
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
 	'sap/ui/core/Popup',
 	'./SliderTooltipContainerRenderer',
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
 function(
 	Library,
 	SliderUtilities,
-	Localization,
 	Control,
-	Element,
 	Popup,
 	SliderTooltipContainerRenderer,
-	jQuery
+	jQuery,
+	Configuration
 ) {
 		"use strict";
 
@@ -39,7 +37,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @private
@@ -85,7 +83,7 @@ function(
 			this._bClosedFromOverflow = false;
 
 			// indicates whether RTL is switched on
-			this._bRtl = Localization.getRTL();
+			this._bRtl = Configuration.getRTL();
 		};
 
 		SliderTooltipContainer.prototype._handleTabNavigation = function (oEvent) {
@@ -326,7 +324,7 @@ function(
 			var aAssociatedTooltips = this.getAssociation("associatedTooltips") || [];
 
 			return aAssociatedTooltips.map(function(sTooltipId) {
-				return Element.getElementById(sTooltipId);
+				return sap.ui.getCore().byId(sTooltipId);
 			});
 		};
 
@@ -357,7 +355,7 @@ function(
 		};
 
 		SliderTooltipContainer.prototype.onBeforeRendering = function () {
-			this._bRtl = Localization.getRTL();
+			this._bRtl = Configuration.getRTL();
 		};
 
 		SliderTooltipContainer.prototype.exit = function () {

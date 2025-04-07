@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,7 +8,6 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'sap/ui/base/ManagedObjectObserver',
-	"sap/ui/core/Element",
 	'sap/ui/layout/library',
 	'./Form',
 	'./FormContainer',
@@ -20,7 +19,6 @@ sap.ui.define([
 ], function(
 	Control,
 	ManagedObjectObserver,
-	Element,
 	library,
 	Form,
 	FormContainer,
@@ -69,7 +67,7 @@ sap.ui.define([
 	 * <b>Note:</b> If a more complex form is needed, use the <code>{@link sap.ui.layout.form.Form Form}</code> control instead.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -122,7 +120,7 @@ sap.ui.define([
 				 * and the spacing between the single controls might be wrong.
 				 * Also, controls that do not fit the mode might be rendered incorrectly.
 				 */
-				editable : {type : "boolean", group : "Misc", defaultValue : false},
+				editable : {type : "boolean", group : "Misc", defaultValue : null},
 
 				/**
 				 * Specifies the min-width in pixels of the label in all form rows.
@@ -275,7 +273,7 @@ sap.ui.define([
 				singleContainerFullSize : {type : "boolean", group : "Misc", defaultValue : true},
 
 				/**
-				 * Breakpoint between large size and extra large size.
+				 * Breakpoint between Medium size and Large size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.34.0
@@ -283,7 +281,7 @@ sap.ui.define([
 				breakpointXL : {type : "int", group : "Misc", defaultValue : 1440},
 
 				/**
-				 * Breakpoint between medium size and large size.
+				 * Breakpoint between Medium size and Large size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.16.3
@@ -291,7 +289,7 @@ sap.ui.define([
 				breakpointL : {type : "int", group : "Misc", defaultValue : 1024},
 
 				/**
-				 * Breakpoint between small size and medium size.
+				 * Breakpoint between Small size and Medium size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.16.3
@@ -364,12 +362,6 @@ sap.ui.define([
 
 				/**
 				 * Title element of the <code>SimpleForm</code>. Can either be a <code>Title</code> element, or a string.
-				 *
-				 * <b>Note:</b> If a <code>Toolbar</code> is used, the <code>Title</code> is ignored.
-				 *
-				 * <b>Note:</b> If the title is provided as a string, the title is rendered with a theme-dependent default level.
-				 * As the <code>Form</code> control cannot know the structure of the page, this might not fit the page structure.
-				 * In this case, provide the title using a <code>Title</code> element and set its {@link sap.ui.core.Title#setLevel level} to the needed value.
 				 * @since 1.16.3
 				 */
 				title : {type : "sap.ui.core.Title", altTypes : ["string"], multiple : false},
@@ -379,24 +371,15 @@ sap.ui.define([
 				 *
 				 * <b>Note:</b> If a <code>Toolbar</code> is used, the <code>Title</code> is ignored.
 				 * If a title is needed inside the <code>Toolbar</code> it must be added at content to the <code>Toolbar</code>.
-				 * In this case, add the <code>Title</code> to the <code>ariaLabelledBy</code> association.
+				 * In this case add the <code>Title</code> to the <code>ariaLabelledBy</code> association.
 				 * @since 1.36.0
 				 */
-				toolbar : {type : "sap.ui.core.Toolbar", multiple : false,
-					forwarding: {
-						idSuffix: "--Form",
-						aggregation: "toolbar"
-					}
-				}
+				toolbar : {type : "sap.ui.core.Toolbar", multiple : false}
 			},
 			associations: {
 
 				/**
 				 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
-				 *
-				 * <b>Note:</b> Every <code>Form</code> needs to have some title or label (at least for screen reader support). If no <code>Title</code>
-				 * is set, and the <code>Form</code> is not a child or a control with a title, such as {@link sap.m.Panel Panel} or {@link sap.m.Dialog Dialog},
-				 * a label or title needs to be assigned using the <code>ariaLabelledBy</code> association.
 				 * @since 1.32.0
 				 */
 				ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
@@ -469,7 +452,7 @@ sap.ui.define([
 		_removeResize.call(this);
 
 		for (var i = 0; i < this._aLayouts.length; i++) {
-			var oLayout = Element.getElementById(this._aLayouts[i]);
+			var oLayout = sap.ui.getCore().byId(this._aLayouts[i]);
 			if (oLayout && oLayout.destroy) {
 				oLayout.destroy();
 			}
@@ -542,16 +525,27 @@ sap.ui.define([
 	SimpleForm.prototype.setToolbar = function(oToolbar) {
 
 		this._bChangedByMe = true;
-		this.setAggregation("toolbar", oToolbar);
+		var oForm = this.getAggregation("form");
+		oForm.setToolbar(oToolbar);
+
 		this._bChangedByMe = false;
 		return this;
+
+	};
+
+	SimpleForm.prototype.getToolbar = function() {
+
+		var oForm = this.getAggregation("form");
+		return oForm.getToolbar();
 
 	};
 
 	SimpleForm.prototype.destroyToolbar = function() {
 
 		this._bChangedByMe = true;
-		this.destroyAggregation("toolbar");
+		var oForm = this.getAggregation("form");
+		oForm.destroyToolbar();
+
 		this._bChangedByMe = false;
 		return this;
 
@@ -919,7 +913,7 @@ sap.ui.define([
 		if (this._aElements) {
 
 			if (typeof (vElement) == "string") { // ID of the element is given
-				vElement = Element.getElementById(vElement);
+				vElement = sap.ui.getCore().byId(vElement);
 			}
 
 			if (typeof (vElement) == "object") { // the element itself is given or has just been retrieved
@@ -1681,7 +1675,7 @@ sap.ui.define([
 			mSettings["label"] = oLabel;
 		} else {
 			sId = oFormContainer.getId() + "--FE-NoLabel"; // There can be only one FormElement without Label in a FomContainer (first one)
-			if (Element.getElementById(sId)) {
+			if (sap.ui.getCore().byId(sId)) {
 				// if ResponsiveLayout and ResponsiveFlowLayoutdata with Linebreak is used multiple FormElements without Label can exist
 				// as already deprecated just keep generatied ID in this very special case.
 				sId = undefined;
@@ -1965,7 +1959,7 @@ sap.ui.define([
 
 		if (!this._bChangedByMe) {
 			// check if content is still the same like in array
-			// maybe a Control was destroyed or removed without using the SimpleForm API
+			// maybe ca Control was destroyed or removed without using the SimpleForm API
 			// as invalidate is fired for every single object only one object can be changed
 			var aContent = _getFormContent(this.getAggregation("form"));
 			var i = 0;

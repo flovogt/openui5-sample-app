@@ -4,51 +4,51 @@
 /* =================================== */
 
 .sapMMsgStrip {
-	border-radius: var(--sapPopover_BorderCornerRadius);
+	border-radius: @sapUiPopoverBorderCornerRadius;
 }
 
 .sapMMsgStripInformation {
-	background-color: var(--sapInformationBackground);
-	border-color: var(--sapMessage_InformationBorderColor);
+	background-color: @sapInformationBackground;
+	border-color: @sapUiMessageInformationBorderColor;
 
 	.sapMBtnTransparent {
-		background-color: var(--sapInformationBackground);
-		border-color: var(--sapInformationBackground);
+		background-color: @sapInformationBackground;
+		border-color: @sapInformationBackground;
 	}
 
 	.sapMMsgStripIcon {
-		color: var(--sapInformativeElementColor);
+		color: @sapInformativeElementColor;
 	}
 }
 
 .sapMMsgStripError {
-	border-color: var(--sapMessage_ErrorBorderColor);
+	border-color: @sapUiMessageErrorBorderColor;
 
 	.sapMBtnTransparent {
-		background-color: var(--sapErrorBackground);
-		border-color: var(--sapErrorBackground);
+		background-color: @sapErrorBackground;
+		border-color: @sapErrorBackground;
 	}
 }
 
 .sapMMsgStripSuccess {
-	border-color: var(--sapMessage_SuccessBorderColor);
+	border-color: @sapUiMessageSuccessBorderColor;
 
 	.sapMBtnTransparent {
-		background-color: var(--sapSuccessBackground);
-		border-color: var(--sapSuccessBackground);
+		background-color: @sapSuccessBackground;
+		border-color: @sapSuccessBackground;
 	}
 }
 
 .sapMMsgStripWarning {
-	border-color: var(--sapMessage_WarningBorderColor);
+	border-color: @sapUiMessageWarningBorderColor;
 
 	.sapMBtnTransparent {
-		background-color: var(--sapWarningBackground);
-		border-color: var(--sapWarningBackground);
+		background-color: @sapWarningBackground;
+		border-color: @sapWarningBackground;
 	}
 }
 
-.sapMMsgStripMessage > .sapMLnk {
+.sapMMsgStripMessage>.sapMLnk {
 	padding-right: 0.25rem;
 	padding-left: 0.25rem;
 }

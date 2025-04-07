@@ -1,13 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/date/CalendarType",
 	'sap/ui/core/Control',
 	'sap/ui/Device',
 	'sap/ui/core/delegate/ItemNavigation',
@@ -22,10 +20,9 @@ sap.ui.define([
 	"sap/ui/core/date/UI5Date",
 	"./YearPickerRenderer",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ], function(
-	Formatting,
-	CalendarType,
 	Control,
 	Device,
 	ItemNavigation,
@@ -40,9 +37,13 @@ sap.ui.define([
 	UI5Date,
 	YearPickerRenderer,
 	KeyCodes,
-	jQuery
+	jQuery,
+	Configuration
 ) {
 	"use strict";
+
+	// shortcut for sap.ui.core.CalendarType
+	var CalendarType = coreLibrary.CalendarType;
 
 	/*
 	* Inside the YearPicker CalendarDate objects are used. But in the API JS dates are used.
@@ -61,7 +62,7 @@ sap.ui.define([
 	 * As in all date-time controls, all pubic JS Date objects that are given (e.g. <code>setDate()</code>) or read
 	 * (e.g. <code>getFirstRenderedDate</code>) with values which are considered as date objects in browser(local) timezone.
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -87,21 +88,10 @@ sap.ui.define([
 			years : {type : "int", group : "Appearance", defaultValue : 20},
 
 			/**
-			 * Determines if an interval of dates can be selected.
-			 *
-			 * <b>Note:</b> This property should be set to <code>false</code> if <code>_singleSelection</code> is set to <code>false</code>, as selecting multiple intervals is not supported.
+			 * If set, interval selection is allowed
 			 * @since 1.74
 			 */
 			intervalSelection : {type : "boolean", group : "Behavior", defaultValue : false},
-
-			/**
-			 * Determines if a single date or single interval, when <code>intervalSelection</code> is set to <code>true</code>, can be selected.
-			 *
-			 * <b>Note:</b> This property should be set to <code>true</code> if <code>intervalSelection</code> is set to <code>true</code>, as selecting multiple intervals is not supported.
-			 * @private
-			 * @since 1.134
-			 */
-			_singleSelection : {type : "boolean", group : "Behavior", defaultValue : true,  visibility: "hidden"},
 
 			/**
 			 * number of years in each row
@@ -122,14 +112,14 @@ sap.ui.define([
 			 * If not set, the calendar type of the global configuration is used.
 			 * @since 1.34.0
 			 */
-			primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
+			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
 
 			/**
 			 * If set, the years are also displayed in this calendar type
 			 * If not set, the years are only displayed in the primary calendar type
 			 * @since 1.104.0
 			 */
-			secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
+			secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
 
 			/**
 			 * Date as CalendarDate object. Holds the rendered date in the middle of the grid.
@@ -289,7 +279,7 @@ sap.ui.define([
 	};
 
 	YearPicker.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
 	};
 
 	/**
@@ -582,7 +572,7 @@ sap.ui.define([
 		if (oParent && oParent._getLocale) {
 			return oParent._getLocale();
 		} else if (!this._sLocale) {
-			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
+			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
 		}
 
 		return this._sLocale;
@@ -765,8 +755,8 @@ sap.ui.define([
 				sYyyymmdd = $DomRef.attr("data-sap-year-start");
 				var oCurrentDate = CalendarDate.fromLocalJSDate(this._oFormatYyyymmdd.parse(sYyyymmdd), this._getPrimaryCalendarType());
 
-				var bApplySelection = this._isYearSelected(oCurrentDate);
-				var bApplySelectionBetween = this._isYearInsideSelectionRange(oCurrentDate);
+				var bApplySelection = this._fnShouldApplySelection(oCurrentDate);
+				var bApplySelectionBetween = this._fnShouldApplySelectionBetween(oCurrentDate);
 
 				if (bApplySelection) {
 					$DomRef.addClass("sapUiCalItemSel");
@@ -801,8 +791,9 @@ sap.ui.define([
 
 	function _initItemNavigation(){
 
-		var oFocusedDate = this.getProperty("_middleDate")
-		|| (this.getDate() ? CalendarDate.fromLocalJSDate(this.getDate(), this._getPrimaryCalendarType()) : this._getDate()),
+		var oFocusedDate = this.getDate()
+			? CalendarDate.fromLocalJSDate(this.getDate(), this._getPrimaryCalendarType())
+			: this._getDate(),
 			oRootDomRef = this.getDomRef(),
 			aDomRefs = this.$().find(".sapUiCalItem"),
 			iIndex, sYyyymmdd, oCurrentDate, i;
@@ -982,80 +973,65 @@ sap.ui.define([
 
 
 	/**
-	 * Determines if any of the <code>selectedDates</code> fall within a given year.
-	 * <b>Note:</b> If <code>intervalSelection</code> is set to <code>true</code>, the year is selected if it contains the start or end of the interval.
+	 * Determines if a given date is the same as selected start or end date
 	 *
 	 * @private
-	 * @param {sap.ui.unified.calendar.CalendarDate} oCurrentDate First date of the year
-	 * @returns {boolean} Returns <code>true</code> if the current year contains any selected dates
+	 * @param {sap.ui.unified.calendar.CalendarDate} oCurrentDate
 	 */
-	YearPicker.prototype._isYearSelected = function(oCurrentDate) {
-		const aSelectedDateRanges = this.getSelectedDates();
-		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
+	YearPicker.prototype._fnShouldApplySelection = function(oCurrentDate) {
+		var oSelectedDates = this._getSelectedDates()[0],
+			oStartDate, oEndDate;
+
+		if (!oSelectedDates) {
 			return false;
 		}
 
-		const oDateRange = aSelectedDateRanges[0];
-		const oStartDate = oDateRange.getStartDate();
-		const oEndDate = oDateRange.getEndDate();
+		oStartDate = oSelectedDates.getStartDate();
+		oEndDate = oSelectedDates.getEndDate();
+
+		if (oStartDate) {
+			oStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
+			oStartDate.setMonth(0, 1);
+		}
 
 		if (this.getIntervalSelection() && oStartDate && oEndDate) {
-			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
-			const oCalEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
-
-			return oCurrentDate.getYear() === oCalStartDate.getYear() || oCurrentDate.getYear() === oCalEndDate.getYear();
-		}
-
-		const fnHasDateInYear = (oDateRange) => {
-			const oStartDate = oDateRange.getStartDate();
-
-			if (!oStartDate) {
-				return false;
+			oEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
+			oEndDate.setMonth(0, 1);
+			if (oCurrentDate.isSame(oStartDate) || oCurrentDate.isSame(oEndDate)) {
+				return true;
 			}
-
-			const oSelectedDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
-			return oCurrentDate.getYear() === oSelectedDate.getYear();
-		};
-
-		if (this.getProperty("_singleSelection")) {
-			return fnHasDateInYear(oDateRange);
+		} else if (oStartDate && oCurrentDate.isSame(oStartDate)) {
+			return true;
 		}
-
-		return aSelectedDateRanges.some(fnHasDateInYear);
+		return false;
 	};
 
 	/**
-	 * Determines if a given year falls within the selected range.
+	 * Determines if a given date is between the selected start and end date
+	 *
 	 * @private
-	 * @param {sap.ui.unified.calendar.CalendarDate} oCurrentDate First date of the year
-	 * @returns {boolean} Returns <code>true</code> if the current year is between the start and end of the selected interval
+	 * @param {sap.ui.unified.calendar.CalendarDate} oCurrentDate
 	 */
-	YearPicker.prototype._isYearInsideSelectionRange = function(oCurrentDate) {
-		const aSelectedDateRanges = this.getSelectedDates();
-		if (!(aSelectedDateRanges && aSelectedDateRanges.length)) {
+	YearPicker.prototype._fnShouldApplySelectionBetween = function(oCurrentDate) {
+		var oSelectedDates = this._getSelectedDates()[0],
+			oStartDate, oEndDate;
+
+		if (!oSelectedDates) {
 			return false;
 		}
+		oStartDate = oSelectedDates.getStartDate();
+		oEndDate = oSelectedDates.getEndDate();
 
-		const oDateRange = aSelectedDateRanges[0];
-		if (!oDateRange) {
-			return false;
-		}
-
-		if (this.getIntervalSelection()) {
-			const oStartDate = oDateRange.getStartDate();
-			const oEndDate = oDateRange.getEndDate();
-
-			if (!oStartDate || !oEndDate) {
-				return false;
+		if (this.getIntervalSelection() && oStartDate && oEndDate) {
+			oStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
+			oStartDate.setMonth(0, 1);
+			oEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
+			oEndDate.setMonth(0, 1);
+			if (CalendarUtils._isBetween(oCurrentDate, oStartDate, oEndDate)) {
+				return true;
 			}
-
-			const oCalStartDate = CalendarDate.fromLocalJSDate(oStartDate, this._getPrimaryCalendarType());
-			const oCalEndDate = CalendarDate.fromLocalJSDate(oEndDate, this._getPrimaryCalendarType());
-			oCalStartDate.setMonth(0, 1);
-			oCalEndDate.setMonth(0, 1);
-
-			return CalendarUtils._isBetween(oCurrentDate, oCalStartDate, oCalEndDate, true);
 		}
+
 		return false;
 	};
 

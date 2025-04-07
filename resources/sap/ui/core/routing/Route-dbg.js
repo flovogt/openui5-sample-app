@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,11 +11,11 @@ sap.ui.define([
 	'sap/ui/core/routing/async/Route',
 	'sap/ui/core/routing/sync/Route',
 	'sap/ui/core/Component',
-	"sap/base/future",
+	"sap/base/Log",
 	"sap/base/assert",
 	"sap/base/util/deepExtend"
 ],
-	function(EventProvider, Target, asyncRoute, syncRoute, Component, future, assert, deepExtend) {
+	function(EventProvider, Target, asyncRoute, syncRoute, Component, Log, assert, deepExtend) {
 	"use strict";
 
 		/**
@@ -139,9 +139,9 @@ sap.ui.define([
 				if (oConfig.parent) {
 					var oRoute = this._getParentRoute(oConfig.parent);
 					if (!oRoute) {
-						future.errorThrows(`${this}: No parent route with "${oConfig.parent}" could be found`);
+						Log.error("No parent route with '" + oConfig.parent + "' could be found", this);
 					} else if (oRoute._aPattern.length > 1) {
-						future.errorThrows(`${this}: Routes with multiple patterns cannot be used as parent for nested routes`);
+						Log.error("Routes with multiple patterns cannot be used as parent for nested routes", this);
 						return;
 					} else {
 						this._oNestingParent = oRoute;
@@ -280,8 +280,6 @@ sap.ui.define([
 			 *
 			 * @param {object} oParameters Parameters for the route
 			 * @return {string} the unencoded pattern with interpolated arguments
-			 * @throws {Error} Error will be thrown when any mandatory parameter in the route's pattern is missing from
-			 *  <code>oParameters</code> or assigned with empty string.
 			 * @public
 			 */
 			getURL : function (oParameters) {
@@ -370,7 +368,7 @@ sap.ui.define([
 										oHashChanger.setHash(oRoute.getURL(oRouteInfo.parameters), bParentRouteSwitched || !bRouteSwitched);
 										return oRoute._changeHashWithComponentTargets(oRouteInfo.componentTargetInfo, bParentRouteSwitched || bRouteSwitched);
 									} else {
-										future.errorThrows("Can not navigate to route with name '" + sRouteName + "' because the route does not exist in component with id '" + oComponent.getId() + "'");
+										Log.error("Can not navigate to route with name '" + sRouteName + "' because the route does not exist in component with id '" + oComponent.getId() + "'");
 									}
 								}
 							});
@@ -641,11 +639,11 @@ sap.ui.define([
 
 			_validateConfig: function(oConfig) {
 				if (!oConfig.name) {
-					future.errorThrows(`${this}: A name has to be specified for every route`);
+					Log.error("A name has to be specified for every route", this);
 				}
 
 				if (oConfig.viewName) {
-					future.errorThrows(`${this}: The 'viewName' option shouldn't be used in Route. please use 'view' instead`);
+					Log.error("The 'viewName' option shouldn't be used in Route. please use 'view' instead", this);
 				}
 			},
 
@@ -673,7 +671,7 @@ sap.ui.define([
 					assert(this._oRouter._oOwner, "No owner component for " + this._oRouter._oOwner.getId());
 					var oOwnerComponent = Component.getOwnerComponentFor(this._oRouter._oOwner);
 					while (oOwnerComponent) {
-						if (oOwnerComponent.isA(aParts[0])) {
+						if (oOwnerComponent.getMetadata().getName() === aParts[0]) {
 							var oRouter = oOwnerComponent.getRouter();
 							return oRouter.getRoute(aParts[1]);
 						}

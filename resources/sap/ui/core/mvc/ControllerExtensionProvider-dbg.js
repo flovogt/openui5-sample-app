@@ -1,9 +1,9 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Component) {
+sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component) {
 	"use strict";
 
 	// contains all external ExtensionProvider instances, mapped by their class-name
@@ -61,7 +61,6 @@ sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Com
 	 *
 	 * @private
 	 * @ui5-restricted sap.ui.core.mvc.Controller
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	ControllerExtensionProvider.getControllerExtensions = function(sControllerName, sComponentId, sViewId, bAsync) {
 		var mControllerExtensions = {
@@ -69,7 +68,7 @@ sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Com
 			providerControllers: []           // extensions loaded via external provider
 		};
 
-		var oComponent = Component.getComponentById(sComponentId);
+		var oComponent = Component.get(sComponentId);
 		// the view ID used in the customizing definition in the manifest.json
 		// must not contain a reference to the runtime ID of the component itself
 		if (oComponent && oComponent.getLocalId) {
@@ -105,7 +104,7 @@ sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Com
 						// add provider-extensions
 						mControllerExtensions.providerControllers = aExternalExtensions;
 					} else {
-						future.errorThrows("Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
+						Log.error("Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
 								" - no valid extensions returned. Return value must be an array of ControllerExtensions.");
 					}
 				}
@@ -165,7 +164,6 @@ sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Com
 	 * @param {boolean} bAsync Load async or not
 	 * @return {ExtensionProvider|Promise|undefined} ExtensionProvider <code>Promise</code> in case of asynchronous loading
 	 *           or the <code>ExtensionProvider</code> in case of synchronous loading or undefined in case no provider exists
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function loadExtensionProvider(bAsync) {
 		var sProviderName = ControllerExtensionProvider._sExtensionProvider.replace(/\./g, "/"),

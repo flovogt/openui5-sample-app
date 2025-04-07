@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -34,7 +34,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.27.0
@@ -90,7 +90,6 @@ sap.ui.define([
 	 * @return {this} Returns <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.27, local BusyIndicator is not supported by control.
-	 * @ui5-not-supported
 	 * @function
 	 */
 	InvisibleText.prototype.setBusy = makeNotSupported("Property busy");
@@ -99,7 +98,6 @@ sap.ui.define([
 	 * @return {this} Returns <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.27, local BusyIndicator is not supported by control.
-	 * @ui5-not-supported
 	 * @function
 	 */
 	InvisibleText.prototype.setBusyIndicatorDelay = makeNotSupported("Property busy");
@@ -108,7 +106,6 @@ sap.ui.define([
 	 * @return {this} Returns <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.54, local BusyIndicator is not supported by control.
-	 * @ui5-not-supported
 	 * @function
 	 */
 	InvisibleText.prototype.setBusyIndicatorSize = makeNotSupported("Property busy");
@@ -117,7 +114,6 @@ sap.ui.define([
 	 * @return {this} Returns <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.27, property <code>visible</code> is not supported by control.
-	 * @ui5-not-supported
 	 * @function
 	 */
 	InvisibleText.prototype.setVisible = makeNotSupported("Property visible");
@@ -126,7 +122,6 @@ sap.ui.define([
 	 * @return {this} Returns <code>this</code> to allow method chaining
 	 * @public
 	 * @deprecated As of version 1.27, tooltip is not supported by control.
-	 * @ui5-not-supported
 	 * @function
 	 */
 	InvisibleText.prototype.setTooltip = makeNotSupported("Aggregation tooltip");

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -8,11 +8,10 @@ sap.ui.define([
 	'./Target',
 	'./async/Targets',
 	'./sync/Targets',
-	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/util/deepExtend"
 ],
-	function(EventProvider, Target, asyncTargets, syncTargets, future, Log, deepExtend) {
+	function(EventProvider, Target, asyncTargets, syncTargets, Log, deepExtend) {
 		"use strict";
 
 		/**
@@ -263,7 +262,7 @@ sap.ui.define([
 					oTarget;
 
 				if (oOldTarget) {
-					future.errorThrows(`${this}: Target with name "${sName}" already exists`);
+					Log.error("Target with name " + sName + " already exists", this);
 				} else {
 					oTarget = this._createTarget(sName, oTargetOptions);
 					this._addParentTo(oTarget);
@@ -560,7 +559,7 @@ sap.ui.define([
 				oParentTarget = this._mTargets[sParent];
 
 				if (!oParentTarget) {
-					future.errorThrows(`${this}: The target "${oTarget._oOptions._name}" has a parent "${sParent}" defined, but it was not found in the other targets`);
+					Log.error("The target '" + oTarget._oOptions._name + " has a parent '" + sParent + "' defined, but it was not found in the other targets", this);
 					return;
 				}
 
@@ -682,7 +681,7 @@ sap.ui.define([
 					oTitleTarget.attachTitleChanged({name:oTitleTarget._oOptions._name}, this._forwardTitleChanged, this);
 					this._oLastDisplayedTitleTarget = oTitleTarget;
 				} else if (sTitleTarget) {
-					future.errorThrows(`${this}: The target with the name "${sTitleTarget}" where the titleChanged event should be fired does not exist!`);
+					Log.error("The target with the name \"" + sTitleTarget + "\" where the titleChanged event should be fired does not exist!", this);
 				}
 			}
 

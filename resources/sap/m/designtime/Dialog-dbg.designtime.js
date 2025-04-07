@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -46,9 +46,7 @@ sap.ui.define([],
 					}
 				},
 				subHeader: {
-					domRef: function(oControl) {
-						return oControl.getAggregation("subHeader").getDomRef();
-					}
+					domRef: ":sap-domref > .sapMDialogSubHeader"
 				},
 				beginButton: {
 					domRef: function(oControl) {

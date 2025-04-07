@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/core/Renderer"],
-	function(ListItemBaseRenderer, Localization, Renderer) {
+sap.ui.define(["./ListItemBaseRenderer", "sap/ui/core/Renderer", "sap/ui/core/Configuration"],
+	function(ListItemBaseRenderer, Renderer, Configuration) {
 	"use strict";
 
 	/**
@@ -28,7 +28,7 @@ sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/c
 		}
 
 		var iIndentation = oLI._getPadding();
-		if (Localization.getRTL()){
+		if (Configuration.getRTL()){
 			rm.style("padding-right", iIndentation + "rem");
 		} else {
 			rm.style("padding-left", iIndentation + "rem");

@@ -1,25 +1,28 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.core.ComponentContainer.
 sap.ui.define([
-	'sap/base/future',
 	'sap/ui/base/ManagedObject',
 	'./Control',
 	'./Component',
 	'./library',
-	"./ComponentContainerRenderer"
-], function(
-	future,
-	ManagedObject,
-	Control,
-	Component,
-	library,
-	ComponentContainerRenderer
-) {
+	"./ComponentContainerRenderer",
+	"sap/base/Log",
+	"sap/ui/core/Configuration"
+],
+	function(
+		ManagedObject,
+		Control,
+		Component,
+		library,
+		ComponentContainerRenderer,
+		Log,
+		Configuration
+	) {
 	"use strict";
 
 
@@ -58,7 +61,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -216,7 +219,7 @@ sap.ui.define([
 	 */
 	function setContainerComponent(oComponentContainer, vComponent, bSuppressInvalidate, bDestroyOldComponent) {
 		// find the reference to the current component and to the old component
-		var oComponent = typeof vComponent === "string" ? Component.getComponentById(vComponent) : vComponent;
+		var oComponent = typeof vComponent === "string" ? Component.get(vComponent) : vComponent;
 		var oOldComponent = oComponentContainer.getComponentInstance();
 		// if there is no difference between the old and the new component just skip this setter
 		if (oOldComponent !== oComponent) {
@@ -248,7 +251,7 @@ sap.ui.define([
 	 */
 	ComponentContainer.prototype.getComponentInstance = function () {
 		var sComponentId = this.getComponent();
-		return sComponentId && Component.getComponentById(sComponentId);
+		return sComponentId && Component.get(sComponentId);
 	};
 
 	// Delegate registered by the ComponentContainer#showPlaceholder function
@@ -330,7 +333,7 @@ sap.ui.define([
 	 * to the component will be set and the models will be propagated if defined.
 	 * If the <code>usage</code> property is set the ComponentLifecycle is processed like a "Container" lifecycle.
 	 *
-	 * @param {sap.ui.core.ID|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
+	 * @param {string|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
 	 * @return {this} the reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
@@ -403,7 +406,7 @@ sap.ui.define([
 			if (oOwnerComponent) {
 				mConfig = oOwnerComponent._enhanceWithUsageConfig(sUsageId, mConfig);
 			} else {
-				future.errorThrows("ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
+				Log.error("ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
 			}
 		}
 
@@ -454,7 +457,7 @@ sap.ui.define([
 					delete this._oComponentPromise;
 					// listeners can prevent the default log entry
 					if ( this.fireComponentFailed({ reason: oReason }) ) {
-						future.errorThrows("Failed to load component for container " + this.getId(), { cause: oReason});
+						Log.error("Failed to load component for container " + this.getId(), oReason);
 					}
 				}.bind(this));
 			} else if (oComponent) {

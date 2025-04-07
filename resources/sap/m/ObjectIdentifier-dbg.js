@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,31 +10,29 @@ sap.ui.define([
 	'./Link',
 	'./Text',
 	'sap/ui/core/Control',
-	"sap/ui/core/ControlBehavior",
 	'sap/ui/core/IconPool',
 	'sap/ui/core/InvisibleText',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/Device',
 	'sap/ui/base/ManagedObject',
 	'./ObjectIdentifierRenderer',
-	"sap/ui/events/KeyCodes"
+	"sap/ui/events/KeyCodes",
+	"sap/ui/core/Configuration"
 ],
 function(
 	library,
 	Link,
 	Text,
 	Control,
-	ControlBehavior,
 	IconPool,
 	InvisibleText,
-	Library,
 	coreLibrary,
 	Device,
 	ManagedObject,
 	ObjectIdentifierRenderer,
-	KeyCodes
-) {
+	KeyCodes,
+	Configuration
+	) {
 	"use strict";
 
 
@@ -45,9 +43,6 @@ function(
 	// shortcut for sap.m.EmptyIndicator
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
 
-	// shortcut for sap.m.ReactiveAreaMode
-	var ReactiveAreaMode = library.ReactiveAreaMode;
-
 	/**
 	 * Constructor for a new ObjectIdentifier.
 	 *
@@ -57,9 +52,9 @@ function(
 	 * @class
 	 * The ObjectIdentifier is a display control that enables the user to easily identify a specific object. The ObjectIdentifier title is the key identifier of the object and additional text can be used to further distinguish it from other objects.
 	 *
-	* <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
+     * <b>Note:</b> This control should not be used with {@link sap.m.Label} or in Forms along with {@link sap.m.Label}.
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -77,12 +72,12 @@ function(
 				/**
 				 * Defines the object title.
 				 */
-				title : {type : "string", group : "Data", defaultValue : null},
+				title : {type : "string", group : "Misc", defaultValue : null},
 
 				/**
 				 * Defines the object text.
 				 */
-				text : {type : "string", group : "Data", defaultValue : null},
+				text : {type : "string", group : "Misc", defaultValue : null},
 
 				/**
 				 * Indicates whether or not the notes icon is displayed.
@@ -112,20 +107,6 @@ function(
 				 * @since 1.26
 				 */
 				titleActive : {type : "boolean", group : "Misc", defaultValue : false},
-
-				/**
-				 * Defines the size of the reactive area of the link:<ul>
-				 * <li><code>ReactiveAreaMode.Inline</code> - The link is displayed as part of a sentence.</li>
-				 * <li><code>ReactiveAreaMode.Overlay</code> - The link is displayed as an overlay on top of other interactive parts of the page.</li></ul>
-				 *
-				 * <b>Note:</b>It is designed to make links easier to activate and helps meet the WCAG 2.2 Target Size requirement. It is applicable only for the SAP Horizon themes.
-				 * <b>Note:</b>The Reactive area size is sufficiently large to help users avoid accidentally selecting (clicking or tapping) on unintented UI elements.
-				 * UI elements positioned over other parts of the page may need an invisible active touch area.
-				 * This will ensure that no elements beneath are activated accidentally when the user tries to interact with the overlay element.
-				 *
-				 * @since 1.133.0
-				 */
-				reactiveAreaMode : {type : "sap.m.ReactiveAreaMode", group : "Appearance", defaultValue : ReactiveAreaMode.Inline},
 
 				/**
 				 * Specifies the element's text directionality with enumerated options. By default, the control inherits text direction from the DOM.
@@ -191,17 +172,10 @@ function(
 	 * @private
 	 */
 	ObjectIdentifier.prototype.init = function() {
-		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
+		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			ObjectIdentifier.OI_ARIA_ROLE = oLibraryResourceBundle.getText("OI_ARIA_ROLE");
-		}
-	};
-
-	ObjectIdentifier.prototype.onBeforeRendering = function() {
-		var oTitleControl = this._getTitleControl();
-		if (oTitleControl.isA("sap.m.Link")) {
-			oTitleControl.setProperty("reactiveAreaMode", this.getReactiveAreaMode());
 		}
 	};
 
@@ -313,7 +287,6 @@ function(
 				oTitleControl = new Link({
 					id : sId + "-link",
 					text: sTitle,
-					reactiveAreaMode: this.getReactiveAreaMode(),
 					//Add a custom hidden role "ObjectIdentifier" with hidden text
 					ariaLabelledBy: addAriaLabelledBy
 				});
@@ -328,33 +301,6 @@ function(
 		}
 
 		return oTitleControl;
-	};
-
-	/**
-	 * Sets title control.
-	 *
-	 * Possible controls are Link, SmartLink, Text.
-	 * @param {sap.ui.core.Control} oTitleControl the control placed as title.
-	 * @returns {sap.m.ObjectIdentifier} <code>this</code> for chaining
-	 * @private
-	 * @ui5-restricted sap.ui.comp
-	 */
-	ObjectIdentifier.prototype.setTitleControl = function(oTitleControl) {
-		this.setAggregation("_titleControl", oTitleControl);
-
-		return this;
-	};
-
-	/**
-	 * Returns the title control.
-	 *
-	 * Possible controls are Link, SmartLink, Text.
-	 * @returns {sap.ui.core.Control} oTitleControl the control placed as title.
-	 * @private
-	 * @ui5-restricted sap.ui.comp
-	 */
-	ObjectIdentifier.prototype.getTitleControl = function() {
-		return this._getTitleControl();
 	};
 
 	/**
@@ -436,17 +382,10 @@ function(
 	 * @private
 	 */
 	ObjectIdentifier.prototype._handlePress = function(oEvent) {
-		if (!this.getTitleActive()) {
-			return;
-		}
-
-		const oPressedItem = oEvent.target;
-		const oLinkDomRef = this.getTitleControl().getDomRef();
-		const bTitlePressed = oPressedItem.parentElement.id === oLinkDomRef.id || oPressedItem.id === oLinkDomRef.id;
-
-		if (bTitlePressed) {
+		var oClickedItem = oEvent.target;
+		if (this.getTitleActive() && this.$("title")[0].firstChild == oClickedItem) { // checking if the title is clicked
 			this.fireTitlePress({
-				domRef: oLinkDomRef
+				domRef: oClickedItem
 			});
 
 			// mark the event that it is handled by the control

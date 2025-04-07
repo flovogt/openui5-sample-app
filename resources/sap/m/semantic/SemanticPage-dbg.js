@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -18,7 +18,6 @@ sap.ui.define([
 	'sap/m/PageAccessibleLandmarkInfo',
 	'sap/ui/base/ManagedObjectObserver',
 	'sap/ui/core/Control',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	"sap/ui/core/InvisibleText",
 	'sap/m/library',
@@ -40,7 +39,6 @@ function(
 	PageAccessibleLandmarkInfo,
 	ManagedObjectObserver,
 	Control,
-	Library,
 	coreLibrary,
 	InvisibleText,
 	library,
@@ -113,7 +111,7 @@ function(
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -287,7 +285,7 @@ function(
 
 	// Static members
 	SemanticPage._getResourceBundle = function () {
-		return Library.getResourceBundleFor("sap.m");
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
 	};
 
 	SemanticPage.ARIA = {

@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/base/i18n/Localization",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"./library",
 	"sap/ui/core/ResizeHandler",
@@ -13,7 +13,7 @@ sap.ui.define([
 	"sap/ui/dom/units/Rem"
 ],
 	function(
-		Localization,
+		Core,
 		Control,
 		library,
 		ResizeHandler,
@@ -40,10 +40,11 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @private
+		 * @experimental This control is only for internal/experimental use and the API will change!
 		 *
 		 * @since 1.48
 		 * @alias sap.ui.layout.AlignedFlowLayout
@@ -161,7 +162,7 @@ sap.ui.define([
 						mEndItemStyle = oEndItemDomRef.style;
 
 					// adapt the position of the absolute-positioned end item in case a standard CSS class is added
-					if (Localization.getRTL()) {
+					if (Core.getConfiguration().getRTL()) {
 						mEndItemStyle.left = oLayoutComputedStyle.getPropertyValue("padding-left");
 					} else {
 						mEndItemStyle.right = oLayoutComputedStyle.getPropertyValue("padding-right");
@@ -321,7 +322,7 @@ sap.ui.define([
 				iAvailableWidthForEndItem;
 
 			var oLastItemComputedStyle = window.getComputedStyle(oLastItemDomRef);
-			if (Localization.getRTL()) {
+			if (Core.getConfiguration().getRTL()) {
 				var iLastItemMarginLeft = Number.parseFloat(oLastItemComputedStyle.marginLeft);
 				iAvailableWidthForEndItem = iLastItemOffsetLeft - iLastItemMarginLeft;
 			} else {

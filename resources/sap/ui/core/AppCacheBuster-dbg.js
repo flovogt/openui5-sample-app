@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,10 +16,11 @@ sap.ui.define([
 	'sap/base/Log',
 	'sap/base/i18n/Localization',
 	'sap/base/util/extend',
+	'sap/base/util/fetch',
 	'sap/base/util/mixedFetch',
 	'sap/base/strings/escapeRegExp',
 	'sap/ui/core/_IconRegistry'
-], function(ManagedObject, URI, BaseConfig, Log, Localization, extend, mixedFetch, escapeRegExp, _IconRegistry) {
+], function(ManagedObject, URI, BaseConfig, Log, Localization, extend, fetch, mixedFetch, escapeRegExp, _IconRegistry) {
 	"use strict";
 
 	/*
@@ -165,7 +166,7 @@ sap.ui.define([
 				oInit = {
 					body: sContent.join("\n"),
 					headers: {
-						"Accept": mixedFetch.ContentTypes.JSON,
+						"Accept": fetch.ContentTypes.JSON,
 						"Content-Type": "text/plain"
 					},
 					mode: "POST"
@@ -206,7 +207,7 @@ sap.ui.define([
 				// configure request; check how to execute the request (sync|async)
 				oInit = {
 					headers: {
-						Accept: mixedFetch.ContentTypes.JSON
+						Accept: fetch.ContentTypes.JSON
 					},
 					mode: "POST"
 				};
@@ -258,7 +259,11 @@ sap.ui.define([
 				// load it
 				Log.info("Loading AppCacheBuster index file from: \"" + sUrl + "\".");
 
-				mixedFetch(sUrl, oInit, !bAsync)
+				/**
+				 * @deprecated As of Version 1.120
+				 */
+				fetch = mixedFetch ? mixedFetch : fetch;
+				fetch(sUrl, oInit, !bAsync)
 					.then(function(oResponse) {
 						if (oResponse.ok) {
 							return oResponse.json();

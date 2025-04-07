@@ -34,21 +34,16 @@
 	}
 }
 
-.sapFDynamicPage > .sapUiLocalBusyIndicator:focus  {
-	z-index: 5;
-}
-
 .sapFDynamicPageTitleWrapper {
 	position: absolute;
 	padding-right: 0;
 	top: 0;
 	right: 0;
 	left: 0;
-	z-index: 3;
+	z-index: 2;
 }
 
-html[data-sap-ui-browser^="ff"].sap-desktop .sapFDynamicPage.sapFDynamicPageWithScroll,
-html[data-sap-ui-os^="win"][data-sap-ui-browser^="cr"].sap-desktop .sapFDynamicPage.sapFDynamicPageWithScroll {
+html[data-sap-ui-browser^="ff"].sap-desktop .sapFDynamicPage.sapFDynamicPageWithScroll {
 	 .sapFDynamicPageTitleWrapper {
 		right: 17px;
 	}
@@ -419,9 +414,4 @@ To be used in Comparison pattern scenario. */
 
 .sapUiComparisonContainer .sapFDynamicPageTitleSnapped + .sapFDynamicPageContentWrapper .sapUiComparisonContent  {
 	margin-right: -1rem;
-}
-
-// Avoid visible gap between content and header when title is snapped
-.sapFDynamicPageTitleWrapper.sapFDynamicPageTitleSnapped + .sapFDynamicPageContentWrapper > .sapFDynamicPageHeaderWrapper {
-	background: @sapUiObjectHeaderBackground;
 }

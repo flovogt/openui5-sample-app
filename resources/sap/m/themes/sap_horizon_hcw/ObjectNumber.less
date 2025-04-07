@@ -3,47 +3,43 @@
 /* Horizon High Contrast White theme   */
 /* =================================== */
 
-.sapMObjectNumber.sapMLnkLargeReactiveArea:not(.sapMObjectNumberLarge):not(.sapMObjectNumberInverted) {
-	.sapMObjectNumberInner {
-		line-height: 1.5rem;
-	}
-}
-
-@sapMONInformativeElement: var(--sapInformationBackground);
+@sapMONInformativeElement: @sapUiInformationBG;
 
 .sapMObjectNumberInverted {
 	box-sizing: border-box;
-
 	&:not(.sapMObjectNumberLarge) .sapMObjectNumberInner {
-		min-height: 1rem;
-		height: auto;
+		height: 0.875rem;
+		line-height: 0.75rem;
+	}
+	.sapMObjectNumberText,
+	.sapMObjectNumberUnit {
+		vertical-align: middle;
+		line-height: 0.875rem;
 	}
 }
 
 .sapMObjectNumberInverted .sapMObjectNumberInner {
-	background-color: var(--sapBackgroundColor);
-	border: 0.0625rem solid;
-	border-radius: var(--sapButton_BorderCornerRadius);
-	padding: 0.1875rem 0.25rem;
-	vertical-align: middle;
+	background-color: @sapUiBaseBG;
+	border-width: 0.0625rem;
+	border-style: solid;
 }
 
 html.sap-desktop .sapMObjectNumberActive:focus {
 
 	.sapMObjectNumberInner::after {
-		top: 0;
+		top: 0px;
 		left: 1px;
 		bottom: -1px;
 		right: 1px;
-		outline: 2px dotted var(--sapContent_FocusColor);
+		outline: 2px dotted @sapUiContentFocusColor;
 	}
 
 	&.sapMObjectNumberInverted .sapMObjectNumberInner::after {
-		top: 0.125rem;
-		left: 0.125rem;
-		bottom: 0.0625rem;
-		right: 0.125rem;
-		outline: 0.125rem dotted var(--sapContent_FocusColor);
+		top: -2px;
+		left: 1px;
+		bottom: -2px;
+		right: 1px;
+		outline: 2px dotted @sapUiContentFocusColor;
 	}
 
 	&.sapMObjectNumberLarge {
@@ -60,15 +56,8 @@ html.sap-desktop .sapMObjectNumberActive:focus {
 			left: 3px;
 			bottom: 3px;
 			right: 3px;
-			outline: 2px dotted var(--sapContent_ContrastFocusColor);
+			outline: 2px dotted @sapContent_ContrastFocusColor;
 		}
-	}
-}
 
-.sapMListTblCell > .sapMObjectNumber {
-
-	.sapMObjectNumberText,
-	.sapMObjectNumberUnit {
-		text-shadow: none;
 	}
 }

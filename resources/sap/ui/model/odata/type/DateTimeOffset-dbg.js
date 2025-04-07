@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/base/Log",
-	"sap/base/i18n/date/CalendarType",
+	"sap/ui/core/CalendarType",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/model/FormatException",
@@ -29,7 +29,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.DateTimeBase
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @alias sap.ui.model.odata.type.DateTimeOffset
 	 * @param {object} [oFormatOptions]

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -110,26 +110,19 @@ sap.ui.define([
 				// add span to static-ui-area
 				oStaticAreaDomRef.appendChild(oSpan);
 
-				// switch the focus after the current call stack because some input device (e.g. Barcode scanner) fires
-				// the "keyup" event in a 0 timeout after the 'keydown' event. We need to make sure that the element can
-				// receive both of the events before we switch the focus to the "span"
+				// set focus on span to enforce blur - e.g. data of input field needs to get peristed
+				oSpan.focus();
+				// setting back the focus async ensures that also a fieldGroupChange happens
 				setTimeout(function() {
-					// set focus on span to enforce blur - e.g. data of input field needs to get persisted
-					oSpan.focus();
+					// restore old focus
+					oFocusedElement.focus();
 
-					// setting back the focus async ensures that also a fieldGroupChange happens
-					setTimeout(function() {
-						// restore old focus
-						oFocusedElement.focus();
+					// cleanup DOM
+					oStaticAreaDomRef.removeChild(oSpan);
 
-						// cleanup DOM
-						oStaticAreaDomRef.removeChild(oSpan);
-
-						// trigger callback
-						fnCallback.apply(null, args);
-					});
+					// trigger callback
+					fnCallback.apply(null, args);
 				});
-
 			}
 
 			var oDelegate = {};

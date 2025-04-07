@@ -1,7 +1,3 @@
-/**
- * @fileoverview
- * @deprecated As of version 1.20, replaced by sap/ui/thirdparty/jqueryui/jquery-ui-effect-core.js
- */
 (function(jQuery, sap) {
 
 	var MESSAGE = "The file sap/ui/thirdparty/jqueryui/jquery-effects-core.js has been renamed to sap/ui/thirdparty/jqueryui/jquery-ui-effect.js! Please update the dependencies accordingly.";

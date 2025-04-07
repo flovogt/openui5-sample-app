@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -25,13 +25,13 @@ sap.ui.define(['./ShellHeader', './ShellLayout', './library', './ShellRenderer']
 	 * @extends sap.ui.unified.ShellLayout
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.15.1
 	 * @alias sap.ui.unified.Shell
-	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @deprecated Since version 1.44.0.
 	 */
 	var Shell = ShellLayout.extend("sap.ui.unified.Shell", /** @lends sap.ui.unified.Shell.prototype */ { metadata : {
 

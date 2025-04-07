@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -17,8 +17,7 @@
 	}
 
 	// do nothing if UI5 is already loaded
-	// ui5lint-disable-next-line no-globals
-	if (globalThis.sap?.ui) {
+	if (window.sap && window.sap.ui) {
 		return;
 	}
 

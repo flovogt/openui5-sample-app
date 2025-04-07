@@ -4,34 +4,36 @@
 /* =========================== */
 
 .sapMLnkDsbl {
-	opacity: var(--sapContent_DisabledOpacity);
+	opacity: @sapUiContentDisabledOpacity;
 	outline: none;
 	cursor: default;
 }
 
+.sapMLnkEmphasized {
+	font-family: @sapUiFontBoldFamily;
+}
+
 .sapMLIBActive .sapMLnk {
-	color: var(--sapList_Active_TextColor);
+	color: @sapUiListActiveTextColor;
 	text-decoration: underline;
 }
 
 .sapMLnk.sapMLnkSubtle {
-	color: var(--sapLink_SubtleColor);
+	color: @sapUiLinkSubtleColor;
 	text-decoration: underline;
 
 	&:not(.sapMLnkDsbl) {
-
 		&:active {
-			color: var(--sapLink_SubtleColor);
+			color: @sapUiLinkSubtleColor;
 		}
 	}
 }
 
 html.sap-desktop .sapMLnk:not(.sapMLnkDsbl) {
-
 	&:focus {
 		border-radius: 0.125rem;
-		background-color: var(--sapContent_FocusColor);
-		color: var(--sapContent_ContrastTextColor);
+		background-color: @sapUiContentFocusColor;
+		color: @sapUiContentContrastTextColor;
 		text-shadow: none;
 		outline: none;
 
@@ -41,28 +43,23 @@ html.sap-desktop .sapMLnk:not(.sapMLnkDsbl) {
 	}
 
 	&.sapMLnkSubtle {
-
 		&:hover:not(:active):not(:focus) {
-			color: var(--sapLink_SubtleColor);
+			color: @sapUiLinkSubtleColor;
 			text-decoration: none;
 		}
 	}
 }
 
 .sapMLnk:not(.sapMLnkDsbl) {
-	text-shadow: var(--sapContent_TextShadow);
+	text-shadow: @sapUiContentTextShadow;
 }
 
 /* align Link in Form with Label */
 .sapUiFormEdit .sapMLnk {
 	margin-top: 0.875rem; /* don't use padding as this would stretch the focus outline */
-	margin-bottom: 0.625rem; /* for some reason browser adds 4px, display: block would lead to stretched focus outline */
+	margin-bottom: 0.625rem; /* for some reason browser adds 4px, display: block would lead to stretched focus outline*/
 }
 
 .sapMListTblRow.sapMLIBSelected .sapMLnk:not(.sapMLnkDsbl) {
-	text-shadow: var(--sapContent_TextShadow);
-}
-
-.sapMLnk.sapMLnkLargeReactiveArea {
-	line-height: 1.5rem;
+	text-shadow: @sapUiContentTextShadow;
 }

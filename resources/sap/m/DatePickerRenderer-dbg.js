@@ -1,10 +1,10 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/ui/core/Lib", 'sap/ui/core/Renderer', './DateTimeFieldRenderer', 'sap/ui/core/library'],
-	function(Library, Renderer, DateTimeFieldRenderer, coreLibrary) {
+sap.ui.define(['sap/ui/core/Renderer', './DateTimeFieldRenderer', 'sap/ui/core/library'],
+	function(Renderer, DateTimeFieldRenderer, coreLibrary) {
 	"use strict";
 
 	/**
@@ -48,7 +48,7 @@ sap.ui.define(["sap/ui/core/Lib", 'sap/ui/core/Renderer', './DateTimeFieldRender
 	DatePickerRenderer.getAccessibilityState = function(oDP) {
 		var mAccessibilityState = DateTimeFieldRenderer.getAccessibilityState.apply(this, arguments);
 
-		mAccessibilityState["roledescription"] = Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_DATEINPUT");
+		mAccessibilityState["roledescription"] = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATEINPUT");
 		if (oDP.getEditable() && oDP.getEnabled()) {
 			mAccessibilityState["haspopup"] = coreLibrary.aria.HasPopup.Grid.toLowerCase();
 		}

@@ -1,20 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/ui/base/Object",
-	"sap/base/Log",
-	"sap/ui/core/Lib"
-], (BaseObject, Log, Library) => {
+	"sap/base/Log"
+], function (BaseObject, Log) {
 	"use strict";
 
-	const ERROR_INSTANCING = "UIManager: This class is a singleton and should not be used without an AdaptationProvider. Please use 'Engine.getInstance().uimanager' instead";
+	var ERROR_INSTANCING = "UIManager: This class is a singleton and should not be used without an AdaptationProvider. Please use 'Engine.getInstance().uimanager' instead";
 
 	//Singleton storage
-	let oUIManager;
+	var oUIManager;
 
 	/**
 	 * Constructor for a new UIManager.
@@ -28,14 +27,14 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @private
 	 *
 	 * @since 1.104
 	 * @alias sap.m.p13n.modules.UIManager
 	 */
-	const UIManager = BaseObject.extend("sap.m.p13n.modules.UIManager", {
+	var UIManager = BaseObject.extend("sap.m.p13n.modules.UIManager", {
 		constructor: function(oAdaptationProvider) {
 
 			if (oUIManager) {
@@ -48,8 +47,8 @@ sap.ui.define([
 		}
 	});
 
-	const loadModules = (aModules) => {
-		return new Promise((resolve, reject) => {
+	var loadModules = function(aModules) {
+		return new Promise(function(resolve, reject) {
 			sap.ui.require(aModules, resolve, reject);
 		});
 	};
@@ -73,149 +72,142 @@ sap.ui.define([
 	 * @returns {Promise} Promise resolving in the <code>sap.m.p13n.Popup</code> instance.
 	 */
 	UIManager.prototype.show = function(oControl, vPanelKeys, mSettings) {
-		const aPanelKeys = vPanelKeys instanceof Array ? vPanelKeys : [vPanelKeys];
-		const oResourceBundle = Library.getResourceBundleFor("sap.m");
-		const that = this;
+		var aPanelKeys = vPanelKeys instanceof Array ? vPanelKeys : [vPanelKeys];
+		var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var that = this;
 		mSettings = Object.assign({}, mSettings);
 
-		if (!this.hasActiveP13n(oControl)) {
+		if (!this.hasActiveP13n(oControl)){
 			this.setActiveP13n(oControl, vPanelKeys);
 
 			return this.create(oControl, vPanelKeys, mSettings)
-				.then((aInitializedPanels) => {
-					return loadModules(["sap/m/p13n/Popup"]).then((Popup) => {
+			.then(function(aInitializedPanels){
+				return loadModules(["sap/m/p13n/Popup"]).then(function(Popup){
 
-						//if there is no title provided and only one panel created, use it's title as the Popup title
-						let sTitle;
-						if (!mSettings.title && aPanelKeys.length === 1 && aInitializedPanels.length > 0) {
-							sTitle = aInitializedPanels[0].getTitle();
-						} else {
-							sTitle = mSettings.title || oResourceBundle.getText("p13n.VIEW_SETTINGS");
-						}
+					//if there is no title provided and only one panel created, use it's title as the Popup title
+					var sTitle;
+					if (!mSettings.title && aPanelKeys.length === 1 && aInitializedPanels.length > 0) {
+						sTitle = aInitializedPanels[0].getTitle();
+					} else {
+						sTitle = mSettings.title || oResourceBundle.getText("p13n.VIEW_SETTINGS");
+					}
 
-						//Enrich Popup with AdaptationProvider functionality --> add controller logic (reset and appliance)
-						const oP13nContainer = new Popup({
-							mode: mSettings.mode,
-							warningText: mSettings.warningText || oResourceBundle.getText("p13n.RESET_WARNING_TEXT"),
-							title: sTitle,
-							close: function(oEvt) {
+					//Enrich Popup with AdaptationProvider functionality --> add controller logic (reset and appliance)
+					var oP13nContainer = new Popup({
+						mode: mSettings.mode,
+						warningText: mSettings.warningText || oResourceBundle.getText("p13n.RESET_WARNING_TEXT"),
+						title: sTitle,
+						close: function(oEvt){
 
-								const sReason = oEvt.getParameter("reason");
-								if (sReason == "Ok") {
-									that.oAdaptationProvider.handleP13n(oControl, aPanelKeys);
-								}
-								const aPanels = oP13nContainer.getPanels();
-
-								aPanels.forEach((oPanel) => {
-									if (oPanel.keepAlive instanceof Function && oPanel.keepAlive()) {
-										oP13nContainer.removePanel(oPanel);
-									}
-								});
-
-								that.setActiveP13n(oControl, null);
-								oP13nContainer._oPopup.attachAfterClose(() => {
-									if (mSettings.close instanceof Function) {
-										mSettings.close();
-									}
-									oP13nContainer.destroy();
-								});
+							var sReason = oEvt.getParameter("reason");
+							if (sReason == "Ok") {
+								that.oAdaptationProvider.handleP13n(oControl, aPanelKeys);
 							}
-						});
+							var aPanels = oP13nContainer.getPanels();
 
-						oP13nContainer._getContainer().attachAfterViewSwitch((oEvt) => {
-							const affectedKey = oEvt.getParameter("target");
-							const affectedPanel = aInitializedPanels[aPanelKeys.indexOf(affectedKey)];
-							that.oAdaptationProvider.validateP13n(oControl, affectedKey, affectedPanel);
-						});
+							aPanels.forEach(function(oPanel){
+								if (oPanel.keepAlive instanceof Function && oPanel.keepAlive()){
+									oP13nContainer.removePanel(oPanel);
+								}
+							});
 
-						if (mSettings.showReset !== false) {
-							oP13nContainer.setReset(() => {
-								const fnReset = mSettings.reset instanceof Function ? mSettings.reset : that.oAdaptationProvider.reset.bind(that.oAdaptationProvider);
-								fnReset(oControl, aPanelKeys);
+							that.setActiveP13n(oControl, null);
+							oP13nContainer._oPopup.attachAfterClose(function(){
+								if (mSettings.close instanceof Function) {
+									mSettings.close();
+								}
+								oP13nContainer.destroy();
 							});
 						}
-
-						aInitializedPanels.forEach((oPanel, iIndex) => {
-							oP13nContainer.addPanel(oPanel, aPanelKeys[iIndex]);
-						});
-
-						oControl.addDependent(oP13nContainer);
-						oP13nContainer.open(mSettings.source, mSettings);
-						return oP13nContainer._oPopup;
-
 					});
-				}, (eContainerFailure) => {
-					this.setActiveP13n(oControl, null);
-					Log.error("UIManager failure:" + eContainerFailure.stack);
+
+					if (mSettings.showReset !== false) {
+						oP13nContainer.setReset(function(){
+							var fnReset = mSettings.reset instanceof Function ? mSettings.reset : that.oAdaptationProvider.reset.bind(that.oAdaptationProvider);
+							fnReset(oControl, aPanelKeys);
+						});
+					}
+
+					aInitializedPanels.forEach(function(oPanel, iIndex){
+						oP13nContainer.addPanel(oPanel, aPanelKeys[iIndex]);
+					});
+
+					oControl.addDependent(oP13nContainer);
+					oP13nContainer.open(mSettings.source, mSettings);
+					return oP13nContainer._oPopup;
+
 				});
+			}, function(eContainerFailure){
+				this.setActiveP13n(oControl, null);
+				Log.error("UIManager failure:" + eContainerFailure.stack);
+			}.bind(this));
 		} else {
 			return Promise.resolve();
 		}
 	};
 
 	UIManager.prototype.create = function(oControl, vPanelKeys) {
-		const aPanelKeys = vPanelKeys instanceof Array ? vPanelKeys : [vPanelKeys];
-		const that = this;
+		var aPanelKeys = vPanelKeys instanceof Array ? vPanelKeys : [vPanelKeys];
+		var that = this;
 
 		return this.oAdaptationProvider.initAdaptation(oControl, aPanelKeys)
-			.then(() => {
-				const vSettings = this.oAdaptationProvider.getUISettings(oControl, aPanelKeys);
+		.then(function(){
+			var vSettings = this.oAdaptationProvider.getUISettings(oControl, aPanelKeys);
 
-				//if condition only temporarly necessary until sap.ui.comp adjusted
-				if (vSettings instanceof Promise) {
-					return vSettings;
-				} else {
-					const aPanelPromises = [],
-						aPanelSettings = [];
-					Object.keys(vSettings).forEach((sSetting) => {
-						const vSetting = vSettings[sSetting];
-						if (vSetting && vSetting.hasOwnProperty("adaptationUI")) {
-							const pCreation = vSetting.adaptationUI;
-							aPanelPromises.push(pCreation);
+			//if condition only temporarly necessary until sap.ui.comp adjusted
+			if (vSettings instanceof Promise) {
+				return vSettings;
+			} else {
+				var aPanelPromises = [], aPanelSettings = [];
+				Object.keys(vSettings).forEach(function(sSetting){
+					var vSetting = vSettings[sSetting];
+					if (vSetting && vSetting.hasOwnProperty("adaptationUI")) {
+						var pCreation = vSetting.adaptationUI;
+						aPanelPromises.push(pCreation);
 
-							aPanelSettings.push({
-								key: sSetting,
-								settings: vSetting
-							});
-						}
-					});
-					return Promise.all(aPanelPromises).then((aPanels) => {
-						const mMappedSetting = {};
-						aPanels.forEach((oPanel, iIndex) => {
-							if (oPanel) {
-								const oPanelSetting = aPanelSettings[iIndex];
-								const mContainerSettings = oPanelSetting.settings.containerSettings;
-								if (mContainerSettings.title) {
-									oPanel.setTitle(mContainerSettings.title);
-								}
-								mMappedSetting[oPanelSetting.key] = {
-									panel: oPanel
-								};
-							}
-						});
-						return mMappedSetting;
-					});
-				}
-			})
-
-			.then((mSettings) => {
-				const aInitializedPanels = [];
-
-				//Attach state validation during personalization
-				Object.keys(mSettings).forEach((sPanel, iIndex) => {
-					const oPanel = mSettings[sPanel].panel;
-
-					//not every panel used is a p13n.BasePanel (comp.FilterPanel, AdaptationFilterBar) these panels might not provide a change event
-					if (oPanel.attachChange instanceof Function) {
-						oPanel.attachChange((oEvt) => {
-							that.oAdaptationProvider.validateP13n(oControl, aPanelKeys[iIndex], oEvt.getSource());
+						aPanelSettings.push({
+							key: sSetting,
+							settings: vSetting
 						});
 					}
-					aInitializedPanels.push(oPanel);
 				});
+				return Promise.all(aPanelPromises).then(function(aPanels){
+					var mMappedSetting = {};
+					aPanels.forEach(function(oPanel, iIndex){
+						if (oPanel) {
+							var oPanelSetting = aPanelSettings[iIndex];
+							var mContainerSettings = oPanelSetting.settings.containerSettings;
+							if (mContainerSettings.title) {
+								oPanel.setTitle(mContainerSettings.title);
+							}
+							mMappedSetting[oPanelSetting.key] = {
+								panel: oPanel
+							};
+						}
+					});
+					return mMappedSetting;
+				});
+			}
+		}.bind(this))
 
-				return aInitializedPanels;
+		.then(function(mSettings){
+			var aInitializedPanels = [];
+
+			//Attach state validation during personalization
+			Object.keys(mSettings).forEach(function(sPanel, iIndex){
+				var oPanel = mSettings[sPanel].panel;
+
+				//not every panel used is a p13n.BasePanel (comp.FilterPanel, AdaptationFilterBar) these panels might not provide a change event
+				if (oPanel.attachChange instanceof Function) {
+					oPanel.attachChange(function(oEvt){
+						that.oAdaptationProvider.validateP13n(oControl, aPanelKeys[iIndex], oEvt.getSource());
+					});
+				}
+				aInitializedPanels.push(oPanel);
 			});
+
+			return aInitializedPanels;
+		});
 	};
 
 	UIManager.getInstance = function(oAdaptationProvider) {
@@ -233,7 +225,7 @@ sap.ui.define([
 	};
 
 	UIManager.prototype.hasActiveP13n = function(vControl) {
-		let bActiveP13n = false;
+		var bActiveP13n = false;
 		if (this.oAdaptationProvider.hasActiveP13n instanceof Function) {
 			bActiveP13n = this.oAdaptationProvider.hasActiveP13n(vControl);
 		}
@@ -248,8 +240,8 @@ sap.ui.define([
 	 *
 	 * @param {sap.m.AdaptationProvider} oAdaptationProvider Object implementing the <code>sap.m.AdaptationProvider</code> interface to provide personalization capabilites.
 	 */
-	UIManager._checkValidInterface = (oAdaptationProvider) => {
-		if (!oAdaptationProvider || !oAdaptationProvider.isA("sap.m.p13n.modules.AdaptationProvider")) {
+	UIManager._checkValidInterface = function(oAdaptationProvider) {
+		if (!oAdaptationProvider || !oAdaptationProvider.isA("sap.m.p13n.modules.AdaptationProvider")){
 			throw Error("The UIManager singleton must not be accessed without an AdaptationProvider interface!");
 		}
 	};

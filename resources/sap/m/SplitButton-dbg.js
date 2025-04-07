@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -12,7 +12,6 @@ sap.ui.define([
 	'./ButtonRenderer',
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'./SplitButtonRenderer',
 	"sap/ui/events/KeyCodes"
@@ -24,11 +23,10 @@ function(
 	ButtonRenderer,
 	EnabledPropagator,
 	IconPool,
-	Library,
 	coreLibrary,
 	SplitButtonRenderer,
 	KeyCodes
-) {
+	) {
 		"use strict";
 
 		// shortcut for sap.ui.core.TextDirection
@@ -48,7 +46,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @private
@@ -155,9 +153,8 @@ function(
 
 			$textButtonRef.attr("tabindex", "-1");
 			$arrowButtonRef.attr("tabindex", "-1");
-			if (this.getTooltip()) {
-				$textButtonRef.removeAttr("title");
-			}
+			$textButtonRef.removeAttr("title");
+			$arrowButtonRef.removeAttr("title");
 			$textButtonRef.removeAttr("aria-describedby");
 			$arrowButtonRef.removeAttr("aria-describedby");
 		};
@@ -220,7 +217,7 @@ function(
 					id: this.getId() + "-arrowButton",
 					icon: "sap-icon://slim-arrow-down",
 					press: this._handleAction.bind(this),
-					tooltip: Library.getResourceBundleFor("sap.m").getText("SPLIT_BUTTON_ARROW_TOOLTIP"),
+					tooltip: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("SPLIT_BUTTON_ARROW_TOOLTIP"),
 					ariaHasPopup: coreLibrary.aria.HasPopup.Menu
 				}).addStyleClass("sapMSBArrow");
 				this.setAggregation("_arrowButton", oCtrl);

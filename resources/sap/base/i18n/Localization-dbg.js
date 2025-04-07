@@ -1,6 +1,6 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 sap.ui.define([
@@ -42,7 +42,6 @@ sap.ui.define([
 		"ZH" : "zh-Hans",
 		"ZF" : "zh-Hant",
 		"SH" : "sr-Latn",
-		"CT" : "cnr",
 		"6N" : "en-GB",
 		"1P" : "pt-PT",
 		"1X" : "es-MX",
@@ -118,7 +117,7 @@ sap.ui.define([
 	 * List of locales for which translated texts have been bundled with the UI5 runtime.
 	 * @private
 	 */
-	const _coreI18nLocales = getDesigntimePropertyAsArray("$core-i18n-locales:,ar,bg,ca,cnr,cs,cy,da,de,el,en,en_GB,es,es_MX,et,fi,fr,fr_CA,hi,hr,hu,id,it,iw,ja,kk,ko,lt,lv,mk,ms,nl,no,pl,pt,pt_PT,ro,ru,sh,sk,sl,sr,sv,th,tr,uk,vi,zh_CN,zh_TW$");
+	const _coreI18nLocales = getDesigntimePropertyAsArray("$core-i18n-locales:,ar,bg,ca,cs,da,de,el,en,en_GB,es,es_MX,et,fi,fr,hi,hr,hu,it,iw,ja,kk,ko,lt,lv,ms,nl,no,pl,pt,ro,ru,sh,sk,sl,sv,th,tr,uk,vi,zh_CN,zh_TW$");
 
 	/**
 	 * Retrieves a Locale for the given SAP logon language or BCP47 tag.
@@ -304,7 +303,7 @@ sap.ui.define([
 		 *                                    represented as en-US with a private extension
 		 * </pre>
 		 *
-		 * Call {@link module:sap/base/i18n/Localization.getLanguageTag getLanguageTag} to get a
+		 * Call {@link moduel:sap/base/i18n/Localization.getLanguageTag getLanguageTag} to get a
 		 * {@link module:sap/base/i18n/LanguageTag LanguageTag} object matching the language.
 		 * For a normalized BCP47 tag, call {@link module:sap/base/i18n/LanguageTag.toString toString()}
 		 * on the returned <code>LanguageTag</code>
@@ -402,7 +401,8 @@ sap.ui.define([
 		 *     bindings in existing Elements, Controls, UIAreas or Components</li>
 		 * <li>ResourceModels currently assigned to the Core, a UIArea, Component,
 		 *     Element or Control</li>
-		 * <li>Elements or Controls that implement the <code>onLocalizationChanged</code> hook</li>
+		 * <li>Elements or Controls that implement the <code>onlocalizationChanged</code> hook
+		 *     (note the lowercase 'l' in onlocalizationChanged)</li>
 		 * </ul>
 		 *
 		 * It furthermore derives the RTL mode from the new language, if no explicit RTL
@@ -522,7 +522,7 @@ sap.ui.define([
 		/**
 		 * Returns a LanguageTag object for the current language.
 		 *
-		 * The LanguageTag is derived from {@link module:sap/base/i18n/Localization.getLanguage Localization.getLanguage}.
+		 * The LanguageTag is derived from {@link modue:sap/base/i18n/Localization.getLanguage Localization.getLanguage}.
 		 *
 		 * @returns {module:sap/base/i18n/LanguageTag} The LanguageTag
 		 * @public
@@ -698,6 +698,7 @@ sap.ui.define([
 		 * Might return undefined if the information is not available.
 		 *
 		 * @returns {string[]|undefined} List of Languages delivered with core
+		 * @experimental
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 * @since 1.120.0
@@ -708,6 +709,7 @@ sap.ui.define([
 
 		/**
 		 * @returns {string[]} List of supported languages
+		 * @experimental
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 * @since 1.120.0

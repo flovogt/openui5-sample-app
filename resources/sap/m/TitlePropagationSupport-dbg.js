@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides helper sap.m.TitlePropagationSupport
-sap.ui.define(["sap/ui/core/ControlBehavior"],
-	function(ControlBehavior) {
+sap.ui.define(["sap/ui/core/Configuration"],
+	function(Configuration) {
 		"use strict";
 
 		/**
@@ -51,7 +51,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 		 * style class support on existing elements by calling this function.
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @param {string} sAggregationName the name of the aggregation which should be affected
 		 * @param {object} fnGetTitleID function that would return the ID of the title
@@ -82,7 +82,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior"],
 					oItem;
 
 				// Note: in case accessibility mode is off we don't need the propagation
-				if (!ControlBehavior.isAccessibilityEnabled() || !sTitleID || !aContent
+				if (!Configuration.getAccessibility() || !sTitleID || !aContent
 					|| aContent.length === 0) {
 						return false;
 				}

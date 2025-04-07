@@ -1,18 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 /*global QUnit*/
 
-sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qunit/utils/nextUIUpdate"],
-		function(ElementRegistry, Control, nextUIUpdate) {
+sap.ui.define([ 'sap/ui/core/Element', 'sap/ui/core/Control', "sap/ui/qunit/utils/nextUIUpdate", 'sap/ui/core/Core' /* provides sap.ui.getCore() */ ],
+		function(Element, Control, nextUIUpdate) {
 	"use strict";
 
-	/**
-	 * @deprecated As of version 1.120, as sync code loading has been deprecated. The calling context must provide QUnit.
-	 */
 	if ( typeof QUnit === "undefined" ) {
 		sap.ui.requireSync("sap/ui/qunit/qunit-css"); // legacy-relevant - sync fallback when caller did not load QUnit
 		sap.ui.requireSync("sap/ui/thirdparty/qunit"); // legacy-relevant - sync fallback when caller did not load QUnit
@@ -30,7 +27,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.48.0
@@ -41,7 +38,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 
 	// gets a snapshot of all currently registered controls (keyed by their ID)
 	function getAllAliveControls() {
-		return ElementRegistry.all();
+		return Element.registry.all();
 	}
 
 
@@ -121,8 +118,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 				oControl2.placeAt("qunit-fixture");
 				await nextUIUpdate();
 
-				oControl2.invalidate(); // just re-render again - this finds problems
-				await nextUIUpdate();
+				oControl2.rerender(); // just re-render again - this finds problems
 			}
 
 			if (fnSomeAdditionalFunction) {
@@ -211,7 +207,7 @@ sap.ui.define([ 'sap/ui/core/ElementRegistry', 'sap/ui/core/Control', "sap/ui/qu
 				mOriginalElements = getAllAliveControls();
 			},
 			afterEach: function(assert) {
-				ElementRegistry.forEach(function(oControl, sId) {
+				Element.registry.forEach(function(oControl, sId) {
 					if (!mOriginalElements[sId]) {
 						assert.ok(oControl.getMetadata().getName(), "Cleanup of id: " + sId + ", control: " + oControl.getMetadata().getName());
 						oControl.destroy();

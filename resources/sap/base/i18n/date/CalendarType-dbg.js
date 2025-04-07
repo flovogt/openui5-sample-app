@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides type module:sap/base/i18n/date/CalendarType.
-sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
+sap.ui.define([], function() {
 	"use strict";
 
 	/**
@@ -48,8 +48,6 @@ sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
 		 */
 		Buddhist: "Buddhist"
 	};
-
-	_EnumHelper.register("sap.base.i18n.date.CalendarType", CalendarType);
 
 	return CalendarType;
 

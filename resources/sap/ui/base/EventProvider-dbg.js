@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.base.EventProvider
-sap.ui.define(['./Event', './Object', "sap/base/assert", "sap/base/Log"],
-	function(Event, BaseObject, assert, Log) {
+sap.ui.define(['./Event', './Object', "sap/base/assert"],
+	function(Event, BaseObject, assert) {
 	"use strict";
 
 
@@ -15,9 +15,10 @@ sap.ui.define(['./Event', './Object', "sap/base/assert", "sap/base/Log"],
 	 *
 	 * @class Provides eventing capabilities for objects like attaching or detaching event handlers for events which are notified when events are fired.
 	 *
+	 * @abstract
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @public
 	 * @alias sap.ui.base.EventProvider
 	 */
@@ -237,13 +238,7 @@ sap.ui.define(['./Event', './Object', "sap/base/assert", "sap/base/Log"],
 
 				for (i = 0, iL = aEventListeners.length; i < iL; i++) {
 					oInfo = aEventListeners[i];
-					const vResult = oInfo.fFunction.call(oInfo.oListener || oProvider, oEvent, oInfo.oData);
-					// proper error handling for rejected promises
-					if (typeof vResult?.then === "function") {
-						vResult.catch?.((err) => {
-							Log.error(`EventProvider.fireEvent: Event Listener for event '${sEventId}' failed during execution.`, err);
-						});
-					}
+					oInfo.fFunction.call(oInfo.oListener || oProvider, oEvent, oInfo.oData);
 				}
 
 				bEnableEventBubbling = bEnableEventBubbling && !oEvent.bCancelBubble;

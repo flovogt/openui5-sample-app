@@ -1,14 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
+sap.ui.define([], function () {
 	"use strict";
 
 	/**
-	 * Available <code>Illustration</code> types for the {@link sap.m.IllustratedMessage} control.
+	 * Available <code>Illustration</code> types for the {@link sap.f.IllustratedMessage} control.
 	 *
 	 * @enum {string}
 	 * @public
@@ -192,12 +192,6 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		GroupTable: "sapIllus-GroupTable",
 
 		/**
-		 * "New Mail" illustration type.
-		 * @public
-		 */
-		NewMail: "sapIllus-NewMail",
-
-		/**
 		 * "No Filter Results" illustration type.
 		 * @public
 		 */
@@ -232,12 +226,6 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		 * @public
 		 */
 		SearchFolder: "sapIllus-SearchFolder",
-
-		/**
-		 * "Sign Out" illustration type.
-		 * @public
-		 */
-		SignOut: "sapIllus-SignOut",
 
 		/**
 		 * "Simple Balloon" illustration type.
@@ -378,8 +366,6 @@ sap.ui.define(["sap/ui/base/DataType"], function(DataType) {
 		UploadCollection: "sapIllus-UploadCollection"
 
 	};
-
-	DataType.registerEnum("sap.m.IllustratedMessageType", IllustratedMessageType);
 
 	return IllustratedMessageType;
 });

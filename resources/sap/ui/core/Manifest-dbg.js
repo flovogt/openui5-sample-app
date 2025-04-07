@@ -1,17 +1,15 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides base class sap.ui.core.Component for all components
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/base/Object',
 	'sap/ui/thirdparty/URI',
 	'sap/ui/VersionInfo',
 	'sap/base/util/Version',
-	'sap/base/future',
 	'sap/base/Log',
 	'sap/ui/dom/includeStylesheet',
 	'sap/base/i18n/ResourceBundle',
@@ -20,43 +18,32 @@ sap.ui.define([
 	'sap/base/util/isPlainObject',
 	'sap/base/util/LoaderExtensions',
 	'sap/base/config',
+	'sap/ui/core/Configuration',
 	'sap/ui/core/Supportability',
 	'sap/ui/core/Lib',
 	'./_UrlResolver'
-], function(
-	Localization,
-	BaseObject,
-	URI,
-	VersionInfo,
-	Version,
-	future,
-	Log,
-	includeStylesheet,
-	ResourceBundle,
-	uid,
-	merge,
-	isPlainObject,
-	LoaderExtensions,
-	BaseConfig,
-	Supportability,
-	Library,
-	_UrlResolver
-) {
+],
+	function(
+		BaseObject,
+		URI,
+		VersionInfo,
+		Version,
+		Log,
+		includeStylesheet,
+		ResourceBundle,
+		uid,
+		merge,
+		isPlainObject,
+		LoaderExtensions,
+		BaseConfig,
+		Configuration,
+		Supportability,
+		Library,
+		_UrlResolver
+	) {
 	"use strict";
 
 	/*global Promise */
-
-	function noMultipleMajorVersionsCheck(aVersions) {
-		const aSeen = [];
-		aVersions.forEach((sVersion) => {
-			const oVersion = Version(sVersion);
-			if (aSeen.includes(oVersion.getMajor())) {
-				throw new Error(`The minimal UI5 versions defined in the manifest must not include multiple versions with the same major version, Component: ${this.getComponentName()}.`);
-			} else {
-				aSeen.push(oVersion.getMajor());
-			}
-		});
-	}
 
 	/**
 	 * Removes the version suffix
@@ -64,13 +51,8 @@ sap.ui.define([
 	 * @param {string} sVersion Version
 	 * @return {string} Version without suffix
 	 */
-	function getVersionWithoutSuffix(vVersion) {
-		let sVersion = vVersion;
-		if (Array.isArray(vVersion)) {
-			sVersion = vVersion.sort()[0];
-			noMultipleMajorVersionsCheck.call(this, vVersion);
-		}
-		const oVersion = Version(sVersion);
+	function getVersionWithoutSuffix(sVersion) {
+		var oVersion = Version(sVersion);
 		return oVersion.getSuffix() ? Version(oVersion.getMajor() + "." + oVersion.getMinor() + "." + oVersion.getPatch()) : oVersion;
 	}
 
@@ -165,7 +147,7 @@ sap.ui.define([
 	 * @class The Manifest class.
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @alias sap.ui.core.Manifest
 	 * @since 1.33.0
 	 */
@@ -379,7 +361,7 @@ sap.ui.define([
 		 */
 		getEntry: function(sPath) {
 			if (!sPath || sPath.indexOf(".") <= 0) {
-				future.warningThrows("Manifest entries with keys without namespace prefix can not be read via getEntry. Key: " + sPath + ", Component: " + this.getComponentName());
+				Log.warning("Manifest entries with keys without namespace prefix can not be read via getEntry. Key: " + sPath + ", Component: " + this.getComponentName());
 				return null;
 			}
 
@@ -387,10 +369,11 @@ sap.ui.define([
 			var oEntry = getObject(oManifest, sPath);
 
 			// top-level manifest section must be an object (e.g. sap.ui5)
-			if (sPath && sPath[0] !== "/" && oEntry !== undefined && !isPlainObject(oEntry)) {
-				future.warningThrows("Manifest entry with key '" + sPath + "' must be an object. Component: " + this.getComponentName());
+			if (sPath && sPath[0] !== "/" && !isPlainObject(oEntry)) {
+				Log.warning("Manifest entry with key '" + sPath + "' must be an object. Component: " + this.getComponentName());
 				return null;
 			}
+
 			return oEntry;
 		},
 
@@ -401,26 +384,26 @@ sap.ui.define([
 		 *
 		 * @private
 		 */
-		checkUI5Version: async function() {
+		checkUI5Version: function() {
+
 			// version check => only if minVersion is available a warning
 			// will be logged and the debug mode is turned on
 			// TODO: enhance version check also for libraries and components
-			var vMinUI5Version = this.getEntry("/sap.ui5/dependencies/minUI5Version");
-			if (vMinUI5Version &&
+			var sMinUI5Version = this.getEntry("/sap.ui5/dependencies/minUI5Version");
+			if (sMinUI5Version &&
 				Log.isLoggable(Log.Level.WARNING) &&
 				Supportability.isDebugModeEnabled()) {
-
-				const oVersionInfo = await VersionInfo.load().catch((e) => {
+				VersionInfo.load().then(function(oVersionInfo) {
+					var oMinVersion = getVersionWithoutSuffix(sMinUI5Version);
+					var oVersion = getVersionWithoutSuffix(oVersionInfo && oVersionInfo.version);
+					if (oMinVersion.compareTo(oVersion) > 0) {
+						Log.warning("Component \"" + this.getComponentName() + "\" requires at least version \"" + oMinVersion.toString() + "\" but running on \"" + oVersion.toString() + "\"!");
+					}
+				}.bind(this), function(e) {
 					Log.warning("The validation of the version for Component \"" + this.getComponentName() + "\" failed! Reason: " + e);
-				});
-
-				const oMinVersion = getVersionWithoutSuffix.call(this, vMinUI5Version);
-				const oVersion = getVersionWithoutSuffix.call(this, oVersionInfo?.version);
-
-				if (oMinVersion.compareTo(oVersion) > 0) {
-				  Log.warning("Component \"" + this.getComponentName() + "\" requires at least version \"" + oMinVersion.toString() + "\" but running on \"" + oVersion.toString() + "\"!");
-				}
+				}.bind(this));
 			}
+
 		},
 
 
@@ -432,7 +415,6 @@ sap.ui.define([
 		 * @return {Promise<void>|undefined} Promise for required *.js resources
 		 *
 		 * @private
-		 * @ui5-transform-hint replace-param bAsync true
 		 */
 		_loadIncludes: function(bAsync) {
 			var mResources = this.getEntry("/sap.ui5/resources"), oPromise;
@@ -443,12 +425,10 @@ sap.ui.define([
 
 			var sComponentName = this.getComponentName();
 
-			/**
-			 * Load JS files.
-			 * @deprecated As of version 1.94, standard dependencies should be used instead.
-			 */
-			if (mResources["js"]) {
-				var aJSResources = mResources["js"];
+			// [Deprecated since 1.94]: Load JS files.
+			//                          Standard dependencies should be used instead.
+			var aJSResources = mResources["js"];
+			if (aJSResources) {
 				var requireAsync = function (sModule) {
 					// Wrap promise within function because OPA waitFor (sap/ui/test/autowaiter/_promiseWaiter.js)
 					// can't deal with a promise instance in the wrapped then handler
@@ -536,7 +516,6 @@ sap.ui.define([
 		 * @return {Promise<void>} Promise containing further promises of dependent libs and components requests
 		 *
 		 * @private
-		 * @ui5-transform-hint replace-param bAsync true
 		 */
 		_loadDependencies: function(bAsync) {
 			var aPromises = [];
@@ -631,7 +610,7 @@ sap.ui.define([
 					var sResourceRootPath = mResourceRoots[sResourceRoot];
 					var oResourceRootURI = new URI(sResourceRootPath);
 					if (oResourceRootURI.is("absolute") || (oResourceRootURI.path() && oResourceRootURI.path()[0] === "/")) {
-						future.errorThrows(`${this.getComponentName()}: Resource root for "${sResourceRoot}" is absolute and therefore won't be registered! "${sResourceRootPath}"`);
+						Log.error("Resource root for \"" + sResourceRoot + "\" is absolute and therefore won't be registered! \"" + sResourceRootPath + "\"", this.getComponentName());
 						continue;
 					}
 					sResourceRootPath = this.resolveUri(sResourceRootPath);
@@ -728,7 +707,7 @@ sap.ui.define([
 			}
 			// version check => only if minVersion is available a warning
 			// will be logged and the debug mode is turned on
-			const pCheckUI5Version = this.checkUI5Version();
+			this.checkUI5Version();
 
 			// define the resource roots
 			// => if not loaded via manifest first approach the resource roots
@@ -745,8 +724,7 @@ sap.ui.define([
 
 			this._pDependenciesAndIncludes = Promise.all([
 				this._loadDependencies(bAsync), // load the component dependencies (other UI5 libraries)
-				this._loadIncludes(bAsync), // load the custom scripts and CSS files
-				pCheckUI5Version
+				this._loadIncludes(bAsync) // load the custom scripts and CSS files
 			]);
 
 			return this._pDependenciesAndIncludes;
@@ -814,7 +792,7 @@ sap.ui.define([
 		// as this is expected to be only done by intension.
 		var oManifestUrl = new URI(sManifestUrl);
 		if (!oManifestUrl.hasQuery("sap-language")) {
-			var sValue = Localization.getSAPLogonLanguage();
+			var sValue = Configuration.getSAPLogonLanguage();
 			if (sValue) {
 				oManifestUrl.addQuery("sap-language", sValue);
 			}
@@ -841,7 +819,7 @@ sap.ui.define([
 			dataType: "json",
 			async: typeof bAsync !== "undefined" ? bAsync : false,
 			headers: {
-				"Accept-Language": Localization.getLanguageTag().toString()
+				"Accept-Language": Configuration.getLanguageTag()
 			},
 			failOnError: typeof bFailOnError !== "undefined" ? bFailOnError : true
 		});

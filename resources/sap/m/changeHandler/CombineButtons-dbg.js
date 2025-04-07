@@ -1,15 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	"sap/base/util/uid",
+	"sap/ui/core/Configuration",
 	"sap/ui/fl/util/ManagedObjectModel" // used implicitly by oModifier.createControl() function
 ], function (
-	Localization, uid
+	uid, Configuration
 ) {
 	"use strict";
 
@@ -18,7 +18,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.CombineButtons
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @experimental Since 1.48
 	 */
 	var CombineButtons = {};
@@ -30,7 +30,7 @@ sap.ui.define([
 		var sPropertyVisible = "";
 		var sOR = "";
 		var aMenuButtonModels = [];
-		var bIsRtl = Localization.getRTL();
+		var bIsRtl = Configuration.getRTL();
 		var aMenuButtonName = [];
 
 		return aButtons.reduce(function(oPreviousPromise, oButton, index) {
@@ -228,11 +228,15 @@ sap.ui.define([
 			})
 			.then(function(oCreatedMenu){
 				oMenu = oCreatedMenu;
-				oCreatedMenu.attachEvent(
+				return oModifier.attachEvent(
+					oMenu,
 					"itemSelected",
 					"sap.m.changeHandler.CombineButtons.pressHandler",
+					null,
 					CombineButtons.pressHandler
 				);
+			})
+			.then(function(){
 				return fnHandleMenuItems(
 					aButtons,
 					oModifier,

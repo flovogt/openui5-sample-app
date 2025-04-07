@@ -6,18 +6,13 @@
 	&.sapMPluginsVerticalBorder {
 		width: 7px;
 		margin-left: -3.5px;
-		cursor: ew-resize;
-
-		html[dir=rtl] & {
-			margin-left: 0;
-			margin-right: -3.5px;
-		}
+		cursor: col-resize;
 	}
 
 	&.sapMPluginsHorizontalBorder {
 		height: 7px;
 		margin-top: -3.5px;
-		cursor: ns-resize;
+		cursor: row-resize;
 	}
 
 	&.sapMPluginsEdge {
@@ -25,11 +20,6 @@
 		width: 10px !important;
 		margin-top: -5px;
 		margin-left: -5px;
-
-		html[dir=rtl] & {
-			margin-left: 0;
-			margin-right: -5px;
-		}
 
 		&.sapMPluginsNESW {
 			cursor: nesw-resize;
@@ -39,7 +29,7 @@
 			cursor: nwse-resize;
 		}
 
-		/* Needed, because (for some reason) RTL converts nwse-resize to the opposite nesw-resize (alhtough we do not want this to happen) */
+		// Needed, because (for some reason) RTL converts nwse-resize to the opposite nesw-resize (alhtough we do not want this to happen)
 		html[dir=rtl] &.sapMPluginsNESW {
 			cursor: nwse-resize;
 		}
@@ -60,87 +50,21 @@
 }
 
 .sapMPluginsCellSelectorSelected {
-	background-color: var(--sapList_Hover_SelectionBackground);
-}
-
-.sapMLIBSelected > .sapMPluginsCellSelectorSelected {
-	border-bottom: var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor) solid;
+	background-color: @sapList_SelectionBackgroundColor;
 }
 
 .sapMPluginsCellSelectorTop {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor);
+	border-top: 0.0625rem @sapList_SelectionBorderColor solid !important;
 }
 
 .sapMPluginsCellSelectorRight {
-	box-shadow: inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor);
+	border-right: 0.0625rem @sapList_SelectionBorderColor solid !important;
 }
 
 .sapMPluginsCellSelectorBottom {
-	box-shadow: inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor);
+	border-bottom: 0.0625rem @sapList_SelectionBorderColor solid !important;
 }
 
 .sapMPluginsCellSelectorLeft {
-	box-shadow: inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorBottom {
-	box-shadow: inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorRight {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorBottom {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorLeft {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorBottom {
-	box-shadow: inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor),
-				inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorLeft {
-	box-shadow: inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorBottom.sapMPluginsCellSelectorLeft {
-	box-shadow: inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorBottom {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor),
-				inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorLeft {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorBottom.sapMPluginsCellSelectorLeft {
-	box-shadow: inset 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor),
-				inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorBottom.sapMPluginsCellSelectorLeft {
-	box-shadow: inset ~"calc(var(--sapList_BorderWidth) * -1)" 0 var(--sapList_SelectionBorderColor),
-				inset 0 ~"calc(var(--sapList_BorderWidth) * -1)" var(--sapList_SelectionBorderColor),
-				inset var(--sapList_BorderWidth) 0 var(--sapList_SelectionBorderColor);
-}
-
-.sapMPluginsCellSelectorTop.sapMPluginsCellSelectorRight.sapMPluginsCellSelectorBottom.sapMPluginsCellSelectorLeft {
-	box-shadow: inset 0 0 0 var(--sapList_BorderWidth) var(--sapList_SelectionBorderColor);
+	border-left: 0.0625rem @sapList_SelectionBorderColor solid !important;
 }

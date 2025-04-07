@@ -1,10 +1,9 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/library',
 	'sap/m/library',
@@ -13,9 +12,10 @@ sap.ui.define([
 	'sap/m/Link',
 	'sap/m/Text',
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/util/defaultLinkTypes"
+	"sap/ui/util/defaultLinkTypes",
+	"sap/ui/core/Configuration"
 ],
-	function(Localization, Control, coreLibrary, library, Device, Log, Link, Text, jQuery, defaultLinkTypes) {
+	function(Control, coreLibrary, library, Device, Log, Link, Text, jQuery, defaultLinkTypes, Configuration) {
 	"use strict";
 
 
@@ -809,7 +809,6 @@ sap.ui.define([
 		oRM.class("sapMOHRBg" + oOH._getBackground());
 		oRM.openEnd();
 		oRM.openStart("div");
-		oRM.class("sapMOHRMaxWidth");
 
 		if (Device.system.desktop && oOH._isMediaSize("Desktop") && oOH.getFullScreenOptimized() && oOH._iCountVisAttrStat >= 1 && oOH._iCountVisAttrStat <= 3) {
 			oRM.class("sapMOHRStatesOneOrThree");
@@ -1078,7 +1077,7 @@ sap.ui.define([
 	ObjectHeaderRenderer._renderResponsiveMarkers = function(oRM, oControl) {
 		var aMarkers = [],
 			sTextDir = oControl.getTitleTextDirection(),
-			bPageRTL = Localization.getRTL();
+			bPageRTL = Configuration.getRTL();
 
 		// load markers based on control state
 		aMarkers = oControl._getVisibleMarkers();

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -38,9 +38,8 @@ sap.ui.define([
 	 *   The binding path, either absolute or relative to a given <code>oContext</code>
 	 * @param {sap.ui.model.Context} [oContext]
 	 *   The parent context which is required as base for a relative path
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [vFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call {@link #filter} to
-	 *   replace them
+	 * @param {sap.ui.model.Filter | sap.ui.model.Filter[]} [vFilters]
+	 *   The application filters to be used initially
 	 * @param {object} [mParameters]
 	 *   Map of binding parameters
 	 * @param {boolean} [mParameters.transitionMessagesOnly=false]
@@ -90,8 +89,8 @@ sap.ui.define([
 	 * @param {object} [mParameters.navigation]
 	 *   <b>Deprecated since 1.44:</b> A map describing the navigation properties between entity
 	 *   sets, which is used for constructing and paging the tree
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [vSorters=[]]
-	 *   The sorters used initially; call {@link #sort} to replace them
+	 * @param {sap.ui.model.Sorter | sap.ui.model.Sorter[]} [vSorters]
+	 *   The dynamic sorters to be used initially
 	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
 	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
 	 *   <code>vFilters</code> together with other filters
@@ -103,7 +102,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.TreeBinding
 	 * @hideconstructor
 	 * @public
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 */
 	var ODataTreeBinding = TreeBinding.extend("sap.ui.model.odata.v2.ODataTreeBinding", /** @lends sap.ui.model.odata.v2.ODataTreeBinding.prototype */ {
 
@@ -142,7 +141,7 @@ sap.ui.define([
 			this.aApplicationFilters = vFilters;
 
 			// check filter integrity
-			this.oModel.checkFilter(this.aApplicationFilters);
+			this.oModel.checkFilterOperation(this.aApplicationFilters);
 
 			// a queue containing all parallel running requests
 			// a request is identified by (node id, startindex, length)
@@ -198,8 +197,6 @@ sap.ui.define([
 
 			// Whether a refresh has been performed
 			this.bRefresh = false;
-			// the maximum value for the $top URL parameter in client mode
-			this.iMaximumTopValue = 5000;
 		}
 
 	});
@@ -290,10 +287,7 @@ sap.ui.define([
 					if (oData) {
 						// we expect only one root node
 						var oEntry = oData;
-						var sKey = that.oModel._getKey(oEntry);
-						// _loadSingleRootNodeByNavigationProperties is only used if there are no tree
-						// annotations so "navigation"-mode is used which is is deprecated since 1.44 (see
-						// mParameters.navigation), so deep path isn't needed
+						var sKey =  that.oModel._getKey(oEntry);
 						var oNewContext = that.oModel.getContext('/' + sKey);
 
 						that.oRootContext = oNewContext;
@@ -642,9 +636,7 @@ sap.ui.define([
 				// collect requested contexts if loaded
 				if (i >= iStartIndex && i < iStartIndex + iLength) {
 					if (sKey) {
-						const sDeepPath = this.oModel.resolveDeep(this.sPath, this.oContext)
-							+ sKey.slice(sKey.indexOf("("));
-						aContexts.push(this.oModel.getContext('/' + sKey, sDeepPath));
+						aContexts.push(this.oModel.getContext('/' + sKey));
 					} else {
 						aContexts.push(undefined);
 					}
@@ -710,9 +702,8 @@ sap.ui.define([
 
 					if (sNodeId) {
 						sFilterParams = sFilterParams ? "%20and%20" + sFilterParams : "";
-						// Retrieve the correct context for sNodeId (it's an OData-Key) and resolve the correct
-						// hierarchy node property as a filter value;
-						// aMissingSections are only requested for known contexts, so deep path isn't needed
+
+						//retrieve the correct context for the sNodeId (it's an OData-Key) and resolve the correct hierarchy node property as a filter value
 						var oNodeContext = this.oModel.getContext("/" + sNodeId);
 						var sNodeIdForFilter = oNodeContext.getProperty(this.oTreeProperties["hierarchy-node-for"]);
 
@@ -915,14 +906,14 @@ sap.ui.define([
 		var sFilterParams = this.getFilterParams() || "";
 		var sNodeFilter = "";
 		if (this.bHasTreeAnnotations) {
+			//resolve OData-Key to hierarchy node property value for filtering
+			var oNodeContext = this.oModel.getContext("/" + sNodeId);
+			var sHierarchyNodeId = oNodeContext.getProperty(this.oTreeProperties["hierarchy-node-for"]);
+
 			sAbsolutePath = this.getResolvedPath();
 			// only filter for the parent node if the given node is not the root (null)
 			// if root and we $count the collection
 			if (sNodeId != null) {
-				// If node ID is given the count is requested for a missing section whose context is already available,
-				// so deep path isn't needed
-				const oNodeContext = this.oModel.getContext("/" + sNodeId);
-				const sHierarchyNodeId = oNodeContext.getProperty(this.oTreeProperties["hierarchy-node-for"]);
 				sNodeFilter = this._getNodeFilterParams({id: sHierarchyNodeId});
 			} else {
 				sNodeFilter = this._getLevelFilterParams("EQ", this.getRootLevel());
@@ -1323,38 +1314,24 @@ sap.ui.define([
 	 * Adds additional URL parameters.
 	 *
 	 * @param {string[]} aURLParams Additional URL parameters
-	 * @param {array} aResultPages=[] An array containing the result arrays with previously read data
-	 * @param {int} iNodesReceived=0 The number of previously read data
 	 *
 	 * @private
 	 */
-	ODataTreeBinding.prototype._loadCompleteTreeWithAnnotations = function (aURLParams, aResultPages = [],
-			iNodesReceived = 0) {
+	ODataTreeBinding.prototype._loadCompleteTreeWithAnnotations = function (aURLParams) {
 		var that = this;
 
 		var sRequestKey = ODataTreeBinding.REQUEST_KEY_CLIENT;
 
-		const aOriginalURLParameters = aURLParams.slice();
 		var fnSuccess = function (oData) {
+
 			// all nodes on root level -> save in this.oKeys[null] = [] (?)
 			if (oData.results && oData.results.length > 0) {
-				iNodesReceived += oData.results.length;
-				aResultPages.push(oData.results);
-				if (oData.__next || oData.results.length === that.iMaximumTopValue) {
-					delete that.mRequestHandles[sRequestKey];
-					that._loadCompleteTreeWithAnnotations(aOriginalURLParameters, aResultPages, iNodesReceived);
 
-					return;
-				}
-			}
-			let aCompleteResults;
-			if (iNodesReceived > 0) {
-				aCompleteResults = Array.prototype.concat.apply([], aResultPages);
 				//collect mapping table between parent node id and actual OData-Key
 				var mParentIds = {};
 				var oDataObj;
-				for (var k = 0; k < aCompleteResults.length; k++) {
-					oDataObj = aCompleteResults[k];
+				for (var k = 0; k < oData.results.length; k++) {
+					oDataObj = oData.results[k];
 					var sDataKey = oDataObj[that.oTreeProperties["hierarchy-node-for"]];
 					// sanity check: if we have duplicate keys, the data is messed up. Has already happened...
 					if (mParentIds[sDataKey]) {
@@ -1364,8 +1341,8 @@ sap.ui.define([
 				}
 
 				// process data and built tree
-				for (var i = 0; i < aCompleteResults.length; i++) {
-					oDataObj = aCompleteResults[i];
+				for (var i = 0; i < oData.results.length; i++) {
+					oDataObj = oData.results[i];
 					var sParentNodeId = oDataObj[that.oTreeProperties["hierarchy-parent-node-for"]];
 					var sParentKey = mParentIds[sParentNodeId]; //oDataObj[that.oTreeProperties["hierarchy-parent-node-for"]];
 
@@ -1394,7 +1371,6 @@ sap.ui.define([
 
 			} else {
 				// no data received -> empty tree
-				aCompleteResults = [];
 				that.oKeys["null"] = [];
 				that.oLengths["null"] = 0;
 				that.oFinalLengths["null"] = true;
@@ -1419,7 +1395,7 @@ sap.ui.define([
 			}
 
 			that.oModel.callAfterUpdate(function() {
-				that.fireDataReceived({data: {results: aCompleteResults}});
+				that.fireDataReceived({data: oData});
 			});
 		};
 
@@ -1441,7 +1417,7 @@ sap.ui.define([
 		};
 
 		// request the tree collection
-		if (!this.bSkipDataEvents && iNodesReceived === 0) {
+		if (!this.bSkipDataEvents) {
 			this.fireDataRequested();
 		}
 		this.bSkipDataEvents = false;
@@ -1456,9 +1432,7 @@ sap.ui.define([
 			}
 			this.mRequestHandles[sRequestKey] = this.oModel.read(sAbsolutePath, {
 				headers: this._getHeaders(),
-				urlParameters: iNodesReceived
-					? ["$skip=" + iNodesReceived + "&$top=" + that.iMaximumTopValue, ...aOriginalURLParameters]
-					: aURLParams,
+				urlParameters: aURLParams,
 				success: fnSuccess,
 				error: fnError,
 				sorters: this.aSorters,
@@ -1649,20 +1623,16 @@ sap.ui.define([
 	 * For more information, see {@link sap.ui.model.odata.v2.ODataModel#bindTree}.
 	 * <b>Note:</b> {@link sap.ui.model.odata.OperationMode.Auto} is deprecated since 1.102.0.
 	 *
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to use; in case of type {@link sap.ui.model.FilterType.Application} this replaces the filters given
-	 *   in {@link sap.ui.model.odata.v2.ODataModel#bindTree}; a falsy value is treated as an empty array and thus
-	 *   removes all filters of the specified type
-	 * @param {sap.ui.model.FilterType} [sFilterType=sap.ui.model.FilterType.Control]
-	 *   The type of the filter to replace
+	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} aFilters
+	 *   Filter or array of filters to apply
+	 * @param {sap.ui.model.FilterType} sFilterType
+	 *   Type of the filter which should be adjusted. If it is not given,
+	 *   the type <code>FilterType.Control</code> is assumed
 	 * @param {boolean} [bReturnSuccess]
 	 *   Whether to return <code>true</code> or <code>false</code>, instead of <code>this</code>,
 	 *   depending on whether the filtering has been done
 	 * @return {this}
 	 *   Returns <code>this</code> to facilitate method chaining
-	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
-	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
-	 *   <code>aFilters</code> together with other filters
 	 *
 	 * @see sap.ui.model.TreeBinding.prototype.filter
 	 * @public
@@ -1672,7 +1642,7 @@ sap.ui.define([
 		sFilterType = sFilterType || FilterType.Control;
 
 		// check filter integrity
-		this.oModel.checkFilter(aFilters);
+		this.oModel.checkFilterOperation(aFilters);
 
 		// check if filtering is supported for the current binding configuration
 		if (sFilterType == FilterType.Control && (!this.bClientOperation || this.sOperationMode == OperationMode.Server)) {
@@ -1755,7 +1725,6 @@ sap.ui.define([
 		// checks if a single key matches the filters
 		var fnFilterKey = function (sKey) {
 			var aFiltered = FilterProcessor.apply([sKey], oCombinedFilter, function(vRef, sPath) {
-				// Only used in client mode, so deep path isn't needed
 				var oContext = that.oModel.getContext('/' + vRef);
 				return that.oModel.getProperty(sPath, oContext);
 			}, that.mNormalizeCache);
@@ -1829,9 +1798,8 @@ sap.ui.define([
 	 * applied locally on the client.
 	 * <b>Note:</b> {@link sap.ui.model.odata.OperationMode.Auto} is deprecated since 1.102.0.
 	 *
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters to use; they replace the sorters given in {@link sap.ui.model.odata.v2.ODataModel#bindTree}; a
-	 *   falsy value is treated as an empty array and thus removes all sorters
+	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} aSorters
+	 *   The Sorter or an Array of sap.ui.model.Sorter instances
 	 * @param {boolean} [bReturnSuccess]
 	 *   Whether to return <code>true</code> or <code>false</code>, instead of <code>this</code>,
 	 *   depending on whether the sorting has been done
@@ -1915,7 +1883,6 @@ sap.ui.define([
 
 		// retrieves the sort value
 		var fnGetValue = function(sKey, sPath) {
-			// Only used in client mode, so deep path isn't needed
 			oContext = that.oModel.getContext('/' + sKey);
 			return that.oModel.getProperty(sPath, oContext);
 		};
@@ -2021,8 +1988,7 @@ sap.ui.define([
 			aNavPath.splice(0,1);
 		}
 
-		const oModel = this.getModel();
-		var oRef = oModel._getObject(sPath);
+		var oRef = this.oModel._getObject(sPath);
 		if (Array.isArray(oRef)) {
 			this.oKeys[sPath] = oRef;
 			this.oLengths[sPath] = oRef.length;
@@ -2035,8 +2001,8 @@ sap.ui.define([
 		if (sNavPath && oObject[sNavPath]) {
 			if (Array.isArray(oRef)) {
 				oRef.forEach(function(sRef) {
-					that._processODataObject(oModel.getProperty("/" + sRef), "/" + sRef + "/" + sNavPath,
-						aNavPath.join("/"));
+					var oObject = that.getModel().getData("/" + sRef);
+					that._processODataObject(oObject, "/" + sRef + "/" + sNavPath, aNavPath.join("/"));
 				});
 			} else if (typeof oRef === "object") {
 				that._processODataObject(oObject, sPath + "/" + sNavPath, aNavPath.join("/"));

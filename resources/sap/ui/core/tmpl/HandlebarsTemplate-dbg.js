@@ -1,25 +1,22 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	'./Template',
 	'./TemplateControl',
-	"sap/ui/core/RenderManager",
 	'sap/ui/thirdparty/handlebars',
 	'sap/ui/base/ManagedObject',
 	'sap/base/util/ObjectPath',
 	"sap/base/security/encodeXML",
 	"sap/base/util/isEmptyObject",
-	// provides sap.ui.getCore()
-	'sap/ui/core/Core'
+	'sap/ui/core/Core' // provides sap.ui.getCore()
 ],
 	function(
 		Template,
 		TemplateControl,
-		RenderManager,
 		Handlebars,
 		ManagedObject,
 		ObjectPath,
@@ -49,10 +46,10 @@ sap.ui.define([
 	 * @extends sap.ui.core.tmpl.Template
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @alias sap.ui.core.tmpl.HandlebarsTemplate
 	 * @since 1.15
-	 * @deprecated as of version 1.56. Use an {@link sap.ui.core.mvc.XMLView XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead.
+	 * @deprecated since 1.56
 	 */
 	var HandlebarsTemplate = Template.extend("sap.ui.core.tmpl.HandlebarsTemplate", /** @lends sap.ui.core.tmpl.HandlebarsTemplate.prototype */
 	{
@@ -119,7 +116,7 @@ sap.ui.define([
 			fnWith = Handlebars.helpers["with"],
 			fnIf = Handlebars.helpers["if"],
 			fnUnless = Handlebars.helpers["unless"],
-			oRenderManager = new RenderManager().getInterface();
+			oRenderManager = sap.ui.getCore().createRenderManager();
 
 		// this special RenderManager is used to write the controlData, classes
 		// and styles into the buffer and extract it later on via getHTML!

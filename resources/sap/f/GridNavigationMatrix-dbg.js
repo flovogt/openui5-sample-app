@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*
@@ -9,9 +9,9 @@
  */
 
 sap.ui.define([
-	"sap/base/i18n/Localization"
+	"sap/ui/core/Configuration"
 ], function (
-	Localization
+	Configuration
 ) {
 	"use strict";
 
@@ -102,7 +102,7 @@ sap.ui.define([
 				fLeftOffsetInGrid,
 				fRightOffsetInGrid;
 
-			if (Localization.getRTL()) {
+			if (Configuration.getRTL()) {
 				iEndCol = -1;
 				iStartCol = oLayoutSizes.columns.length - 1;
 				fRightOffsetInGrid = oGridRect.right - oLayoutSizes.paddingRight - oItemRect.right;

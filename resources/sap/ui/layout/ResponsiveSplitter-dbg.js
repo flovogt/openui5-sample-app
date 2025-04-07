@@ -1,6 +1,6 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
@@ -13,9 +13,8 @@ sap.ui.define([
 	"./ResponsiveSplitterUtilities",
 	"./SplitPane",
 	"./Splitter",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	"sap/ui/core/delegate/ItemNavigation",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/RenderManager"
@@ -27,9 +26,8 @@ sap.ui.define([
 	RSUtil,
 	SplitPane,
 	Splitter,
+	Core,
 	Control,
-	Element,
-	Library,
 	ItemNavigation,
 	ResizeHandler,
 	RenderManager
@@ -72,7 +70,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -126,7 +124,7 @@ sap.ui.define([
 	ResponsiveSplitter.prototype.init = function () {
 		this._aPaneContainers = [];
 		this._aPanes = [];
-		this._oResourceBundle = Library.getResourceBundleFor("sap.ui.layout");
+		this._oResourceBundle = Core.getLibraryResourceBundle("sap.ui.layout");
 
 		this._oItemNavigation = new ItemNavigation();
 		this._oItemNavigation.setCycling(false);
@@ -187,7 +185,7 @@ sap.ui.define([
 
 		for (var i = 0; i < aContentAreas.length; i++) {
 			sContentId = aContentAreas[i].childNodes[0].id;
-			oAreaContent = Element.getElementById(sContentId);
+			oAreaContent = Core.byId(sContentId);
 			iCurrentPaneIndex = i + 1;
 			iNextPaneIndex = i + 2;
 
@@ -455,7 +453,7 @@ sap.ui.define([
 	ResponsiveSplitter.prototype._arrangeContent = function () {
 		var aPages = this.getAggregation("_pages") || [],
 			iDefaultPageIndex = 0,
-			oDefaultPane = Element.getElementById(this.getDefaultPane()),
+			oDefaultPane = Core.byId(this.getDefaultPane()),
 			oDefaultPageContent,
 			sDefaultPageContentId,
 			i;

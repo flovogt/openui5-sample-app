@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.message.MessageProcessor
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.Model
@@ -627,11 +627,10 @@ sap.ui.define([
 	 *   The path pointing to the list / array that should be bound
 	 * @param {sap.ui.model.Context} [oContext]
 	 *   The context object for this databinding
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link sap.ui.model.ListBinding#sort} to replace them
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call
-	 *   {@link sap.ui.model.ListBinding#filter} to replace them
+	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]} [aSorters]
+	 *   Initial sort order (can be either a sorter or an array of sorters)
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} [aFilters]
+	 *   Predefined filter/s (can be either a filter or an array of filters)
 	 * @param {object} [mParameters]
 	 *   Additional model-specific parameters
 	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} filter instance is contained in <code>aFilters</code>
@@ -651,13 +650,12 @@ sap.ui.define([
 	 *   The path pointing to the tree / array that should be bound
 	 * @param {sap.ui.model.Context} [oContext]
 	 *   The context object for this databinding
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call
-	 *   {@link sap.ui.model.TreeBinding#filter} to replace them
+	 * @param {sap.ui.model.Filter[]} [aFilters]
+	 *   Predefined filter/s contained in an array
 	 * @param {object} [mParameters]
 	 *   Additional model specific parameters
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link sap.ui.model.TreeBinding#sort} to replace them
+	 * @param {sap.ui.model.Sorter[]} [aSorters]
+	 *   Predefined sap.ui.model.sorter/s contained in an array
 	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} filter instance is contained in <code>aFilters</code>
 	 *   together with other filters
 	 *
@@ -787,11 +785,7 @@ sap.ui.define([
 				sContextPath = oContext.getPath();
 				sResolvedPath = sContextPath + (sContextPath.endsWith("/") ? "" : "/") + sPath;
 			} else {
-				sResolvedPath = undefined;
-				/** @deprecated As of version 1.88.0 */
-				if (this.isLegacySyntax()) {
-					sResolvedPath = "/" + sPath;
-				}
+				sResolvedPath = this.isLegacySyntax() ? "/" + sPath : undefined;
 			}
 		}
 		if (!sPath && oContext) {
@@ -1170,14 +1164,12 @@ sap.ui.define([
 	 *   Single filter or an array of filter instances
 	 * @throws {Error}
 	 *   If at least one filter uses an <code>sap.ui.model.FilterOperator</code> that is not
-	 *   supported by the related model instance or if the {@link sap.ui.model.Filter.NONE} filter instance is contained
-	 *   in <code>vFilters</code> together with other filters
+	 *   supported by the related model instance
 	 * @private
 	 * @ui5-restricted sap.ui.model
 	 */
-	Model.prototype.checkFilter = function(vFilters) {
-		Filter.checkFilterNone(vFilters);
-		Model._traverseFilter(vFilters, function (oFilter) {
+	Model.prototype.checkFilterOperation = function(vFilters) {
+		_traverseFilter(vFilters, function (oFilter) {
 			if (this.mUnsupportedFilterOperators[oFilter.sOperator]) {
 				throw new Error("Filter instances contain an unsupported FilterOperator: " + oFilter.sOperator);
 			}
@@ -1212,7 +1204,7 @@ sap.ui.define([
 	 *   Check function which is called for each filter instance in the tree
 	 * @private
 	 */
-	Model._traverseFilter = function(vFilters, fnCheck) {
+	function _traverseFilter (vFilters, fnCheck) {
 		vFilters = vFilters || [];
 
 		if (vFilters instanceof Filter) {
@@ -1226,12 +1218,12 @@ sap.ui.define([
 			fnCheck(oFilter);
 
 			// check subfilter for lambda expressions (e.g. Any, All, ...)
-			Model._traverseFilter(oFilter.oCondition, fnCheck);
+			_traverseFilter(oFilter.oCondition, fnCheck);
 
 			// check multi filter if necessary
-			Model._traverseFilter(oFilter.aFilters, fnCheck);
+			_traverseFilter(oFilter.aFilters, fnCheck);
 		}
-	};
+	}
 
 	/**
 	 * Introduces data binding support on the ManagedObject prototype via mixin.

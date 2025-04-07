@@ -1,14 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/m/library",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib"
-], function(library, Element, Library) {
+	"sap/m/library"
+], function (library) {
 	"use strict";
 
 	var WizardRenderer = {
@@ -23,7 +21,7 @@ sap.ui.define([
 	};
 
 	WizardRenderer.startWizard = function (oRm, oWizard) {
-		var sWizardLabelText = Library.getResourceBundleFor("sap.m").getText("WIZARD_LABEL");
+		var sWizardLabelText = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("WIZARD_LABEL");
 
 		oRm.openStart("div", oWizard)
 			.class("sapMWizard")
@@ -80,7 +78,7 @@ sap.ui.define([
 
 
 		var fnCheckStepOrder = function (sSubsequentStepId, index, oRefStep) {
-			var oSubsequentStep = Element.getElementById(sSubsequentStepId);
+			var oSubsequentStep = sap.ui.getCore().byId(sSubsequentStepId);
 			if (aSteps.indexOf(oSubsequentStep) < aSteps.indexOf(oRefStep)) {
 				var iSubsequentStep = aSteps.indexOf(oSubsequentStep),
 					temp = aSteps[iSubsequentStep];

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -12,16 +12,16 @@ sap.ui.define([
 	"./AnnotationParser",
 	"sap/base/assert",
 	"sap/base/Log",
-	"sap/base/i18n/Localization",
 	"sap/base/util/each",
 	"sap/base/util/extend",
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/uid",
 	"sap/ui/base/EventProvider",
+	"sap/ui/core/Configuration",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/thirdparty/datajs"
 ],
-	function(Utils, AnnotationParser, assert, Log, Localization, each, extend, isEmptyObject, uid, EventProvider,
+	function(Utils, AnnotationParser, assert, Log, each, extend, isEmptyObject, uid, EventProvider, Configuration,
 		CacheManager, OData) {
 	"use strict";
 	/*eslint max-nested-callbacks: 0*/
@@ -49,7 +49,7 @@ sap.ui.define([
 	 * Implementation to access OData metadata
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.ODataMetadata
@@ -186,20 +186,17 @@ sap.ui.define([
 	 *
 	 * @param {string} sUrl The metadata URL
 	 * @param {boolean} bSuppressEvents Suppress metadata events
-	 * @param {function} [fnRequest] Request function which can handle 503 "Retry-After" responses,
-	 *   see {@link sap.ui.model.odata.v2.ODataModel#_request}
 	 * @returns {Promise} Promise for metadata loading
 	 * @private
 	 */
-	ODataMetadata.prototype._loadMetadata = function(sUrl, bSuppressEvents, fnRequest) {
+	ODataMetadata.prototype._loadMetadata = function(sUrl, bSuppressEvents) {
 
 		// request the metadata of the service
 		var that = this;
 		sUrl = sUrl || this.sUrl;
 
-		let oRequest;
 		if (!this.sMetadata) {
-			oRequest = this._createRequest(sUrl);
+			var oRequest = this._createRequest(sUrl);
 		}
 
 		return new Promise(function(resolve, reject) {
@@ -275,12 +272,7 @@ sap.ui.define([
 			}
 
 			// execute the request
-			if (fnRequest) {
-				oRequestHandle = fnRequest(oRequest, _handleSuccess, _handleError, OData.metadataHandler,
-					/*oHttpClient*/undefined, /*oMetadata*/undefined, /*bSkipHandleTracking*/true);
-			} else {
-				oRequestHandle = OData.request(oRequest, _handleSuccess, _handleError, OData.metadataHandler);
-			}
+			oRequestHandle = OData.request(oRequest, _handleSuccess, _handleError, OData.metadataHandler);
 			if (that.bAsync) {
 				oRequestHandle.id = uid();
 				that.mRequestHandles[oRequestHandle.id] = oRequestHandle;
@@ -1188,20 +1180,14 @@ sap.ui.define([
 	};
 
 	/**
-	 * Gets the property metadata of the given property path relative to the given entity type.
+	 * Extract the property metadata of a specified property of an entity type out of the metadata
+	 * document.
 	 *
-	 * @param {object} oEntityType
-	 *   The entity type
-	 * @param {string} sPropertyPath
-	 *   The property path relative to the given entity type; may contain leading or trailing "/" and may contain
-	 *   navigation properties, complex types and annotation path, for example: "Description" (simple property),
-	 *   "ToProducts/Name" (property via navigation property), "Address/Street" (property via complex type),
-	 *   "ToSupplier/Address/Street" (property via navigation property and complex type), "Amount/@sap:label" (property
-	 *   with additional annotation path)
-	 * @returns {object|undefined}
-	 *   The property's metadata; or <code>undefined</code> if no property metadata could be found
+	 * @param {object} oEntityType The entity type
+	 * @param {string} sProperty The property in the entity type
+	 * @returns {object} The property's metadata
 	 */
-	ODataMetadata.prototype._getPropertyMetadata = function(oEntityType, sPropertyPath) {
+	ODataMetadata.prototype._getPropertyMetadata = function(oEntityType, sProperty) {
 		var oPropertyMetadata, that = this;
 
 		if (!oEntityType) {
@@ -1209,8 +1195,8 @@ sap.ui.define([
 		}
 
 		// remove starting/trailing /
-		sPropertyPath = sPropertyPath.replace(/^\/|\/$/g, "");
-		var aParts = sPropertyPath.split("/"); // path could point to a complex type or nav property
+		sProperty = sProperty.replace(/^\/|\/$/g, "");
+		var aParts = sProperty.split("/"); // path could point to a complex type or nav property
 
 		each(oEntityType.property, function(k, oProperty) {
 			if (oProperty.name === aParts[0]) {
@@ -1223,58 +1209,20 @@ sap.ui.define([
 		if (aParts.length > 1) {
 			// check for navigation property and complex type
 			if (!oPropertyMetadata) {
-				var oLastEntityType;
 				while (oEntityType && aParts.length > 1) {
 					oEntityType = this._getEntityTypeByNavProperty(oEntityType, aParts[0]);
-					if (oEntityType) {
-						oLastEntityType = oEntityType;
-						aParts.shift();
-					}
+					aParts.shift();
 				}
-				if (oEntityType) { // then there is only one part left
+				if (oEntityType) {
 					oPropertyMetadata = that._getPropertyMetadata(oEntityType, aParts[0]);
-				} else if (oLastEntityType) {
-					// the remaining first part may be a complex type; retry with the last known entity type and the
-					// remaining path
-					oPropertyMetadata = that._getPropertyMetadata(oLastEntityType, aParts.join("/"));
-				} // else: then the first part is neither a complex type nor a navigation property -> return undefined
+				}
 			} else if (!oPropertyMetadata.type.toLowerCase().startsWith("edm.")) {
 				var oNameInfo = this._splitName(oPropertyMetadata.type);
 				oPropertyMetadata = this._getPropertyMetadata(this._getObjectMetadata("complexType", oNameInfo.name, oNameInfo.namespace), aParts[1]);
-			} // else: the rest of the path is not relevant as it may be a metadata path, e.g. @sap:label
+			}
 		}
 
 		return oPropertyMetadata;
-	};
-
-	/**
-	 * Gets a map of property names defined by referential constraints. Maps a key property name of the given entity to
-	 * the corresponding property name of the entity referenced by the given navigation property.
-	 *
-	 * @param {object} oSourceEntityType
-	 *   The entity type, for example the metadata object for "GWSAMPLE_BASIC.BusinessPartner"
-	 * @param {string} sNavigationProperty
-	 *   The navigation property name, for example "ToProducts"
-	 * @returns {Object<string, string>}
-	 *   Maps a key property name of the given entity to the foreign key property name of the entity referenced by the
-	 *   given navigation property based on the association's referential constraints; returns an empty object if no
-	 *   mapping is defined; for example <code>{"BusinessPartnerID" : "SupplierID"}</code>
-	 * @private
-	 */
-	ODataMetadata.prototype._getReferentialConstraintsMapping = function (oSourceEntityType, sNavigationProperty) {
-		const oNavigationPropertyInfo = oSourceEntityType.navigationProperty
-			.find((oNavigationProperty) => oNavigationProperty.name === sNavigationProperty);
-		const oAssociationInfo = this._splitName(oNavigationPropertyInfo.relationship);
-		const oAssociation = this._getObjectMetadata("association", oAssociationInfo.name, oAssociationInfo.namespace);
-		if (oNavigationPropertyInfo.fromRole === oAssociation.referentialConstraint?.principal.role) {
-			const aSourceProperties = oAssociation.referentialConstraint.principal.propertyRef;
-			const aTargetProperties = oAssociation.referentialConstraint.dependent.propertyRef;
-			return aSourceProperties.reduce((mSource2TargetProperty, oSourceProperty, iSourceIndex) => {
-				mSource2TargetProperty[oSourceProperty.name] = aTargetProperties[iSourceIndex].name;
-				return mSource2TargetProperty;
-			}, {});
-		}
-		return {};
 	};
 
 	ODataMetadata.prototype.destroy = function() {
@@ -1344,10 +1292,10 @@ sap.ui.define([
 	ODataMetadata.prototype._createRequest = function(sUrl) {
 		// The 'sap-cancel-on-close' header marks the OData metadata request as cancelable. This helps to save resources at the back-end.
 		var oDefaultHeaders = {
-				"sap-cancel-on-close": "true"
+				"sap-cancel-on-close": true
 			},
 			oLangHeader = {
-				"Accept-Language": Localization.getLanguageTag().toString()
+				"Accept-Language": Configuration.getLanguageTag()
 			};
 
 		extend(oDefaultHeaders, this.mHeaders, oLangHeader);
@@ -1388,16 +1336,14 @@ sap.ui.define([
 	 * Add metadata url: The response will be merged with the existing metadata object.
 	 *
 	 * @param {string|string[]} vUrl Either one URL as string or an array of URI strings
-	 * @param {function} [fnRequest] Request function which can handle 503 "Retry-After" responses,
-	 *   see {@link sap.ui.model.odata.v2.ODataModel#_request}
 	 * @returns {Promise} The Promise for metadata loading
 	 * @private
 	 */
-	ODataMetadata.prototype._addUrl = function(vUrl, fnRequest) {
+	ODataMetadata.prototype._addUrl = function(vUrl) {
 		var aUrls = [].concat(vUrl);
 
 		return Promise.all(aUrls.map(function(sUrl) {
-			return this._loadMetadata(sUrl, true, fnRequest);
+			return this._loadMetadata(sUrl, true);
 		}, this));
 	};
 

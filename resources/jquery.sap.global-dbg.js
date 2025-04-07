@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -35,6 +35,22 @@ sap.ui.define([
 
 	jQuery /* , ui5loaderAutoconfig, jquerySapStubs */) {
 	"use strict";
+
+	/**
+ 	 * Provides base functionality of the SAP jQuery plugin as extension of the jQuery framework.<br/>
+	 * See also <a href="http://api.jquery.com/jQuery/">jQuery</a> for details.<br/>
+	 * Although these functions appear as static ones, they are meant to be used on jQuery instances.<br/>
+	 * If not stated differently, the functions follow the fluent interface paradigm and return the jQuery instance for chaining of statements.
+	 *
+	 * Example for usage of an instance method:
+	 * <pre>
+	 *   var oRect = jQuery("#myDiv").rect();
+	 *   alert("Top Position: " + oRect.top);
+	 * </pre>
+	 *
+	 * @namespace jQuery
+	 * @public
+	 */
 
 	if ( !jQuery ) {
 		throw new Error("Loading of jQuery failed");
@@ -151,7 +167,7 @@ sap.ui.define([
 	/**
 	 * Root Namespace for the jQuery plug-in provided by SAP SE.
 	 *
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @namespace
 	 * @public
 	 * @static
@@ -803,7 +819,7 @@ sap.ui.define([
 	 * @public
 	 * @static
 	 * @function
-	 * @deprecated as of version 1.58. Use native JavaScript instead.
+	 * @deprecated since 1.58
 	 */
 	jQuery.sap.getter = function(oValue) {
 		return function() {
@@ -1140,7 +1156,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.clear} instead
 	 */
-	jQuery.sap.measure.clearInteractionMeasurements = () => { Interaction.clear(); };
+	jQuery.sap.measure.clearInteractionMeasurements = Interaction.clear;
 
 	/**
 	 * Start an interaction measurements
@@ -1152,7 +1168,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.start} instead
 	 */
-	jQuery.sap.measure.startInteraction = (sType, oSrcElement) => { Interaction.start(sType, oSrcElement); };
+	jQuery.sap.measure.startInteraction = Interaction.start;
 
 	/**
 	 * End an interaction measurements
@@ -1163,7 +1179,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.end} instead
 	 */
-	jQuery.sap.measure.endInteraction = (bForce) => { Interaction.end(bForce); };
+	jQuery.sap.measure.endInteraction = Interaction.end;
 
 	/**
 	 * Gets the incomplete pending interaction
@@ -1173,7 +1189,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.getPending} instead
 	 */
-	jQuery.sap.measure.getPendingInteractionMeasurement = () => { return Interaction.getPending(); };
+	jQuery.sap.measure.getPendingInteractionMeasurement = Interaction.getPending;
 
 	/**
 	 * Gets all interaction measurements for which a provided filter function returns a truthy value.
@@ -1190,7 +1206,7 @@ sap.ui.define([
 	 * @since 1.36.2
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.filter} instead
 	 */
-	jQuery.sap.measure.filterInteractionMeasurements = (fnFilter) => { return Interaction.filter(fnFilter); };
+	jQuery.sap.measure.filterInteractionMeasurements = Interaction.filter;
 
 	/**
 	 * Gets all interaction measurements
@@ -1201,7 +1217,7 @@ sap.ui.define([
 	 * @since 1.34.0
 	 * @deprecated since 1.58 use {@link module:sap/ui/performance/trace/Interaction.getAll} instead
 	 */
-	jQuery.sap.measure.getAllInteractionMeasurements = (bFinalize) => { return Interaction.getAll(bFinalize); };
+	jQuery.sap.measure.getAllInteractionMeasurements = Interaction.getAll;
 
 	/**
 	 * Gets the current request timings array for type 'resource' safely
@@ -1213,8 +1229,8 @@ sap.ui.define([
 	 * @deprecated since 1.58 use native function <code>performance.getEntriesByType("resource")</code> instead
 	 */
 	jQuery.sap.measure.getRequestTimings = function() {
-		if (performance.getEntriesByType) {
-			return performance.getEntriesByType("resource");
+		if (window.performance.getEntriesByType) {
+			return window.performance.getEntriesByType("resource");
 		}
 		return [];
 	};
@@ -1228,8 +1244,8 @@ sap.ui.define([
 	 * @deprecated since 1.58 use native function <code>performance.clearResourceTimings()</code> where available
 	 */
 	jQuery.sap.measure.clearRequestTimings = function() {
-		if (performance.clearResourceTimings) {
-			performance.clearResourceTimings();
+		if (window.performance.clearResourceTimings) {
+			window.performance.clearResourceTimings();
 		}
 	};
 
@@ -1244,8 +1260,8 @@ sap.ui.define([
 	 * @deprecated since 1.58 use native function <code>performance.setResourceTimingBufferSize(iSize)</code> where available
 	 */
 	jQuery.sap.measure.setRequestBufferSize = function(iSize) {
-		if (performance.setResourceTimingBufferSize) {
-			performance.setResourceTimingBufferSize(iSize);
+		if (window.performance.setResourceTimingBufferSize) {
+			window.performance.setResourceTimingBufferSize(iSize);
 		}
 	};
 
@@ -1528,7 +1544,7 @@ sap.ui.define([
 		 * @see jQuery.sap.isDeclared
 		 * @public
 		 * @static
-		 * @deprecated as of version 1.58. Applications must not rely on such internal information. There is no API replacement.
+		 * @deprecated since 1.58
 		 * @function
 		 */
 		jQuery.sap.getAllDeclaredModules = LoaderExtensions.getAllRequiredModules;
@@ -1890,7 +1906,7 @@ sap.ui.define([
 	 * @type void
 	 * @public
 	 * @static
-	 * @deprecated as of version 1.58. Do not use to avoid violation of Content Security Policy (CSP).
+	 * @deprecated since 1.58
 	 * @SecSink {0|XSS} Parameter is evaluated
 	 */
 	jQuery.sap.globalEval = function() {

@@ -1,17 +1,17 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.core.support.plugins.Performance
 sap.ui.define([
-	"sap/ui/core/RenderManager",
+	"sap/ui/core/Core",
 	"sap/ui/core/support/Plugin",
 	"sap/ui/performance/Measurement",
 	"sap/base/security/encodeXML"
 ],
-	function(RenderManager, Plugin, Measurement, encodeXML) {
+	function(Core, Plugin, Measurement, encodeXML) {
 		"use strict";
 
 		var _rawdata = [];
@@ -56,7 +56,7 @@ sap.ui.define([
 		 * With this plugIn the performance measurements are displayed
 		 *
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 * @private
 		 * @alias sap.ui.core.support.plugins.Performance
 		 */
@@ -484,7 +484,7 @@ sap.ui.define([
 			allTimeSum = topSumTimeStep.time._total;
 			allDurationSum = topSumDurationStep.duration._total;
 
-			var rm = new RenderManager().getInterface();
+			var rm = Core.createRenderManager();
 
 			rm.openStart("ol").openEnd();
 
@@ -542,8 +542,8 @@ sap.ui.define([
 		 ============================================================================================================= */
 
 		function _render() {
-			var barRm = new RenderManager().getInterface();
-			var barInfoRm = new RenderManager().getInterface();
+			var barRm = Core.createRenderManager();
+			var barInfoRm = Core.createRenderManager();
 
 			//get all data from the filter ui elements
 			var filterOptions = _getFilterOptions();

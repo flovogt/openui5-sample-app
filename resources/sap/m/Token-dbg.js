@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,20 +8,20 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/Icon',
 	'./TokenRenderer',
-	'sap/ui/events/KeyCodes'
+	'sap/ui/events/KeyCodes',
+	'sap/ui/core/Core'
 ],
 	function(
 		library,
 		Control,
-		Library,
 		coreLibrary,
 		Icon,
 		TokenRenderer,
-		KeyCodes
+		KeyCodes,
+		Core
 	) {
 	"use strict";
 
@@ -50,7 +50,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -71,12 +71,12 @@ sap.ui.define([
 				/**
 				 * Key of the token.
 				 */
-				key : {type : "string", group : "Data", defaultValue : ""},
+				key : {type : "string", group : "Misc", defaultValue : ""},
 
 				/**
 				 * Displayed text of the token.
 				 */
-				text : {type : "string", group : "Data", defaultValue : ""},
+				text : {type : "string", group : "Misc", defaultValue : ""},
 
 				/**
 				 * Indicates the editable status of the token. If it is set to <code>true</code>, token displays a delete icon.
@@ -165,7 +165,7 @@ sap.ui.define([
 				src : "sap-icon://decline",
 				noTabStop: true,
 				press : this._fireDeleteToken.bind(this),
-				tooltip: Library.getResourceBundleFor("sap.m").getText("TOKEN_ICON_TOOLTIP")
+				tooltip: Core.getLibraryResourceBundle("sap.m").getText("TOKEN_ICON_TOOLTIP")
 			});
 
 		oDeleteIcon.addStyleClass("sapMTokenIcon");
@@ -205,7 +205,7 @@ sap.ui.define([
 	Token.prototype._onTokenPress = function(oEvent) {
 		var bSelected = this.getSelected(),
 			bCtrlKey = oEvent.ctrlKey || oEvent.metaKey,
-			bNewSelectedValue = !bSelected;
+			bNewSelectedValue = true;
 
 		if (bCtrlKey || (oEvent.which === KeyCodes.SPACE)) {
 			bNewSelectedValue = !bSelected;

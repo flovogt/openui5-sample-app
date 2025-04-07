@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,11 +10,8 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'./library',
-	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/Element",
 	'sap/ui/core/LabelEnablement',
 	'sap/ui/core/InvisibleText',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/StaticArea',
 	'sap/ui/Device',
@@ -24,17 +21,15 @@ sap.ui.define([
 	'sap/base/Log',
 	'sap/base/security/encodeXML',
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration",
 	"./FileUploaderHelper",
 	// jQuery Plugin "addAriaDescribedBy"
 	'sap/ui/dom/jquery/Aria'
 ], function(
 	Control,
 	library,
-	ControlBehavior,
-	Element,
 	LabelEnablement,
 	InvisibleText,
-	Library,
 	coreLibrary,
 	StaticArea,
 	Device,
@@ -44,6 +39,7 @@ sap.ui.define([
 	Log,
 	encodeXML,
 	jQuery,
+	Configuration,
 	FileUploaderHelper
 ) {
 
@@ -73,7 +69,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IFormContent, sap.ui.unified.IProcessableBlobs
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -388,7 +384,7 @@ sap.ui.define([
 					 * Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
 					 * This property is not supported by Internet Explorer 9.
 					 */
-					status : {type : "int"},
+					status : {type : "string"},
 
 					/**
 					 * Http-Response which comes from the server.
@@ -626,9 +622,9 @@ sap.ui.define([
 		// check if sap.m library is used
 		this.bMobileLib = this.oBrowse.getMetadata().getName() == "sap.m.Button";
 
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			if (!FileUploader.prototype._sAccText) {
-				var rb = Library.getResourceBundleFor("sap.ui.unified");
+				var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 				FileUploader.prototype._sAccText = rb.getText("FILEUPLOAD_ACC");
 			}
 			if (this.oBrowse.addAriaDescribedBy) {
@@ -673,6 +669,10 @@ sap.ui.define([
 		return this;
 	};
 
+	FileUploader.prototype.getIdForLabel = function () {
+		return this.oBrowse.getId();
+	};
+
 	/**
 	 * Ensures that FileUploader's internal button will have a reference back to the labels, by which
 	 * the FileUploader is labelled
@@ -693,12 +693,6 @@ sap.ui.define([
 			});
 		}
 
-		return this;
-	};
-
-	FileUploader.prototype.setName = function (sName) {
-		this.setProperty("name", sName, false);
-		this._rerenderInputField();
 		return this;
 	};
 
@@ -771,10 +765,6 @@ sap.ui.define([
 
 	FileUploader.prototype.removeAriaLabelledBy = function(sID) {
 		var sLabelId = this.removeAssociation("ariaLabelledBy", sID);
-		if (!sLabelId) {
-			return;
-		}
-
 		this.oBrowse.removeAriaLabelledBy(sLabelId);
 
 		return sLabelId;
@@ -803,10 +793,6 @@ sap.ui.define([
 
 	FileUploader.prototype.removeAriaDescribedBy = function(sID) {
 		var sDescriptionId = this.removeAssociation("ariaDescribedBy", sID);
-		if (!sDescriptionId) {
-			return;
-		}
-
 		this.oBrowse.removeAriaDescribedBy(sDescriptionId);
 
 		return sDescriptionId;
@@ -838,7 +824,7 @@ sap.ui.define([
 			sAccDescription = "";
 
 		if (bIsRequired) {
-			sAccDescription += Library.getResourceBundleFor("sap.ui.unified").getText("FILEUPLOAD_REQUIRED") + " ";
+			sAccDescription += sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified").getText("FILEUPLOAD_REQUIRED") + " ";
 		}
 
 		if (sTooltip) {
@@ -921,7 +907,7 @@ sap.ui.define([
 		jQuery(this.oFileUpload).appendTo(oStaticArea);
 
 		if (!this.getName()) {
-			Log.warning("Name property is not set. It would be used instead to identify the control on the server.", this);
+			Log.warning("Name property is not set. Id would be used instead to identify the control on the server.", this);
 		}
 
 		// unbind the custom event handlers
@@ -989,7 +975,7 @@ sap.ui.define([
 
 	FileUploader.prototype.onsapfocusleave = function(oEvent) {
 
-		if (!oEvent.relatedControlId || !containsOrEquals(this.getDomRef(), Element.getElementById(oEvent.relatedControlId).getFocusDomRef())) {
+		if (!oEvent.relatedControlId || !containsOrEquals(this.getDomRef(), sap.ui.getCore().byId(oEvent.relatedControlId).getFocusDomRef())) {
 			this.closeValueStateMessage();
 		}
 
@@ -1183,7 +1169,7 @@ sap.ui.define([
 				if (window.File) {
 					oFiles = this.FUEl.files;
 				}
-				if (!this.getSameFilenameAllowed() || (sValue && oldValue != sValue)) {
+				if (!this.getSameFilenameAllowed() || sValue) {
 					this.fireChange({id:this.getId(), newValue:sValue, files:oFiles});
 				}
 			}
@@ -1208,8 +1194,6 @@ sap.ui.define([
 		var uploadForm = this.getDomRef("fu_form");
 		if (uploadForm) {
 			uploadForm.reset();
-		} else if (this.oFileUpload) {
-			this.oFileUpload.files = new DataTransfer().files;
 		}
 		//clear the value, don't fire change event, and suppress the refocusing of the file input field
 		return this.setValue("", false, true);
@@ -1329,7 +1313,7 @@ sap.ui.define([
 			var iHeaderIdx;
 			var sReadyState;
 			sReadyState = oXhr.xhr.readyState;
-			var iStatus = oXhr.xhr.status;
+			var sStatus = oXhr.xhr.status;
 
 			if (oXhr.xhr.readyState == 4) {
 				//this check is needed, because (according to the xhr spec) the readyState is set to OPEN (4)
@@ -1356,7 +1340,7 @@ sap.ui.define([
 					"response": sResponse,
 					"responseRaw": sResponseRaw,
 					"readyStateXHR": sReadyState,
-					"status": iStatus,
+					"status": sStatus,
 					"requestHeaders": oRequestHeaders
 				});
 			}
@@ -1917,7 +1901,7 @@ sap.ui.define([
 
 		// as the text is the same for all FileUploaders, get it only once
 		if (!FileUploader.prototype._sBrowseText) {
-			var rb = Library.getResourceBundleFor("sap.ui.unified");
+			var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 			FileUploader.prototype._sBrowseText = rb.getText("FILEUPLOAD_BROWSE");
 		}
 
@@ -1933,7 +1917,7 @@ sap.ui.define([
 
 		// as the text is the same for all FileUploaders, get it only once
 		if (!FileUploader.prototype._sNoFileChosenText) {
-			var rb = Library.getResourceBundleFor("sap.ui.unified");
+			var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 			FileUploader.prototype._sNoFileChosenText = rb.getText("FILEUPLOAD_NO_FILE_CHOSEN");
 		}
 
@@ -2088,24 +2072,17 @@ sap.ui.define([
 	* Add default input type=file and label behaviour to file uploader.
 	*/
 	FileUploader.prototype._addLabelFeaturesToBrowse = function () {
-		let $browse;
-		const fnBrowseClickHandler = (oEvent) => {
-			oEvent.preventDefault();
-			oEvent.stopPropagation();
-			this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
-		};
+		var $browse;
 
 		if (this.oBrowse &&  this.oBrowse.$().length) {
 			$browse = this.oBrowse.$();
+			$browse.attr("type', 'button"); // The default type of button is submit that's why on click of label there are submit of the form. This way we are avoiding the submit of form.
 
-			if (this.oBrowse.getAriaLabelledBy()) {
-				LabelEnablement.getReferencingLabels(this).forEach(function (sLabelId) {
-					const $externalLabel = Element.getElementById(sLabelId).$();
-					$externalLabel.off("click").on("click", fnBrowseClickHandler);
-				}, this);
-			}
-
-			$browse.off("click").on("click", fnBrowseClickHandler);
+			$browse.off("click").on("click", (oEvent) => {
+				oEvent.preventDefault();
+				oEvent.stopPropagation();
+				this.FUEl.click(); // The default behaviour on click on label is to open "open file" dialog. The only way to attach click event that is transferred from the label to the button is this way. AttachPress and attachTap don't work in this case.
+			});
 
 			// The event propagation needs to be stopped so composing controls, which also react on
 			// drag and drop events like the sap.m.UploadCollection or sap.m.upload.UploadSet aren't affected.

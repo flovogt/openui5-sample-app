@@ -1,16 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*
  * IMPORTANT: This is a private module, its API must not be used and is subject to change.
  * Code other than the OpenUI5 libraries must not introduce dependencies to this module.
  */
-sap.ui.define(['sap/base/Log', 'sap/base/util/now'
-], function(Log, now) {
+/*global XMLHttpRequest, document, location, window */
+sap.ui.define(['sap/base/Log', 'sap/ui/thirdparty/URI', 'sap/base/util/now'
+], function(Log, URI, now) {
 
 	"use strict";
+
+	var URI = window.URI;
 
 	/**
 	 * Performance Measurement API.
@@ -150,7 +153,7 @@ sap.ui.define(['sap/base/Log', 'sap/base/util/now'
 						sMeasureId;
 
 					oXHR.open = function() {
-						sMeasureId = new URL(arguments[1], document.baseURI).href;
+						sMeasureId = new URI(arguments[1], new URI(document.baseURI).search("")).href();
 						fnStart(sMeasureId, "Request for " + sMeasureId, "xmlhttprequest");
 						oXHR.addEventListener("loadend", fnEnd.bind(null, sMeasureId));
 
@@ -195,8 +198,8 @@ sap.ui.define(['sap/base/Log', 'sap/base/util/now'
 
 			// create timeline entries if available
 			/*eslint-disable no-console */
-			if (Log.getLevel("sap.ui.Performance") >= 4) {
-				console?.time(sInfo + " - " + sId);
+			if (Log.getLevel("sap.ui.Performance") >= 4 && window.console && console.time) {
+				console.time(sInfo + " - " + sId);
 			}
 			/*eslint-enable no-console */
 			Log.info("Performance measurement start: " + sId + " on " + iTime);
@@ -325,8 +328,8 @@ sap.ui.define(['sap/base/Log', 'sap/base/util/now'
 			if (oMeasurement) {
 				// end timeline entry
 				/*eslint-disable no-console */
-				if (Log.getLevel("sap.ui.Performance") >= 4) {
-					console?.timeEnd(oMeasurement.info + " - " + sId);
+				if (Log.getLevel("sap.ui.Performance") >= 4 && window.console && console.timeEnd) {
+					console.timeEnd(oMeasurement.info + " - " + sId);
 				}
 				/*eslint-enable no-console */
 				return this.getMeasurement(sId);

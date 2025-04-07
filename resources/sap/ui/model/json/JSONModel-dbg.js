@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -29,13 +29,12 @@ sap.ui.define([
 	/**
 	 * Constructor for a new JSONModel.
 	 *
-	 * When observation is activated, the application can directly change the JS objects without the need to call
-	 * {@link sap.ui.model.json.JSONModel#setData}, {@link sap.ui.model.json.JSONModel#setProperty} or
-	 * {@link sap.ui.model.Model#refresh}. <b>Note:</b> Observation only works for existing properties in the JSON
-	 * model. Newly added or removed properties and newly added or removed array entries, for example, are not detected.
+	 * The observation feature is experimental! When observation is activated, the application can directly change the
+	 * JS objects without the need to call setData, setProperty or refresh. Observation does only work for existing
+	 * properties in the JSON, it cannot detect new properties or new array entries.
 	 *
 	 * @param {object|string} [oData] Either the URL where to load the JSON from or a JS object
-	 * @param {boolean} [bObserve=false] Whether to observe the JSON data for property changes
+	 * @param {boolean} [bObserve] Whether to observe the JSON data for property changes (experimental)
 	 *
 	 * @class
 	 * Model implementation for the JSON format.
@@ -49,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -70,17 +69,6 @@ sap.ui.define([
 		}
 
 	});
-
-	/**
-	 * Returns a copy of all active bindings of the model.
-	 *
-	 * @return {sap.ui.model.Binding[]} The active bindings of the model
-	 *
-	 * @function
-	 * @name sap.ui.model.json.JSONModel.prototype.getBindings
-	 * @private
-	 * @ui5-restricted sap.ushell
-	 */
 
 	/**
 	 * Sets the data, passed as a JS object tree, to the model.
@@ -184,28 +172,22 @@ sap.ui.define([
 	};
 
 	/**
-	 * Loads JSON-encoded data from the server and stores the resulting JSON data in the model.
+	 * Load JSON-encoded data from the server using a GET HTTP request and store the resulting JSON data in the model.
 	 * Note: Due to browser security restrictions, most "Ajax" requests are subject to the same origin policy,
 	 * the request can not successfully retrieve data from a different domain, subdomain, or protocol.
 	 *
-	 * Note: To send a JSON object in the body of a "POST" request to load the model data, <code>oParameters</code> has
-	 * to be the JSON-stringified value of the object to be sent, and <code>mHeaders</code> has to contain a
-	 * <code>"Content-Type"</code> property with the value <code>"application/json;charset=utf-8"</code>.
-	 *
-	 * @param {string} sURL A string containing the URL to which the request is sent
-	 * @param {object | string} [oParameters]
-	 *   The data to be sent to the server with the data-loading request. If <code>oParameters</code> is a string, it
-	 *   has to be encoded based on the used content type. The default encoding is
-	 *   <code>'application/x-www-form-urlencoded; charset=UTF-8'</code> but it may be overwritten via the
-	 *   <code>"Content-Type"</code> property given in <code>mHeaders</code>. If <code>oParameters</code> is an object,
-	 *   a string is generated and the keys and values are URL-encoded. The resulting string is appended to the URL if
-	 *   the HTTP request method cannot have a request body, e.g. for a "GET" request. Otherwise, the resulting string
-	 *   is added to the request body.
+	 * @param {string} sURL A string containing the URL to which the request is sent.
+	 * @param {object | string} [oParameters] A map or string that is sent to the server with the request.
+	 * Data that is sent to the server is appended to the URL as a query string.
+	 * If the value of the data parameter is an object (map), it is converted to a string and
+	 * url-encoded before it is appended to the URL.
 	 * @param {boolean} [bAsync=true] <b>Deprecated as of Version 1.107</b>; always use asynchronous
 	 * loading for performance reasons. By default, all requests are sent asynchronously.
 	 * Synchronous requests may temporarily lock the browser, disabling any actions while
 	 * the request is active. Cross-domain requests do not support synchronous operations.
-	 * @param {string} [sType="GET"] The HTTP verb to use for the request ("GET" or "POST")
+	 * @param {string} [sType=GET] The type of request to make ("POST" or "GET"), default is "GET".
+	 * Note: Other HTTP request methods, such as PUT and DELETE, can also be used here, but
+	 * they are not supported by all browsers.
 	 * @param {boolean} [bMerge=false] Whether the data should be merged instead of replaced
 	 * @param {boolean} [bCache=true] <b>Deprecated as of Version 1.107</b>; always use the cache
 	 * headers from the back-end system for performance reasons. Disables caching if set to
@@ -270,7 +252,6 @@ sap.ui.define([
 				cache: bCache,
 				data: oParameters,
 				headers: mHeaders,
-				jsonp: false,
 				type: sType,
 				success: fnSuccess,
 				error: fnError
@@ -438,11 +419,7 @@ sap.ui.define([
 	 * @private
 	 */
 	JSONModel.prototype._getObject = function (sPath, oContext) {
-		let oNode = null;
-		/** @deprecated As of version 1.88.0 */
-		if (this.isLegacySyntax()) {
-			oNode = this.oData;
-		}
+		var oNode = this.isLegacySyntax() ? this.oData : null;
 		if (oContext instanceof Context) {
 			oNode = this._getObject(oContext.getPath());
 		} else if (oContext != null) {

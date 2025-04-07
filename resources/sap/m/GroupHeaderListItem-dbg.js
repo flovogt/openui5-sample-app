@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -32,7 +32,7 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 	 * @implements sap.m.ITableItem
 
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -61,7 +61,7 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 				/**
 				 * Allows to uppercase the group title.
 				 * @since 1.13.2
-				 * @deprecated As of version 1.40.10, the concept has been discarded.
+				 * @deprecated Since version 1.40.10
 				 */
 				upperCase : {type : "boolean", group : "Appearance", defaultValue : false, deprecated: true},
 
@@ -113,6 +113,9 @@ sap.ui.define(["sap/ui/core/library", "./library", "./ListItemBase", "./GroupHea
 	GroupHeaderListItem.prototype.getContentAnnouncement = function() {
 		return this.getTitle();
 	};
+
+	// group header has no group announcement
+	GroupHeaderListItem.prototype.getGroupAnnouncement = function() {};
 
 	return GroupHeaderListItem;
 

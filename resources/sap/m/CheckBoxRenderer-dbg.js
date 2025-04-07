@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/library', 'sap/ui/core/ValueStateSupport', 'sap/ui/Device'],
-	function(ControlBehavior, coreLibrary, ValueStateSupport, Device) {
+sap.ui.define(['sap/ui/core/library', 'sap/ui/core/ValueStateSupport', 'sap/ui/Device', "sap/ui/core/Configuration"],
+	function(coreLibrary, ValueStateSupport, Device, Configuration) {
 	"use strict";
 
 
@@ -34,7 +34,6 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/library', 'sap/ui/cor
 			bEnabled = oCheckBox.getEnabled(),
 			bDisplayOnly = oCheckBox.getDisplayOnly(),
 			bEditable = oCheckBox.getEditable(),
-			bRequired = oCheckBox.getRequired(),
 			bInteractive = bEnabled && !bDisplayOnly,
 			bDisplayOnlyApplied = bEnabled && bDisplayOnly,
 			oCbLabel = oCheckBox.getAggregation("_label"),
@@ -93,31 +92,21 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/library', 'sap/ui/cor
 			oRm.attr("title", sTooltip);
 		}
 
-		if (oCheckBox._getVisualOnlyMode()) {
-			oRm.accessibilityState(oCheckBox, {
-				role: "presentation",
-				selected: null,
-				required: null,
-				labelledby: null
-			});
-		} else {
-			if (bInteractive) {
-				oRm.attr("tabindex", oCheckBox.getTabIndex());
-			}
+		if (bInteractive) {
+			oRm.attr("tabindex", oCheckBox.getTabIndex());
+		}
 
-			//ARIA attributes
-			oRm.accessibilityState(oCheckBox, {
-				role: "checkbox",
-				selected: null,
-				required: oCheckBox._isRequired() || undefined,
-				checked: oCheckBox._getAriaChecked(),
-				describedby: sTooltip && bEditableAndEnabled ? sId + "-Descr" : undefined,
-				labelledby: { value: oCbLabel ? oCbLabel.getId() : undefined, append: true }
-			});
+		//ARIA attributes
+		oRm.accessibilityState(oCheckBox, {
+			role: "checkbox",
+			selected: null,
+			checked: oCheckBox._getAriaChecked(),
+			describedby: sTooltip && bEditableAndEnabled ? sId + "-Descr" : undefined,
+			labelledby: { value: oCbLabel ? oCbLabel.getId() : undefined, append: true }
+		});
 
-			if (bDisplayOnlyApplied) {
-				oRm.attr("aria-readonly", true);
-			}
+		if (bDisplayOnlyApplied) {
+			oRm.attr("aria-readonly", true);
 		}
 
 		oRm.openEnd();		// DIV element
@@ -148,38 +137,30 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/library', 'sap/ui/cor
 
 		oRm.openEnd();		// DIV element
 
-		if (!oCheckBox._getVisualOnlyMode()) {
-			oRm.voidStart("input", oCheckBox.getId() + "-CB");
-			oRm.attr("type", "CheckBox");
+		oRm.voidStart("input", oCheckBox.getId() + "-CB");
+		oRm.attr("type", "CheckBox");
 
-			if (oCheckBox.getSelected()) {
-				oRm.attr("checked", "checked");
-			}
-
-			if (oCheckBox.getName()) {
-				oRm.attr("name", oCheckBox.getName());
-			}
-
-			if (!bEnabled) {
-				oRm.attr("disabled", "disabled");
-			}
-
-			if (!bEditable) {
-				oRm.attr("readonly", "readonly");
-			}
-
-			oRm.voidEnd();
+		if (oCheckBox.getSelected()) {
+			oRm.attr("checked", "checked");
 		}
 
+		if (oCheckBox.getName()) {
+			oRm.attr("name", oCheckBox.getName());
+		}
+
+		if (!bEnabled) {
+			oRm.attr("disabled", "disabled");
+		}
+
+		if (!bEditable) {
+			oRm.attr("readonly", "readonly");
+		}
+
+		oRm.voidEnd();
 		oRm.close("div");
-
-		if (oCbLabel) {
-			oCbLabel.setRequired(bRequired);
-		}
-
 		oRm.renderControl(oCbLabel);
 
-		if (sTooltip && ControlBehavior.isAccessibilityEnabled() && bEditableAndEnabled) {
+		if (sTooltip && Configuration.getAccessibility() && bEditableAndEnabled) {
 			// for ARIA, the tooltip must be in a separate SPAN and assigned via aria-describedby.
 			// otherwise, JAWS does not read it.
 			oRm.openStart("span", sId + "-Descr");

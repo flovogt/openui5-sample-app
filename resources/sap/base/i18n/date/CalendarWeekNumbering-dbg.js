@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides type module:sap/base/i18n/date/CalendarWeekNumbering.
-sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
+sap.ui.define([], function() {
 	"use strict";
 
 	/**
@@ -68,8 +68,6 @@ sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
 		 */
 		WesternTraditional : "WesternTraditional"
 	};
-
-	_EnumHelper.register("sap.base.i18n.date.CalendarWeekNumbering", CalendarWeekNumbering);
 
 	/**
 	 * Returns an object containing the week configuration values for the given calendar week

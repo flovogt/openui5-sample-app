@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -196,7 +196,6 @@ sap.ui.define([
 	 */
 	RecordReplay.waitForUI5 = function (oOptions) {
 		oOptions = oOptions || {};
-		_autoWaiterAsync.resetConfig();
 		_autoWaiterAsync.extendConfig(oOptions);
 		return new Promise(function (resolve, reject) {
 			_autoWaiterAsync.waitAsync(function (sError) {

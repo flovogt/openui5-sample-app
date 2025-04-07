@@ -1,17 +1,16 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.f.shellBar.CoPilot.
 sap.ui.define([
-	"sap/ui/core/Control",
-	"sap/ui/core/Configuration",
-	"sap/f/shellBar/CoPilotRenderer",
-	"sap/ui/core/ControlBehavior"
-],
-	function(Control, Configuration, CoPilotRenderer, ControlBehavior) {
+		"sap/ui/core/Control",
+		"sap/ui/core/Configuration",
+		"sap/f/shellBar/CoPilotRenderer"
+	],
+	function(Control, Configuration, CoPilotRenderer) {
 	"use strict";
 
 	/**
@@ -26,7 +25,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @private
@@ -53,7 +52,7 @@ sap.ui.define([
 	};
 
 	CoPilot.prototype.getAnimation = function () {
-		return ControlBehavior.getAnimationMode() !== Configuration.AnimationMode.none;
+		return Configuration.getAnimationMode() !== Configuration.AnimationMode.none;
 	};
 
 	return CoPilot;

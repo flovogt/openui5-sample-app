@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -13,6 +13,8 @@ sap.ui.define([
 	],
 	function(assert, Log, Localization, formatMessage, Properties, merge) {
 	"use strict";
+
+	/* global Promise */
 
 	/**
 	 * A regular expression that describes language tags according to BCP-47.
@@ -41,7 +43,8 @@ sap.ui.define([
 	var M_ISO639_NEW_TO_OLD = {
 		"he" : "iw",
 		"yi" : "ji",
-		"nb" : "no"
+		"nb" : "no",
+		"sr" : "sh" // for backward compatibility, as long as "sr (Cyrillic)" is not supported
 	};
 
 	/**
@@ -78,99 +81,11 @@ sap.ui.define([
 	var rSAPSupportabilityLocales = /(?:^|-)(saptrc|sappsd|saprigi)(?:-|$)/i;
 
 	/**
-	 * The cache for property file requests
-	 *
-	 * @private
-	 */
-	const oPropertiesCache = {
-
-		/**
-		 * Holds the cache entries
-		 *
-		 * @private
-		 */
-		_oCache: new Map(),
-
-		/**
-		 * Removes the given cache entry
-		 *
-		 * @param {string} sKey The key of the cache entry
-		 * @private
-		 */
-		_delete(sKey){
-			this._oCache.delete(sKey);
-		},
-
-		/**
-		 * Creates and returns a new instance of {@link module:sap/base/util/Properties}.
-		 *
-		 * @see {@link module:sap/base/util/Properties.create}
-		 * @param {object} oOptions The options to create the properties object
-		 * @returns {module:sap/base/util/Properties|null|Promise<module:sap/base/util/Properties|null>} The properties object or a promise on it
-		 * @private
-		 */
-		_load(oOptions){
-			return Properties.create(oOptions);
-		},
-
-		/**
-		 * Inserts or updates an entry
-		 *
-		 * @param {string} sKey the cache id
-		 * @param {object} oValue entry to cache
-		 * @private
-		 */
-		_set(sKey, oValue){
-			this._oCache.set(sKey, oValue);
-		},
-
-		/**
-		 * Retrieves an entry from the cache
-		 *
-		 * @param {string} sKey the cache id
-		 * @param {object} [oLoadOptions] options which are passed to #load
-		 * @param {boolean} [bAsync=false] async requested
-		 * @returns {object} entry which either comes from cache or from #load
-		 * @private
-		 */
-		get(sKey, oLoadOptions, bAsync){
-			if (this._oCache.has(sKey)) {
-				const oExisting = this._oCache.get(sKey);
-				if (bAsync){
-					return Promise.resolve(oExisting);
-				} else if (!(oExisting instanceof Promise)) {
-					return oExisting;
-				}
-				// can't use cached, non-fulfilled promise in sync mode
-			}
-
-			const oNewEntry = this._load(oLoadOptions);
-			if (oNewEntry instanceof Promise) {
-				// update cache entry with actual object instead of fulfilled promise
-				oNewEntry.then((oResult) => {
-					if (oResult) {
-						this._set(sKey, oResult);
-					} else {
-						this._delete(sKey);
-					}
-				}).catch((e) => {
-					this._delete(sKey);
-					throw e;
-				});
-			}
-			if (oNewEntry) {
-				this._set(sKey, oNewEntry);
-			}
-			return oNewEntry;
-		}
-	};
-
-	/**
 	 * Helper to normalize the given locale (in BCP-47 syntax) to the java.util.Locale format.
 	 *
 	 * @param {string} sLocale Locale to normalize
 	 * @param {boolean} [bPreserveLanguage=false] Whether to keep the language untouched, otherwise
-	 *     the language is mapped from modern to legacy ISO639 codes, e.g. "he" to "iw"
+	 *     the language is mapped from modern to legacy ISO639 codes, e.g. "sr" to "sh"
 	 * @returns {string|undefined} Normalized locale or <code>undefined</code> if the locale can't be normalized
 	 * @private
 	 */
@@ -218,7 +133,7 @@ sap.ui.define([
 	 * @param {string} sLocale locale (aka 'language tag') to be normalized.
 	 * 	   Can either be a BCP47 language tag or a JDK compatible locale string (e.g. "en-GB", "en_GB" or "fr");
 	 * @param {boolean} [bPreserveLanguage=false] whether to keep the language untouched, otherwise
-	 *     the language is mapped from modern to legacy ISO639 codes, e.g. "he" to "iw"
+	 *     the language is mapped from modern to legacy ISO639 codes, e.g. "sr" to "sh"
 	 * @returns {string} normalized locale
 	 * @throws {TypeError} Will throw an error if the locale is not a valid BCP47 language tag.
 	 * @private
@@ -433,9 +348,8 @@ sap.ui.define([
 	 * @param {string} sKey Key to retrieve the text for
 	 * @param {any[]} [aArgs] List of parameter values which should replace the placeholders "{<i>n</i>}"
 	 *     (<i>n</i> is the index) in the found locale-specific string value. Note that the replacement
-	 *     is done whenever <code>aArgs</code> is given (not <code>undefined</code>), no matter whether
-	 *     the text contains placeholders or not and no matter whether <code>aArgs</code> contains a
-	 *     value for <i>n</i> or not.
+	 *     is done whenever <code>aArgs</code> is given, no matter whether the text contains placeholders
+	 *     or not and no matter whether <code>aArgs</code> contains a value for <i>n</i> or not.
 	 * @param {boolean} [bIgnoreKeyFallback=false]
 	 *     If set, <code>undefined</code> is returned instead of the key string, when the key is not found
 	 *     in any bundle or fallback bundle.
@@ -687,19 +601,12 @@ sap.ui.define([
 				sUrl = oUrl.prefix + (sLocale ? "_" + sLocale : "") + oUrl.suffix;
 			}
 
-			// headers might contain "accept-language" tag which can lead to a different properties
-			// request, therefore it needs to be integrated into the cache key
-			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language
-			var sCacheKey = JSON.stringify({url: new URL(sUrl, document.baseURI).href, headers: mHeaders});
-
-			var oOptions = {
+			var vProperties = Properties.create({
 				url: sUrl,
 				headers: mHeaders,
 				async: !!bAsync,
 				returnNullIfMissing: true
-			};
-
-			const vProperties = oPropertiesCache.get(sCacheKey, oOptions, oOptions.async);
+			});
 
 			var addProperties = function(oProps) {
 				if ( oProps ) {
@@ -826,8 +733,8 @@ sap.ui.define([
 	 *     (e.g. "en-GB", "en_GB" or "en"). An empty string (<code>""</code>) represents the 'raw' bundle.
 	 *     <b>Note:</b> The given language tags can use modern or legacy ISO639 language codes. Whatever
 	 *     language code is used in the list of supported locales will also be used when requesting a file
-	 *     from the server. If the <code>locale</code> contains a legacy language code like "iw" and the
-	 *     <code>supportedLocales</code> contains [...,"he",...], "he" will be used in the URL.
+	 *     from the server. If the <code>locale</code> contains a legacy language code like "sh" and the
+	 *     <code>supportedLocales</code> contains [...,"sr",...], "sr" will be used in the URL.
 	 *     This mapping works in both directions.
 	 * @property {string} [fallbackLocale="en"] A fallback locale to be used after all locales
 	 *     derived from <code>locale</code> have been tried, but before the 'raw' bundle is used.
@@ -861,8 +768,8 @@ sap.ui.define([
 	 *     (e.g. "en-GB", "en_GB" or "en"). An empty string (<code>""</code>) represents the 'raw' bundle.
 	 *     <b>Note:</b> The given language tags can use modern or legacy ISO639 language codes. Whatever
 	 *     language code is used in the list of supported locales will also be used when requesting a file
-	 *     from the server. If the <code>locale</code> contains a legacy language code like "iw" and the
-	 *     <code>supportedLocales</code> contains [...,"he",...], "he" will be used in the URL.
+	 *     from the server. If the <code>locale</code> contains a legacy language code like "sh" and the
+	 *     <code>supportedLocales</code> contains [...,"sr",...], "sr" will be used in the URL.
 	 *     This mapping works in both directions.
 	 * @public
 	 */
@@ -989,8 +896,8 @@ sap.ui.define([
 	 *     (e.g. "en-GB", "en_GB" or "en"). An empty string (<code>""</code>) represents the 'raw' bundle.
 	 *     <b>Note:</b> The given language tags can use modern or legacy ISO639 language codes. Whatever
 	 *     language code is used in the list of supported locales will also be used when requesting a file
-	 *     from the server. If the <code>locale</code> contains a legacy language code like "iw" and the
-	 *     <code>supportedLocales</code> contains [...,"he",...], "he" will be used in the URL.
+	 *     from the server. If the <code>locale</code> contains a legacy language code like "sh" and the
+	 *     <code>supportedLocales</code> contains [...,"sr",...], "sr" will be used in the URL.
 	 *     This mapping works in both directions.
 	 * @param {string} [mParams.fallbackLocale="en"] A fallback locale to be used after all locales
 	 *     derived from <code>locale</code> have been tried, but before the 'raw' bundle is used.
@@ -1025,7 +932,7 @@ sap.ui.define([
 			mParams.url = mParams.url || ResourceBundle._getUrl(mParams.bundleUrl, mParams.bundleName);
 		}
 
-		// Hook implemented by sap/ui/core/Lib.js; adds missing terminology information from the library manifest, if available
+		// Hook implemented by Core.js; adds missing terminology information from the library manifest, if available
 		mParams = ResourceBundle._enrichBundleConfig(mParams);
 
 		// Note: ResourceBundle constructor returns a Promise in async mode!
@@ -1070,15 +977,14 @@ sap.ui.define([
 	};
 
 	/**
-	 * Hook implemented by sap/ui/core/Lib to enrich bundle config with terminologies.
-	 * See also the documentation of the hook's implementation in sap/ui/core/Lib.js.
+	 * Hook implemented by sap.ui.core.Core. to enrich bundle config with terminologies.
+	 * See also the documentation of the hook's implementation in Core.js.
 	 *
-	 * @see sap.ui.core.Lib.getResourceBundleFor
+	 * @see sap.ui.core.Core.getLibraryResourceBundle
 	 *
-	 * @param {object} mParams the ResourceBundle.create bundle config
-	 * @returns {object} the enriched bundle config
+	 * @params {object} the ResourceBundle.create bundle config
 	 * @private
-	 * @ui5-restricted sap.ui.core.Lib
+	 * @ui5-restricted sap.ui.core.Core
 	 */
 	ResourceBundle._enrichBundleConfig = function(mParams) {
 		// Note: the ResourceBundle is a base module, which might be used standalone without the Core,
@@ -1102,28 +1008,28 @@ sap.ui.define([
 	 * is contained in the list, the alternative locale is returned.
 	 *
 	 * If there is no match, <code>undefined</code> is returned.
-	 * @param {string} sLocale Locale, using legacy ISO639 language code, e.g. iw_IL
-	 * @param {string[]} aSupportedLocales List of supported locales, e.g. ["he_IL"]
+	 * @param {string} sLocale Locale, using legacy ISO639 language code, e.g. sh_RS
+	 * @param {string[]} aSupportedLocales List of supported locales, e.g. ["sr_RS"]
 	 * @returns {string} The match in the supportedLocales (using either modern or legacy ISO639 language codes),
-	 *   e.g. "he_IL"; <code>undefined</code> if not matched
+	 *   e.g. "sr_RS"; <code>undefined</code> if not matched
 	 */
 	function findSupportedLocale(sLocale, aSupportedLocales) {
 
 		// if supportedLocales array is empty or undefined or if it contains the given locale,
 		// return that locale (with a legacy ISO639 language code)
-		if (!aSupportedLocales || aSupportedLocales.length === 0 || aSupportedLocales.includes(sLocale)) {
+		if (!aSupportedLocales || aSupportedLocales.length === 0 || aSupportedLocales.indexOf(sLocale) >= 0) {
 			return sLocale;
 		}
 
 		// determine an alternative locale, using a modern ISO639 language code
-		// (converts "iw_IL" to "he-IL")
+		// (converts "sh_RS" to "sr-RS")
 		sLocale = convertLocaleToBCP47(sLocale, true);
 		if (sLocale) {
 			// normalize it to JDK syntax for easier comparison
-			// (converts "he-IL" to "he_IL" - using an underscore ("_") between the segments)
+			// (converts "sr-RS" to "sr_RS" - using an underscore ("_") between the segments)
 			sLocale = normalize(sLocale, true);
 		}
-		if (aSupportedLocales.includes(sLocale)) {
+		if (aSupportedLocales.indexOf(sLocale) >= 0) {
 			// return the alternative locale (with a modern ISO639 language code)
 			return sLocale;
 		}
@@ -1269,16 +1175,6 @@ sap.ui.define([
 			sFallbackLocale,
 			/* no context info */ ""
 		);
-	};
-
-	/**
-	 * Gets the properties cache
-	 *
-	 * @returns {Map} The properties cache
-	 * @private
-	 */
-	ResourceBundle._getPropertiesCache = function () {
-		return oPropertiesCache._oCache;
 	};
 
 	return ResourceBundle;

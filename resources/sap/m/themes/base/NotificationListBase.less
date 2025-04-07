@@ -14,8 +14,7 @@
 		margin: 0 0.5rem;
 	}
 }
-
-/* Priority icons */
+// Priority icons
 
 .sapMNLIBPriority {
 	padding-right: 0.625rem;
@@ -27,7 +26,7 @@
 }
 
 .sapMNLIBPriorityLow .sapUiIcon {
-	color: var(--sapSuccessBorderColor);
+	color: @sapUiSuccessBorder;
 
 	&::before {
 		content: '\e1c1';
@@ -35,7 +34,7 @@
 }
 
 .sapMNLIBPriorityMedium .sapUiIcon {
-	color: var(--sapWarningBorderColor);
+	color: @sapUiWarningBorder;
 
 	&::before {
 		content: '\e053';
@@ -43,7 +42,7 @@
 }
 
 .sapMNLIBPriorityHigh .sapUiIcon {
-	color: var(--sapErrorBorderColor);
+	color: @sapUiErrorBorder;
 
 	&::before {
 		content: '\e1ec';
@@ -55,7 +54,6 @@
 }
 
 .sapUiSizeCompact {
-
 	.sapMNLIBPriority {
 		padding-right: 0.5rem;
 	}

@@ -1,18 +1,18 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	"../library",
-	"sap/base/i18n/Localization",
 	"sap/ui/Device",
 	"sap/ui/core/Element",
 	"sap/ui/core/StaticArea",
 	"../UIArea",
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
-function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
+function(lib, Device, Element, StaticArea, UIArea, jQuery, Configuration) {
 	"use strict";
 
 	var RelativeDropPosition = lib.dnd.RelativeDropPosition;
@@ -25,6 +25,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 	 * @public
 	 * @since 1.52
 	 */
+
 	var DnD = {},
 		oDragControl = null,        // the control being dragged
 		oDropControl = null,        // the current drop target control
@@ -39,7 +40,6 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		mLastIndicatorStyle = {},   // holds the last style settings of the indicator
 		oDraggableAncestorNode,     // reference to ancestor node that has draggable=true attribute
 		iDragEndTimer,              // timer for the dragend event to ensure it is dispatched after the drop event
-		iDragLeaveTimer,			// timer for the dragleave event to ensure dragging leaves the browser window
 		bDraggedOutOfBrowser;       // determines whether something dragged out of the browser context e.g. for file upload
 
 
@@ -73,87 +73,9 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			return;
 		}
 
-		var oNewEvent = new jQuery.Event(null, oEvent);
+		var oNewEvent = jQuery.Event(null, oEvent);
 		oNewEvent.type = sEventName;
 		oControl.getUIArea()._handleEvent(oNewEvent);
-	}
-
-	function simulateEvent(sEventName, oControl, oDataTransfer, vSimulated = true) {
-		const oEvent = new Event(sEventName);
-		if (oDataTransfer) {
-			oEvent.dataTransfer = oDataTransfer;
-		}
-
-		const $Event = new jQuery.Event(oEvent);
-		$Event.setMark("simulated", vSimulated);
-		oControl.$().trigger($Event);
-		return $Event;
-	}
-
-	function getSiblingOfControl(oControl, sDirection) {
-		let aAggregatedControls = [];
-		const oParent = oControl.getParent();
-		const oMetadata = oParent.getMetadata();
-		const sAggregation = oControl.sParentAggregationName;
-		const aPublicAggregations = oMetadata.getAllAggregations();
-
-		if (aPublicAggregations[sAggregation]) {
-			aAggregatedControls = oParent[aPublicAggregations[sAggregation]._sGetter]();
-		} else {
-			const aPrivateAggregations = oMetadata.getAllPrivateAggregations();
-			if (aPrivateAggregations[sAggregation]) {
-				aAggregatedControls = oParent.getAggregation(sAggregation);
-			}
-		}
-
-		const iIndex = aAggregatedControls.indexOf(oControl);
-		if (sDirection == "next") {
-			return aAggregatedControls.slice(iIndex + 1).find((aAggregatedControl) => aAggregatedControl.getDomRef());
-		}
-		return aAggregatedControls.slice(0, iIndex).findLast((aAggregatedControl) => aAggregatedControl.getDomRef());
-	}
-
-	function getReorderInfo(oEvent) {
-		if (oEvent.isMarked() || !(oEvent.ctrlKey || oEvent.metaKey) || !oEvent.code?.startsWith("Arrow")) {
-			return;
-		}
-
-		const oTarget = oEvent.target;
-		const oControl = oTarget.hasAttribute("data-sap-ui-draghandle") ? Element.closestTo(oTarget, true) : Element.getElementById(oTarget.id);
-		if (!oControl) {
-			return;
-		}
-
-		const oDragControl = Element.getElementById(oControl.$().closest("[data-sap-ui-draggable]").attr("id"));
-		const oDragControlParent = oDragControl?.getParent();
-		const sAggregationName = oDragControl?.sParentAggregationName;
-		if (!oDragControlParent || !sAggregationName) {
-			return;
-		}
-
-		const aDropConfigs = [];
-		const aDraggableGroups = [];
-		oDragControlParent.getDragDropConfig().forEach((oConfig) => {
-			if (!oConfig.getKeyboardHandling()) {
-				return;
-			}
-			if (oConfig.isA("sap.ui.core.dnd.IDropInfo") && oConfig.getTargetAggregation() == sAggregationName && oConfig.getDropPosition() == "Between") {
-				aDropConfigs.push(oConfig);
-			}
-			if (oConfig.isA("sap.ui.core.dnd.IDragInfo") && oConfig.getSourceAggregation() == sAggregationName) {
-				aDraggableGroups.push(oConfig.getGroupName());
-			}
-		});
-
-		const oDropConfig = aDropConfigs.find((oDropConfig) => aDraggableGroups.includes(oDropConfig.getGroupName()));
-		if (!oDropConfig) {
-			return;
-		}
-
-		return {
-			oDragControl,
-			oDropConfig
-		};
 	}
 
 	function isSelectableElement(oElement) {
@@ -305,14 +227,14 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			 * @returns {object} Drop indicator configuration
 			 * @protected
 			 */
-			getIndicatorConfig: function() {
+			getIndicatorConfig: function(mConfig) {
 				return mIndicatorConfig;
 			},
 
 			/**
 			 * Returns the dragged control, if available within the same UI5 application frame.
 			 *
-			 * @returns {sap.ui.core.Element|null} The dragged control
+			 * @returns {sap.ui.core.Element|null}
 			 * @protected
 			 */
 			getDragControl: function() {
@@ -322,7 +244,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			/**
 			 * The valid drop target underneath the dragged control.
 			 *
-			 * @returns {sap.ui.core.Element|null} The drop target
+			 * @returns {sap.ui.core.Element|null}
 			 * @protected
 			 */
 			getDropControl: function() {
@@ -330,9 +252,8 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			},
 
 			/**
-			 * Set the valid target.
+			 * Set the valid drop control.
 			 *
-			 * @param {sap.ui.core.Element} oControl The dropped target
 			 * @protected
 			 */
 			setDropControl: function(oControl) {
@@ -342,7 +263,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			/**
 			 * Returns the drop configuration corresponding to the drop control.
 			 *
-			 * @returns {sap.ui.core.dnd.DropInfo|null} The drop configuration
+			 * @returns {sap.ui.core.dnd.DropInfo|null}
 			 * @protected
 			 */
 			getDropInfo: function() {
@@ -352,7 +273,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			/**
 			 * Returns the calculated position of the drop action relative to the valid dropped control.
 			 *
-			 * @returns {sap.ui.core.dnd.RelativeDropPosition} The calculated position
+			 * @returns {sap.ui.core.dnd.RelativeDropPosition}
 			 * @protected
 			 */
 			getDropPosition: function() {
@@ -361,8 +282,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		};
 	}
 
-	function closeDragSession() {
-		hideDropIndicator();
+	function closeDragSession(oEvent) {
 		oDragControl = oDropControl = oValidDropControl = oDragSession = null;
 		sCalculatedDropPosition = "";
 		bDraggedOutOfBrowser = false;
@@ -388,25 +308,15 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		}
 	}
 
-	function showDropIndicator(oEvent, oDropTarget, sDropPosition, sDropLayout, bCalculateOnly) {
+	function showDropIndicator(oEvent, oDropTarget, sDropPosition, sDropLayout) {
 		if (!oDropTarget) {
 			return;
 		}
 
-		const vSimulated = oEvent.getMark("simulated");
-		if (vSimulated) {
-			if (vSimulated == "prev") {
-				return RelativeDropPosition.Before;
-			}
-			if (vSimulated == "next") {
-				return RelativeDropPosition.After;
-			}
-		}
-
 		var mClientRect = oValidDropControl.getDropAreaRect ? oValidDropControl.getDropAreaRect(sDropLayout) : oDropTarget.getBoundingClientRect(),
 			mIndicatorConfig = oEvent.dragSession && oEvent.dragSession.getIndicatorConfig(),
-			iPageYOffset = window.scrollY,
-			iPageXOffset = window.scrollX,
+			iPageYOffset = window.pageYOffset,
+			iPageXOffset = window.pageXOffset,
 			$Indicator = getDropIndicator(),
 			sRelativePosition,
 			mStyle = {},
@@ -449,7 +359,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 					sRelativePosition = RelativeDropPosition.On;
 				}
 			}
-			if (sRelativePosition != RelativeDropPosition.On && Localization.getRTL()) {
+			if (sRelativePosition != RelativeDropPosition.On && Configuration.getRTL()) {
 				sRelativePosition = (sRelativePosition == RelativeDropPosition.After) ? RelativeDropPosition.Before : RelativeDropPosition.After;
 			}
 		} else {
@@ -481,7 +391,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			}
 		}
 
-		if (bCalculateOnly || mIndicatorConfig?.display == "none") {
+		if (mIndicatorConfig && mIndicatorConfig.display == "none") {
 			return sRelativePosition;
 		}
 
@@ -560,11 +470,11 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		}
 	}
 
-	function showDropPosition(oEvent, oDropInfo, oValidDropControl, bCalculateOnly) {
+	function showDropPosition(oEvent, oDropInfo, oValidDropControl) {
 		// no target aggregation so entire control is the target
 		var sTargetAggregation = oDropInfo.getTargetAggregation();
 		if (!sTargetAggregation) {
-			return showDropIndicator(oEvent, oValidDropControl.getDomRef(), undefined, undefined, bCalculateOnly);
+			return showDropIndicator(oEvent, oValidDropControl.getDomRef());
 		}
 
 		// whether the current DOM element corresponds to the configured aggregation
@@ -577,7 +487,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		oTargetDomRef = oTargetDomRef || oValidDropControl.getDomRef();
 
 		// let the user know the drop position
-		return showDropIndicator(oEvent, oTargetDomRef, oDropInfo.getDropPosition(true), oDropInfo.getDropLayout(true), bCalculateOnly);
+		return showDropIndicator(oEvent, oTargetDomRef, oDropInfo.getDropPosition(true), oDropInfo.getDropLayout(true));
 	}
 
 	// before controls handle UIArea events
@@ -585,11 +495,6 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		if (oDragSession && oEvent.type.indexOf("dr") == 0) {
 			// attach dragSession to all drag events
 			oEvent.dragSession = oDragSession;
-
-			// stop the drag leave timer in case of any drag event
-			if (iDragLeaveTimer) {
-				iDragLeaveTimer = clearTimeout(iDragLeaveTimer);
-			}
 		}
 
 		var sEventHandler = "onbefore" + oEvent.type;
@@ -604,53 +509,6 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		if (DnD[sEventHandler]) {
 			DnD[sEventHandler](oEvent);
 		}
-	};
-
-	// keyboard support for aggregation reordering
-	DnD.onbeforekeydown = function(oEvent) {
-		if (getReorderInfo(oEvent)) {
-			oEvent.setMark("dnd");
-		}
-	};
-
-	// keyboard support for aggregation reordering
-	DnD.onafterkeydown = function(oEvent) {
-		if (!oEvent.getMark("dnd")) {
-			return;
-		}
-
-		let sDirection, oDropControl;
-		const { oDragControl, oDropConfig } = getReorderInfo(oEvent);
-		const sDropLayout = oDropConfig.getDropLayout(true);
-		if (sDropLayout == "Horizontal" && (oEvent.code == "ArrowRight" || oEvent.code == "ArrowLeft")) {
-			const sNext = Localization.getRTL() ? "prev" : "next";
-			const sPrev = Localization.getRTL() ? "next" : "prev";
-			sDirection = oEvent.code == "ArrowRight" ? sNext : sPrev;
-			oDropControl = getSiblingOfControl(oDragControl, sDirection);
-			oEvent.preventDefault();
-		}
-		if (sDropLayout == "Vertical" && (oEvent.code == "ArrowDown" || oEvent.code == "ArrowUp")) {
-			sDirection = oEvent.code == "ArrowDown" ? "next" : "prev";
-			oDropControl = getSiblingOfControl(oDragControl, sDirection);
-			oEvent.preventDefault();
-		}
-
-		if (!oDropControl) {
-			return;
-		}
-
-		const oDataTransfer = new DataTransfer();
-		const oDragStartEvent = simulateEvent("dragstart", oDragControl, oDataTransfer, sDirection);
-		if (oDragStartEvent.isDefaultPrevented() || oDragStartEvent.isMarked("NonDraggable")) {
-			return;
-		}
-
-		const oDragEnterEvent = simulateEvent("dragenter", oDropControl, oDataTransfer, sDirection);
-		if (!oDragEnterEvent.isMarked("NonDroppable")) {
-			simulateEvent("drop", oDropControl, oDataTransfer, sDirection);
-		}
-
-		simulateEvent("dragend", oDragControl, oDataTransfer, sDirection);
 	};
 
 	DnD.onbeforemousedown = function(oEvent) {
@@ -721,11 +579,6 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 			return;
 		}
 
-		// drag start visualization is not necessary for simulated events
-		if (oEvent.simulated) {
-			return;
-		}
-
 		// set custom drag ghost
 		setDragGhost(oDragControl, oEvent);
 
@@ -760,6 +613,7 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 
 			oParentDomRef = oValidDropControl.getDomRef();
 			oParentDomRef = oParentDomRef && oParentDomRef.parentElement;
+
 			oValidDropControl = Element.closestTo(oParentDomRef, true);
 		}
 
@@ -787,7 +641,6 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 		} else if (oEvent.getMark("DragWithin") != "SameControl") {
 			// fire dragenter event of valid DropInfos and filter if preventDefault is called
 			aValidDropInfos = aValidDropInfos.filter(function(oDropInfo) {
-				sCalculatedDropPosition = showDropPosition(oEvent, oDropInfo, oValidDropControl, true);
 				return oDropInfo.fireDragEnter(oEvent);
 			});
 		}
@@ -813,45 +666,35 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 	};
 
 	DnD.onafterdragover = function(oEvent) {
-		// drop is not possible if there is no valid drop control or dragover event is marked as NonDroppable
-		if (!oValidDropControl || oEvent.isMarked("NonDroppable")) {
-			aValidDropInfos = [];
-		} else {
-			// fire dragover event of valid DropInfos and filter if preventDefault is called
-			aValidDropInfos = aValidDropInfos.filter(function(oDropInfo) {
-				sCalculatedDropPosition = showDropPosition(oEvent, oDropInfo, oValidDropControl, true);
-				return oDropInfo.fireDragOver(oEvent);
-			});
-		}
+		var oValidDropInfo = aValidDropInfos[0];
 
-		// set drop effect and drop position
-		const oValidDropInfo = aValidDropInfos[0];
+		// let the browser do the default if there is no valid drop info
 		if (!oValidDropInfo || oValidDropInfo.getDropEffect() == "None") {
-			hideDropIndicator();
-			sCalculatedDropPosition = "";
-		} else {
-			// browsers drop effect must be set on dragover always
-			setDropEffect(oEvent, oValidDropInfo);
-
-			// drop position is set already at dragenter it should not be changed for DropPosition=On
-			if (oValidDropInfo && oValidDropInfo.getDropPosition(true) == "On") {
-				return;
-			}
-
-			// drop indicator position may change depending on the mouse pointer location
-			sCalculatedDropPosition = showDropPosition(oEvent, oValidDropInfo, oValidDropControl);
+			return;
 		}
+
+		// fire dragover events of valid DropInfos
+		aValidDropInfos.forEach(function(oDropInfo) {
+			oDropInfo.fireDragOver(oEvent);
+		});
+
+		// browsers drop effect must be set on dragover always
+		setDropEffect(oEvent, oValidDropInfo);
+
+		// drop position is set already at dragenter it should not be changed for DropPosition=On
+		if (oValidDropInfo && oValidDropInfo.getDropPosition(true) == "On") {
+			return;
+		}
+
+		// drop indicator position may change depending on the mouse pointer location
+		sCalculatedDropPosition = showDropPosition(oEvent, oValidDropInfo, oValidDropControl);
 	};
 
 	DnD.onafterdragleave = function(oEvent) {
 		// clean up the drop indicator if the user left the browser window while dragging
-		if (bDraggedOutOfBrowser) {
-			if (Device.browser.safari) {
-				// Safari does not provide the relatedTarget: https://bugs.webkit.org/show_bug.cgi?id=66547
-				iDragLeaveTimer = setTimeout(closeDragSession, 100);
-			} else if (!oEvent.relatedTarget) {
-				closeDragSession();
-			}
+		if (bDraggedOutOfBrowser && !oEvent.relatedTarget) {
+			hideDropIndicator();
+			closeDragSession();
 		}
 	};
 
@@ -886,6 +729,9 @@ function(lib, Localization, Device, Element, StaticArea, UIArea, jQuery) {
 
 		// retain the scrolling behavior of the html element after dragend
 		jQuery("html").removeClass("sapUiDnDNoScrolling");
+
+		// hide the indicator
+		hideDropIndicator();
 
 		// finalize drag session
 		closeDragSession();

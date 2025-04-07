@@ -1,12 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ObjectListItem.
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/base/ManagedObjectObserver',
 	'./ListItemBase',
 	'./library',
@@ -16,10 +15,10 @@ sap.ui.define([
 	'./ObjectMarker',
 	'./Text',
 	'./ObjectListItemRenderer',
+	'sap/ui/core/Configuration',
 	"sap/m/ImageHelper"
 ],
 function(
-	Localization,
 	ManagedObjectObserver,
 	ListItemBase,
 	library,
@@ -29,6 +28,7 @@ function(
 	ObjectMarker,
 	Text,
 	ObjectListItemRenderer,
+	Configuration,
 	ImageHelper
 	) {
 		"use strict";
@@ -60,7 +60,7 @@ function(
 		 *
 		 * <b>Note:</b> The control must only be used in the context of a list.
 		 * @extends sap.m.ListItemBase
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -244,7 +244,7 @@ function(
 
 		ObjectListItem.prototype.onAfterRendering = function() {
 			var oObjectNumber = this.getAggregation("_objectNumber"),
-				bPageRTL = Localization.getRTL(),
+				bPageRTL = Configuration.getRTL(),
 				sTextAlign = bPageRTL ? TextAlign.Left : TextAlign.Right;
 
 			if (oObjectNumber && oObjectNumber.getNumber()) { // adjust alignment according the design specification

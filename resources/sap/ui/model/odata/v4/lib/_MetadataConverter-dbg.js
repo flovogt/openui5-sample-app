@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -241,7 +241,9 @@ sap.ui.define([
 	_MetadataConverter.prototype.getOrCreateArray = function (oParent, sProperty) {
 		var oResult = oParent[sProperty];
 
-		oResult ??= oParent[sProperty] = [];
+		if (!oResult) {
+			oResult = oParent[sProperty] = [];
+		}
 		return oResult;
 	};
 
@@ -255,7 +257,9 @@ sap.ui.define([
 	_MetadataConverter.prototype.getOrCreateObject = function (oParent, sProperty) {
 		var oResult = oParent[sProperty];
 
-		oResult ??= oParent[sProperty] = {};
+		if (!oResult) {
+			oResult = oParent[sProperty] = {};
+		}
 		return oResult;
 	};
 

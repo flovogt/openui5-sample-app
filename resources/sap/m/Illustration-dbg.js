@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,13 +10,13 @@ sap.ui.define([
 	"sap/ui/core/Control",
 	"./IllustrationRenderer",
 	"./IllustrationPool",
-	"sap/ui/core/Theming"
+	"sap/ui/core/Core"
 ], function(
 	Log,
 	Control,
 	IllustrationRenderer,
 	IllustrationPool,
-	Theming
+	Core
 ) {
 	"use strict";
 
@@ -41,7 +41,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -78,12 +78,7 @@ sap.ui.define([
 				 * Association to controls / IDs which label those controls (see WAI-ARIA attribute aria-labelledBy).
 	 			 * @since 1.106.0
 				 */
-				ariaLabelledBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"},
-				/**
-				 * Association to controls / IDs which label those controls (see WAI-ARIA attribute aria-describedBy).
-	 			 * @since 1.133.0
-				 */
-				ariaDescribedBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"}
+				ariaLabelledBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"}
 			},
 			dnd: { draggable: true, droppable: false }
 		},
@@ -154,7 +149,7 @@ sap.ui.define([
 		var sMappedType = sType,
 			sPrefix = "",
 			oMetadata = IllustrationPool.getIllustrationSetMetadata(sSet),
-			sCurrentTheme = Theming.getTheme(),
+			sCurrentTheme = Core.getConfiguration().getTheme(),
 			sCollectionPath = oCollectionMap[sCurrentTheme];
 
 		if (

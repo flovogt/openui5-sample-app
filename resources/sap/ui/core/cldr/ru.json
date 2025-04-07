@@ -1,7 +1,7 @@
 {
 	"__license": "This file has been derived from Unicode Common Locale Data Repository (CLDR) files (http://cldr.unicode.org). See the copyright and permission notice in the Unicode-Data-Files-LICENSE.txt available at the same location as this file or visit http://www.unicode.org/copyright.html",
-	"__version": "46.1.0",
-	"__buildtime": "2025-01-28T09:40:27.437Z",
+	"__version": "43.0.0",
+	"__buildtime": "2023-09-28T11:39:07.908Z",
 	"languages": {
 		"aa": "афарский",
 		"ab": "абхазский",
@@ -52,7 +52,6 @@
 		"bez": "бена",
 		"bfd": "бафут",
 		"bg": "болгарский",
-		"bgc": "харианви",
 		"bgn": "западный белуджский",
 		"bho": "бходжпури",
 		"bi": "бислама",
@@ -60,7 +59,6 @@
 		"bin": "бини",
 		"bkm": "ком",
 		"bla": "сиксика",
-		"blo": "ании",
 		"bm": "бамбара",
 		"bn": "бенгальский",
 		"bo": "тибетский",
@@ -97,7 +95,6 @@
 		"ckb_alt-menu": "курдский (сорани)",
 		"ckb_alt-variant": "центральнокурдский",
 		"clc": "чилкотин",
-		"cnr": "Черногорский",
 		"co": "корсиканский",
 		"cop": "коптский",
 		"cr": "кри",
@@ -291,7 +288,6 @@
 		"kv": "коми",
 		"kw": "корнский",
 		"kwk": "квакиутль",
-		"kxv": "куви",
 		"ky": "киргизский",
 		"la": "латинский",
 		"lad": "ладино",
@@ -302,10 +298,8 @@
 		"lez": "лезгинский",
 		"lg": "ганда",
 		"li": "лимбургский",
-		"lij": "лигурский",
 		"lil": "лиллуэт",
 		"lkt": "лакота",
-		"lmo": "ломбардский",
 		"ln": "лингала",
 		"lo": "лаосский",
 		"lol": "монго",
@@ -500,7 +494,6 @@
 		"swb": "коморский",
 		"syc": "классический сирийский",
 		"syr": "сирийский",
-		"szl": "силезский",
 		"ta": "тамильский",
 		"tce": "южный тутчоне",
 		"te": "телугу",
@@ -550,9 +543,7 @@
 		"uz": "узбекский",
 		"vai": "ваи",
 		"ve": "венда",
-		"vec": "венецианский",
 		"vi": "вьетнамский",
-		"vmw": "макуа",
 		"vo": "волапюк",
 		"vot": "водский",
 		"vun": "вунджо",
@@ -566,7 +557,6 @@
 		"wuu": "у",
 		"xal": "калмыцкий",
 		"xh": "коса",
-		"xnr": "кангри",
 		"xog": "сога",
 		"yao": "яо",
 		"yap": "яп",
@@ -915,8 +905,6 @@
 		"IM": "о-в Мэн",
 		"IN": "Индия",
 		"IO": "Британская территория в Индийском океане",
-		"IO-alt-biot": "Британская территория в Индийском океане",
-		"IO-alt-chagos": "архипелаг Чагос",
 		"IQ": "Ирак",
 		"IR": "Иран",
 		"IS": "Исландия",
@@ -1162,13 +1150,13 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
-					"h": "h:mm–h:mm B",
-					"m": "h:mm–h:mm B"
+					"B": "h:mm B – h:mm B",
+					"h": "h:mm – h:mm B",
+					"m": "h:mm – h:mm B"
 				},
 				"d": {
 					"d": "d–d"
@@ -1179,14 +1167,14 @@
 				},
 				"GyM": {
 					"G": "MM.y G – MM.y G",
-					"M": "MM.y–MM.y G",
-					"y": "MM.y–MM.y G"
+					"M": "MM.y – MM.y G",
+					"y": "MM.y – MM.y G"
 				},
 				"GyMd": {
-					"d": "dd.MM.y–dd.MM.y G",
+					"d": "dd.MM.y – dd.MM.y G",
 					"G": "dd.MM.y G – dd.MM.y G",
-					"M": "dd.MM.y–dd.MM.y G",
-					"y": "dd.MM.y–dd.MM.y G"
+					"M": "dd.MM.y – dd.MM.y G",
+					"y": "dd.MM.y – dd.MM.y G"
 				},
 				"GyMEd": {
 					"d": "ccc, dd.MM.y – ccc, dd.MM.y G",
@@ -1247,8 +1235,8 @@
 					"M": "M–M"
 				},
 				"Md": {
-					"d": "dd.MM–dd.MM",
-					"M": "dd.MM–dd.MM"
+					"d": "dd.MM – dd.MM",
+					"M": "dd.MM – dd.MM"
 				},
 				"MEd": {
 					"d": "E, dd.MM – E, dd.MM",
@@ -1272,13 +1260,13 @@
 					"y": "y–y"
 				},
 				"yM": {
-					"M": "MM.y–MM.y",
-					"y": "MM.y–MM.y"
+					"M": "MM.y – MM.y",
+					"y": "MM.y – MM.y"
 				},
 				"yMd": {
-					"d": "dd.MM.y–dd.MM.y",
-					"M": "dd.MM.y–dd.MM.y",
-					"y": "dd.MM.y–dd.MM.y"
+					"d": "dd.MM.y – dd.MM.y",
+					"M": "dd.MM.y – dd.MM.y",
+					"y": "dd.MM.y – dd.MM.y"
 				},
 				"yMEd": {
 					"d": "ccc, dd.MM.y – ccc, dd.MM.y",
@@ -1690,11 +1678,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm – h:mm B",
 					"m": "h:mm – h:mm B"
 				},
@@ -2215,11 +2203,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm – h:mm B",
 					"m": "h:mm – h:mm B"
 				},
@@ -2760,11 +2748,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm – h:mm B",
 					"m": "h:mm – h:mm B"
 				},
@@ -3285,11 +3273,11 @@
 			"intervalFormats": {
 				"intervalFormatFallback": "{0} – {1}",
 				"Bh": {
-					"B": "h B – h B",
+					"B": "h B – h B",
 					"h": "h–h B"
 				},
 				"Bhm": {
-					"B": "h:mm B – h:mm B",
+					"B": "h:mm B – h:mm B",
 					"h": "h:mm – h:mm B",
 					"m": "h:mm – h:mm B"
 				},
@@ -4331,6 +4319,7 @@
 			"Montserrat": "Монтсеррат",
 			"Nassau": "Нассау",
 			"New_York": "Нью-Йорк",
+			"Nipigon": "Нипигон",
 			"Nome": "Ном",
 			"Noronha": "Норонья",
 			"North_Dakota": {
@@ -4341,6 +4330,7 @@
 			"Nuuk": "Нуук",
 			"Ojinaga": "Охинага",
 			"Panama": "Панама",
+			"Pangnirtung": "Пангниртанг",
 			"Paramaribo": "Парамарибо",
 			"Phoenix": "Финикс",
 			"Port-au-Prince": "Порт-о-Пренс",
@@ -4348,11 +4338,13 @@
 			"Porto_Velho": "Порту-Велью",
 			"Puerto_Rico": "Пуэрто-Рико",
 			"Punta_Arenas": "Пунта-Аренас",
+			"Rainy_River": "Рейни-Ривер",
 			"Rankin_Inlet": "Ранкин-Инлет",
 			"Recife": "Ресифи",
 			"Regina": "Реджайна",
 			"Resolute": "Резольют",
 			"Rio_Branco": "Риу-Бранку",
+			"Santa_Isabel": "Санта-Изабел",
 			"Santarem": "Сантарен",
 			"Santiago": "Сантьяго",
 			"Santo_Domingo": "Санто-Доминго",
@@ -4368,6 +4360,7 @@
 			"Swift_Current": "Свифт-Керрент",
 			"Tegucigalpa": "Тегусигальпа",
 			"Thule": "Туле",
+			"Thunder_Bay": "Тандер-Бей",
 			"Tijuana": "Тихуана",
 			"Toronto": "Торонто",
 			"Tortola": "Тортола",
@@ -4375,6 +4368,7 @@
 			"Whitehorse": "Уайтхорс",
 			"Winnipeg": "Виннипег",
 			"Yakutat": "Якутат",
+			"Yellowknife": "Йеллоунайф",
 			"_parent": "Америка"
 		},
 		"Antarctica": {
@@ -4412,6 +4406,7 @@
 			"Bishkek": "Бишкек",
 			"Brunei": "Бруней",
 			"Chita": "Чита",
+			"Choibalsan": "Чойбалсан",
 			"Colombo": "Коломбо",
 			"Damascus": "Дамаск",
 			"Dhaka": "Дакка",
@@ -4560,6 +4555,7 @@
 			"Tallinn": "Таллин",
 			"Tirane": "Тирана",
 			"Ulyanovsk": "Ульяновск",
+			"Uzhgorod": "Ужгород",
 			"Vaduz": "Вадуц",
 			"Vatican": "Ватикан",
 			"Vienna": "Вена",
@@ -4567,6 +4563,7 @@
 			"Volgograd": "Волгоград",
 			"Warsaw": "Варшава",
 			"Zagreb": "Загреб",
+			"Zaporozhye": "Запорожье",
 			"Zurich": "Цюрих",
 			"_parent": "Европа"
 		},
@@ -4682,28 +4679,52 @@
 	},
 	"decimalFormat-short": {
 		"1000-one": "0 тыс'.'",
+		"1000-few": "0 тыс'.'",
+		"1000-many": "0 тыс'.'",
 		"1000-other": "0 тыс'.'",
 		"10000-one": "00 тыс'.'",
+		"10000-few": "00 тыс'.'",
+		"10000-many": "00 тыс'.'",
 		"10000-other": "00 тыс'.'",
 		"100000-one": "000 тыс'.'",
+		"100000-few": "000 тыс'.'",
+		"100000-many": "000 тыс'.'",
 		"100000-other": "000 тыс'.'",
 		"1000000-one": "0 млн",
+		"1000000-few": "0 млн",
+		"1000000-many": "0 млн",
 		"1000000-other": "0 млн",
 		"10000000-one": "00 млн",
+		"10000000-few": "00 млн",
+		"10000000-many": "00 млн",
 		"10000000-other": "00 млн",
 		"100000000-one": "000 млн",
+		"100000000-few": "000 млн",
+		"100000000-many": "000 млн",
 		"100000000-other": "000 млн",
 		"1000000000-one": "0 млрд",
+		"1000000000-few": "0 млрд",
+		"1000000000-many": "0 млрд",
 		"1000000000-other": "0 млрд",
 		"10000000000-one": "00 млрд",
+		"10000000000-few": "00 млрд",
+		"10000000000-many": "00 млрд",
 		"10000000000-other": "00 млрд",
 		"100000000000-one": "000 млрд",
+		"100000000000-few": "000 млрд",
+		"100000000000-many": "000 млрд",
 		"100000000000-other": "000 млрд",
 		"1000000000000-one": "0 трлн",
+		"1000000000000-few": "0 трлн",
+		"1000000000000-many": "0 трлн",
 		"1000000000000-other": "0 трлн",
 		"10000000000000-one": "00 трлн",
+		"10000000000000-few": "00 трлн",
+		"10000000000000-many": "00 трлн",
 		"10000000000000-other": "00 трлн",
 		"100000000000000-one": "000 трлн",
+		"100000000000000-few": "000 трлн",
+		"100000000000000-many": "000 трлн",
 		"100000000000000-other": "000 трлн"
 	},
 	"scientificFormat": {
@@ -4714,13 +4735,21 @@
 	},
 	"currencyFormat": {
 		"standard": "#,##0.00 ¤",
-		"standard-noCurrency": "#,##0.00",
 		"accounting": "#,##0.00 ¤",
-		"accounting-noCurrency": "#,##0.00",
+		"currencySpacing": {
+			"beforeCurrency": {
+				"currencyMatch": "[[:^S:]&[:^Z:]]",
+				"surroundingMatch": "[:digit:]",
+				"insertBetween": " "
+			},
+			"afterCurrency": {
+				"currencyMatch": "[[:^S:]&[:^Z:]]",
+				"surroundingMatch": "[:digit:]",
+				"insertBetween": " "
+			}
+		},
 		"sap-standard": "#,##0.00 ¤",
-		"sap-accounting": "#,##0.00 ¤",
-		"sap-standard-noCurrency": "#,##0.00",
-		"sap-accounting-noCurrency": "#,##0.00"
+		"sap-accounting": "#,##0.00 ¤"
 	},
 	"miscPattern": {
 		"approximately": "≈{0}",
@@ -4815,7 +4844,6 @@
 		"VND": "₫",
 		"XAF": "FCFA",
 		"XCD": "EC$",
-		"XCG": "Cg.",
 		"XOF": "F CFA",
 		"XPF": "CFPF",
 		"XXX": "XXXX"
@@ -4877,12 +4905,6 @@
 			"10p-24": {
 				"unitPrefixPattern": "и{0}"
 			},
-			"10p-27": {
-				"unitPrefixPattern": "р{0}"
-			},
-			"10p-30": {
-				"unitPrefixPattern": "кв{0}"
-			},
 			"10p1": {
 				"unitPrefixPattern": "да{0}"
 			},
@@ -4913,12 +4935,6 @@
 			"10p24": {
 				"unitPrefixPattern": "И{0}"
 			},
-			"10p27": {
-				"unitPrefixPattern": "Р{0}"
-			},
-			"10p30": {
-				"unitPrefixPattern": "Кв{0}"
-			},
 			"1024p1": {
 				"unitPrefixPattern": "Ки{0}"
 			},
@@ -4948,10 +4964,16 @@
 			},
 			"power2": {
 				"compoundUnitPattern1": "{0}²",
+				"compoundUnitPattern1-count-one": "{0}²",
+				"compoundUnitPattern1-count-few": "{0}²",
+				"compoundUnitPattern1-count-many": "{0}²",
 				"compoundUnitPattern1-count-other": "{0}²"
 			},
 			"power3": {
 				"compoundUnitPattern1": "{0}³",
+				"compoundUnitPattern1-count-one": "{0}³",
+				"compoundUnitPattern1-count-few": "{0}³",
+				"compoundUnitPattern1-count-many": "{0}³",
 				"compoundUnitPattern1-count-other": "{0}³"
 			},
 			"times": {
@@ -4987,14 +5009,23 @@
 			},
 			"angle-degree": {
 				"displayName": "°",
+				"unitPattern-count-one": "{0}°",
+				"unitPattern-count-few": "{0}°",
+				"unitPattern-count-many": "{0}°",
 				"unitPattern-count-other": "{0}°"
 			},
 			"angle-arc-minute": {
 				"displayName": "′",
+				"unitPattern-count-one": "{0}′",
+				"unitPattern-count-few": "{0}′",
+				"unitPattern-count-many": "{0}′",
 				"unitPattern-count-other": "{0}′"
 			},
 			"angle-arc-second": {
 				"displayName": "″",
+				"unitPattern-count-one": "{0}″",
+				"unitPattern-count-few": "{0}″",
+				"unitPattern-count-many": "{0}″",
 				"unitPattern-count-other": "{0}″"
 			},
 			"area-square-kilometer": {
@@ -5102,6 +5133,9 @@
 			},
 			"concentr-permillion": {
 				"displayName": "ppm",
+				"unitPattern-count-one": "{0} ppm",
+				"unitPattern-count-few": "{0} ppm",
+				"unitPattern-count-many": "{0} ppm",
 				"unitPattern-count-other": "{0} ppm"
 			},
 			"concentr-percent": {
@@ -5378,6 +5412,13 @@
 				"unitPattern-count-many": "{0} кал",
 				"unitPattern-count-other": "{0} кал"
 			},
+			"energy-foodcalorie": {
+				"displayName": "ккал",
+				"unitPattern-count-one": "{0} ккал",
+				"unitPattern-count-few": "{0} ккал",
+				"unitPattern-count-many": "{0} ккал",
+				"unitPattern-count-other": "{0} ккал"
+			},
 			"energy-kilojoule": {
 				"displayName": "кДж",
 				"unitPattern-count-one": "{0} кДж",
@@ -5527,6 +5568,9 @@
 			},
 			"length-earth-radius": {
 				"displayName": "R⊕",
+				"unitPattern-count-one": "{0} R⊕",
+				"unitPattern-count-few": "{0} R⊕",
+				"unitPattern-count-many": "{0} R⊕",
 				"unitPattern-count-other": "{0} R⊕"
 			},
 			"length-kilometer": {
@@ -5676,6 +5720,9 @@
 			},
 			"length-solar-radius": {
 				"displayName": "R☉",
+				"unitPattern-count-one": "{0} R☉",
+				"unitPattern-count-few": "{0} R☉",
+				"unitPattern-count-many": "{0} R☉",
 				"unitPattern-count-other": "{0} R☉"
 			},
 			"light-lux": {
@@ -5701,6 +5748,9 @@
 			},
 			"light-solar-luminosity": {
 				"displayName": "L☉",
+				"unitPattern-count-one": "{0} L☉",
+				"unitPattern-count-few": "{0} L☉",
+				"unitPattern-count-many": "{0} L☉",
 				"unitPattern-count-other": "{0} L☉"
 			},
 			"mass-tonne": {
@@ -5793,10 +5843,16 @@
 			},
 			"mass-earth-mass": {
 				"displayName": "M⊕",
+				"unitPattern-count-one": "{0} M⊕",
+				"unitPattern-count-few": "{0} M⊕",
+				"unitPattern-count-many": "{0} M⊕",
 				"unitPattern-count-other": "{0} M⊕"
 			},
 			"mass-solar-mass": {
 				"displayName": "M☉",
+				"unitPattern-count-one": "{0} M☉",
+				"unitPattern-count-few": "{0} M☉",
+				"unitPattern-count-many": "{0} M☉",
 				"unitPattern-count-other": "{0} M☉"
 			},
 			"mass-grain": {
@@ -5946,15 +6002,11 @@
 				"unitPattern-count-many": "{0} уз",
 				"unitPattern-count-other": "{0} уз"
 			},
-			"speed-beaufort": {
-				"displayName": "Бфт",
-				"unitPattern-count-one": "{0} Бфт",
-				"unitPattern-count-few": "{0} Бфт",
-				"unitPattern-count-many": "{0} Бфт",
-				"unitPattern-count-other": "{0} Бфт"
-			},
 			"temperature-generic": {
 				"displayName": "°",
+				"unitPattern-count-one": "{0}°",
+				"unitPattern-count-few": "{0}°",
+				"unitPattern-count-many": "{0}°",
 				"unitPattern-count-other": "{0}°"
 			},
 			"temperature-celsius": {
@@ -5973,6 +6025,9 @@
 			},
 			"temperature-kelvin": {
 				"displayName": "K",
+				"unitPattern-count-one": "{0} K",
+				"unitPattern-count-few": "{0} K",
+				"unitPattern-count-many": "{0} K",
 				"unitPattern-count-other": "{0} K"
 			},
 			"torque-pound-force-foot": {
@@ -6232,22 +6287,6 @@
 				"unitPattern-count-many": "{0} имп. кварт.",
 				"unitPattern-count-other": "{0} имп. кварт."
 			},
-			"speed-light-speed": {
-				"displayName": "light",
-				"unitPattern-count-other": "{0} light"
-			},
-			"concentr-portion-per-1e9": {
-				"displayName": "ppb",
-				"unitPattern-count-other": "{0} ppb"
-			},
-			"duration-night": {
-				"displayName": "ноч.",
-				"unitPattern-count-one": "{0} ноч.",
-				"unitPattern-count-few": "{0} ноч.",
-				"unitPattern-count-many": "{0} ноч.",
-				"unitPattern-count-other": "{0} ноч.",
-				"perUnitPattern": "{0}/ноч."
-			},
 			"coordinateUnit": {
 				"displayName": "направление",
 				"east": "{0} в. д.",
@@ -6258,9 +6297,9 @@
 		}
 	},
 	"lenient-scope-number": {
-		"minusSign": "-－﹣‑‒−⁻₋➖",
-		"commaSign": ",，﹐︐،٫、﹑､︑",
-		"plusSign": "+＋﬩﹢⁺₊➕"
+		"minusSign": "-‒⁻₋−➖﹣－",
+		"commaSign": ",،٫、︐︑﹐﹑，､",
+		"plusSign": "+⁺₊➕﬩﹢＋"
 	},
 	"currencyFormat-sap-short": {
 		"1000-one": "0 тыс'.' ¤",
@@ -6459,9 +6498,5 @@
 		"noon": {
 			"_at": "12:00"
 		}
-	},
-	"sap-calendarWeek": {
-		"narrow": "КН {0}",
-		"wide": "Календарная неделя {0}"
 	}
 }

@@ -1,13 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define(['sap/base/util/LoaderExtensions'], function (LoaderExtensions) {
 	"use strict";
-
-	let oVersionInfo;
 
 	/**
 	 * @alias module:sap/ui/VersionInfo
@@ -15,16 +13,7 @@ sap.ui.define(['sap/base/util/LoaderExtensions'], function (LoaderExtensions) {
 	 * @since 1.56.0
 	 * @public
 	 */
-	var VersionInfo = {
-		/**
-		 * Retrieves the version info in case it was already loaded.
-		 * @private
-		 * @ui5-restricted sap.ui.core
-		 */
-		get _content() {
-			return oVersionInfo;
-		}
-	};
+	var VersionInfo = {};
 
 	/**
 	 * Loads the version info asynchronously from resource "sap-ui-version.json".
@@ -60,6 +49,8 @@ sap.ui.define(['sap/base/util/LoaderExtensions'], function (LoaderExtensions) {
 	 */
 	var oVersionInfoPromise = null;
 
+	var oVersionInfo;
+
 	/**
 	 * Mapping of library name to it's dependencies.
 	 * Extracted from the loaded version info.
@@ -80,9 +71,6 @@ sap.ui.define(['sap/base/util/LoaderExtensions'], function (LoaderExtensions) {
 		mKnownComponents = null;
 	}
 
-	/**
-	 * @deprecated since 1.120
-	 */
 	Object.defineProperty(sap.ui, "versioninfo", {
 		configurable: true,
 		enumerable: true,

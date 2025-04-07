@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -79,7 +79,7 @@ function(
 	 *
 	 *
 	 * @author Frank Weigel
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @since 0.8.6
 	 * @alias sap.ui.base.ManagedObjectMetadata
 	 * @extends sap.ui.base.Metadata
@@ -126,29 +126,6 @@ function(
 		}
 
 		return result;
-	}
-
-	/**
-	 * Validates the given default class against its aggregation type.
-	 */
-	function validateDefaultClass(oAggregation, oOriginalAggregationInfo, fnClass) {
-		const fnDefaultClass = oOriginalAggregationInfo.defaultClass;
-
-		// we check if:
-		//    1. the defaultClass matches the aggregation type
-		//    2. the defaultClass matches the altTypes ('object' must not be included)
-		//    3. the defaultClass defined with a nullish value
-		if (fnDefaultClass) {
-			if (!BaseObject.isObjectA(fnDefaultClass.prototype, oAggregation.type)) {
-				throw new TypeError(`The 'defaultClass' of the aggregation '${oAggregation.name}' in '${fnClass.getName()}' is not of type '${oAggregation.type}'.`);
-			} else if (oAggregation.altTypes?.includes("object")) {
-				throw new TypeError(`The aggregation '${oAggregation.name}' in '${fnClass.getName()}' must not defined a 'defaultClass' together with the altType 'object'.`);
-			}
-		} else if (oOriginalAggregationInfo.hasOwnProperty("defaultClass")) {
-			throw new TypeError(`The 'defaultClass' of the aggregation '${oAggregation.name}' in '${fnClass.getName()}' is defined with a nullish value (${fnDefaultClass}).`);
-		}
-
-		return fnDefaultClass;
 	}
 
 	var Kind = {
@@ -282,7 +259,6 @@ function(
 		this.name = name;
 		this.type = info.type || 'sap.ui.core.Control';
 		this.altTypes = Array.isArray(info.altTypes) ? info.altTypes : undefined;
-		this.defaultClass = validateDefaultClass(this, info, oClass) || null;
 		this.multiple = typeof info.multiple === 'boolean' ? info.multiple : true;
 		this.singularName = this.multiple ? info.singularName || guessSingularName(name) : undefined;
 		this.bindable = !!info.bindable;
@@ -1342,9 +1318,9 @@ function(
 	 *
 	 * @private
 	 * @ui5-restricted SAPUI5 Distribution Layer Libraries
-	 *
-	 * Controls should prefer to declare aggregation forwarding in the metadata for the aggregation. See property
-	 * <code>forwarding</code> in the documentation of {@link sap.ui.base.ManagedObject.extend ManagedObject.extend}.
+	 * @experimental As of 1.54, this method is still in an experimental state. Its signature might change or it might be removed
+	 *   completely. Controls should prefer to declare aggregation forwarding in the metadata for the aggregation. See property
+	 *   <code>forwarding</code> in the documentation of {@link sap.ui.base.ManagedObject.extend ManagedObject.extend}.
 	 */
 	ManagedObjectMetadata.prototype.forwardAggregation = function(sForwardedSourceAggregation, mOptions) {
 

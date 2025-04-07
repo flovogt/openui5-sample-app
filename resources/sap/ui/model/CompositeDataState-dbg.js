@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -14,7 +14,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	 * @extends sap.ui.model.DataState
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.CompositeDataState
@@ -32,9 +32,6 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 			this.mChangedProperties = Object.assign({},this.mProperties);
 
 			this.aDataStates = aDataStates;
-			aDataStates.forEach((oDataState) => {
-				oDataState.setParent(this);
-			});
 		}
 	});
 
@@ -110,7 +107,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	/**
 	 * Returns the array of current state messages of the model.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of messages of the model
+	 * @returns {sap.ui.core.Message[]} The array of messages of the model
 	 *
 	 * @public
 	 */
@@ -121,7 +118,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	/**
 	 * Returns the array of current state messages of the control.
 	 *
-	 * @return {sap.ui.core.message.Message[]} The array of control messages
+	 * @return {sap.ui.core.Message[]} The array of control messages
 	 *
 	 * @public
 	 */
@@ -133,7 +130,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	 * Returns an array of all model and control messages of all parts of the composite binding,
 	 * regardless of whether they are old or new.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of all messages
+	 * @returns {sap.ui.core.Message[]} The array of all messages
 	 *
 	 * @public
 	 * @since 1.98.0
@@ -151,7 +148,7 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	/**
 	 * Returns the array of all current state messages combining the model and control messages.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of all messages
+	 * @returns {sap.ui.core.Message[]} The array of all messages
 	 *
 	 * @public
 	 */
@@ -200,16 +197,20 @@ sap.ui.define(['./DataState', "sap/base/util/deepEqual", "sap/base/util/each"], 
 	};
 
 	/**
-	 * Returns whether the data state is dirty in the UI control. A data state is dirty in the UI control if an entered
-	 * value did not pass the type validation.
+	 * Returns whether the data state is dirty in the UI control.
+	 * A data state is dirty in the UI control if the entered value did not yet pass the type validation.
 	 *
-	 * @returns {boolean}
-	 *   Whether this data state or at least one of the aggregated data states is dirty in the UI control
+	 * @returns {boolean} Whether the control data state is dirty
 	 * @public
 	 */
-	CompositeDataState.prototype.isControlDirty = function () {
-		return DataState.prototype.isControlDirty.call(this)
-			|| this.aDataStates.some((oDataState) => oDataState.isControlDirtyInternal());
+	CompositeDataState.prototype.isControlDirty = function() {
+		return this.aDataStates.reduce(function(bIsInvalid, oDataState) {
+			if (oDataState.isControlDirty()) {
+				return true;
+			} else {
+				return bIsInvalid;
+			}
+		}, DataState.prototype.isControlDirty.apply(this, arguments));
 	};
 
 	/**

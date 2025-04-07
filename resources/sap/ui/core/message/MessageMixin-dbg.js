@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,11 +8,8 @@
 sap.ui.define(["sap/ui/core/Element", "sap/ui/core/library", "sap/base/Log", "sap/ui/core/LabelEnablement"], function(Element, library, Log, LabelEnablement) {
 	"use strict";
 
-	// Marker for first visit of a gmessage
-	const HANDLEDBYMIXIN = Symbol("sap.ui.core.message.MessageMixin");
-
 	// shortcut for sap.ui.core.ValueState
-	const ValueState = library.ValueState;
+	var ValueState = library.ValueState;
 
 	/**
 	 * Applying the MessageMixin to a Control's prototype augments the refreshDataState function to support Label-texts.
@@ -49,16 +46,8 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/library", "sap/base/Log", "sa
 					// we simply take the first label text and ignore all others
 					var oLabel = Element.getElementById(sLabelId);
 					if (oLabel.getMetadata().isInstanceOf("sap.ui.core.Label") && oLabel.getText) {
-						let sAdditionalText = oMessage.getAdditionalText() || '';
-						const sLabel = oLabel.getText();
-						if (!sAdditionalText.split(',').includes(sLabel)) {
-							if (oMessage[HANDLEDBYMIXIN]) {
-								sAdditionalText = sAdditionalText ? `${sAdditionalText}, ${sLabel}` : sLabel;
-							} else {
-								sAdditionalText = sLabel;
-								oMessage[HANDLEDBYMIXIN] = true;
-							}
-							oMessage.setAdditionalText(sAdditionalText);
+						if (oMessage.getAdditionalText() !== oLabel.getText()) {
+							oMessage.setAdditionalText(oLabel.getText());
 							bForceUpdate = true;
 						}
 					} else {
@@ -69,7 +58,7 @@ sap.ui.define(["sap/ui/core/Element", "sap/ui/core/library", "sap/base/Log", "sa
 						);
 					}
 				}
-				if (!oMessage.getControlIds().includes(this.getId())){
+				if (oMessage.getControlId() !== this.getId()){
 					oMessage.addControlId(this.getId());
 					bForceUpdate = true;
 				}

@@ -1,12 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.SegmentedButton.
 sap.ui.define([
-	"sap/ui/core/Element",
 	'sap/ui/core/Lib',
 	'./library',
 	'./Button',
@@ -21,7 +20,6 @@ sap.ui.define([
 	'./SegmentedButtonRenderer'
 ],
 function(
-	Element,
 	Library,
 	library,
 	Button,
@@ -34,7 +32,7 @@ function(
 	ListItem,
 	IconPool,
 	SegmentedButtonRenderer
-) {
+	) {
 	"use strict";
 
 	// lazy dependency to sap/m/Image
@@ -59,7 +57,7 @@ function(
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -812,7 +810,7 @@ function(
 	/**
 	 * Setter for association <code>selectedButton</code>.
 	 *
-	 * @param {sap.ui.core.ID | sap.m.Button | null | undefined} vButton New value for association <code>setSelectedButton</code>
+	 * @param {string | sap.m.Button | null | undefined} vButton New value for association <code>setSelectedButton</code>
 	 *    An sap.m.Button instance which becomes the new target of this <code>selectedButton</code> association.
 	 *    Alternatively, the ID of an sap.m.Button instance may be given as a string.
 	 *    If the value of null, undefined, or an empty string is provided the first item will be selected.
@@ -840,7 +838,7 @@ function(
 	/**
 	 * Setter for association <code>selectedItem</code>.
 	 *
-	 * @param {sap.ui.core.ID | sap.m.SegmentedButtonItem | null | undefined} vItem New value for association <code>setSelectedItem</code>
+	 * @param {string | sap.m.SegmentedButtonItem | null | undefined} vItem New value for association <code>setSelectedItem</code>
 	 *    An sap.m.SegmentedButtonItem instance which becomes the new target of this <code>selectedItem</code> association.
 	 *    Alternatively, the ID of an <code>sap.m.SegmentedButtonItem</code> instance may be given as a string.
 	 *    If the value of null, undefined, or an empty string is provided, the first item will be selected.
@@ -849,7 +847,7 @@ function(
 	 * @override
 	 */
 	SegmentedButton.prototype.setSelectedItem = function (vItem) {
-		var oItem = typeof vItem === "string" && vItem !== "" ? Element.getElementById(vItem) : vItem,
+		var oItem = typeof vItem === "string" && vItem !== "" ? sap.ui.getCore().byId(vItem) : vItem,
 			oItemInstanceOfSegBtnItem = oItem instanceof SegmentedButtonItem,
 			vButton = oItemInstanceOfSegBtnItem ? oItem.oButton : vItem;
 

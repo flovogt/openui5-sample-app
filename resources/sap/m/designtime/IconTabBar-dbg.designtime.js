@@ -1,20 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides the Design Time Metadata for the sap.m.IconTabBar control
 sap.ui.define([
-	"sap/ui/core/Element",
 	"sap/ui/model/json/JSONModel",
-	"sap/ui/core/Fragment",
-	"sap/ui/core/Lib"
+	"sap/ui/core/Core",
+	"sap/ui/core/Fragment"
 ],
-	function(Element, JSONModel, Fragment, Lib) {
+	function (JSONModel, Core, Fragment) {
 		"use strict";
 
-		var oTextResources = Lib.getResourceBundleFor("sap.m.designtime");
+		var oTextResources = Core.getLibraryResourceBundle("sap.m.designtime");
 
 		var oSelectIconTabBarFilter = function (oControl, mPropertyBag) {
 			return new Promise(function (fnResolve) {
@@ -47,7 +46,7 @@ sap.ui.define([
 					oDialog.setModel(oModel);
 
 					oDialog.getBeginButton().attachPress(function (oEvent) {
-						var sNewSelectedKey = Element.getElementById("targetCombo").getSelectedKey();
+						var sNewSelectedKey = sap.ui.getCore().byId("targetCombo").getSelectedKey();
 
 						fnResolve(sNewSelectedKey);
 						oDialog.close();
@@ -103,8 +102,9 @@ sap.ui.define([
 							return {
 								aggregations: {
 									content: {
-										domRef: ":sap-domref > .sapMITBContainerContent",
-
+										domRef: function () {
+											return ":sap-domref > .sapMITBContainerContent";
+										},
 										actions: {
 											move: "moveControls"
 										}

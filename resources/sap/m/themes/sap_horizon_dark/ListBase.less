@@ -15,18 +15,14 @@
 
 .sapUiTableOnObjectPageAdjustmentsForSection .sapMListHdrText,
 .sapUiTableOnObjectPageAdjustmentsForSection .sapMSticky > .sapMListHdrTBar.sapMTB-Transparent-CTX {
-	background: var(--sapBackgroundColor);
+	background: @sapUiGlobalBackgroundColor;
 	border-top-right-radius: 0;
 	border-top-left-radius: 0;
 }
 
 .sapMListHdr {
-	border-top-right-radius: var(--sapElement_BorderCornerRadius);
-	border-top-left-radius: var(--sapElement_BorderCornerRadius);
-}
-
-.sapMListHdrText {
-	font-size: var(--sapGroup_Title_FontSize);
+	border-top-right-radius: @sapUiElementBorderCornerRadius;
+	border-top-left-radius: @sapUiElementBorderCornerRadius;
 }
 
 .sapUiTableOnObjectPageAdjustmentsForSection .sapMListHdr {
@@ -40,15 +36,13 @@
 }
 
 .sapMGrowingList {
-	background-color: var(--sapList_Background);
+	background-color: @sapUiListBackground;
 }
 
 .sapMGrowingListDummyColumn {
-	border-right: 1px solid var(--sapList_TableFixedBorderColor);
+	border-right: 1px solid @sapUiListTableFixedBorderColor;
 }
 
 .sapMGrowingListTrigger {
-	border-top: var(--sapList_BorderWidth) solid var(--sapList_HeaderBorderColor);
+    border-top: @sapUiListBorderWidth solid @sapUiListHeaderBorderColor;
 }
-
-._sap_m_ListBase_Rounded_HeaderToolbarMixin();

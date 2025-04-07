@@ -1,20 +1,20 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/ui/core/Element",
 	"sap/ui/core/util/reflection/JsControlTreeModifier"
-], function(Element, JsControlTreeModifier) {
+], function(JsControlTreeModifier) {
 	"use strict";
 
 	/**
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
+	 * @experimental Since 1.27.0
 	 */
 	var UnhideForm = { };
 
@@ -88,12 +88,12 @@ sap.ui.define([
 		//TODO remove sUnhideId when rta is switched to new logic to create reveal changes
 		var oContent = {};
 		if (oSpecificChangeInfo.sUnhideId) {
-			var oUnhideElement = Element.getElementById(oSpecificChangeInfo.sUnhideId);
+			var oUnhideElement = sap.ui.getCore().byId(oSpecificChangeInfo.sUnhideId);
 			oContent.elementSelector = JsControlTreeModifier.getSelector(oUnhideElement, mPropertyBag.appComponent);
 			oChangeWrapper.addDependentControl(oUnhideElement, "elementSelector", mPropertyBag);
 		} else if (oSpecificChangeInfo.revealedElementId ) {
 			//translate from FormElement (unstable id) to the label control (stable id and in public aggregation)
-			var oFormElement = Element.getElementById(oSpecificChangeInfo.revealedElementId || oSpecificChangeInfo.sUnhideId);
+			var oFormElement = sap.ui.getCore().byId(oSpecificChangeInfo.revealedElementId || oSpecificChangeInfo.sUnhideId);
 			var oLabel = oFormElement.getLabel();
 			oContent.elementSelector = JsControlTreeModifier.getSelector(oLabel, mPropertyBag.appComponent);
 			oChangeWrapper.addDependentControl(oLabel, "elementSelector", mPropertyBag);
@@ -143,9 +143,8 @@ sap.ui.define([
 								|| (oModifier.getControlType(oField) === "sap.ui.core.Title")
 								|| (oModifier.getControlType(oField) === "sap.m.Title")
 								|| (oModifier.getControlType(oField) === "sap.m.Toolbar")
-								|| (oModifier.getControlType(oField) === "sap.m.OverflowToolbar")
-							) {
-								return true;
+								|| (oModifier.getControlType(oField) === "sap.m.OverflowToolbar")) {
+								return undefined;
 							}
 							oModifier.setVisible(oField, false);
 						}
@@ -157,26 +156,10 @@ sap.ui.define([
 	};
 
 	UnhideForm.getChangeVisualizationInfo = function(oChange, oAppComponent) {
-		// Groups cannot be revealed, so we just need to handle the FormElement case
-		const oElementSelector = oChange.getContent().elementSelector;
-		const oFormSelector = oChange.getSelector();
-		const oLabel = JsControlTreeModifier.bySelector(oElementSelector, oAppComponent);
-		const oFormElement = oLabel.getParent();
-		const oForm = JsControlTreeModifier.bySelector(oFormSelector, oAppComponent);
-
-		const oReturn = {
-			affectedControls: [oFormElement.getId()],
+		return {
+			affectedControls: [JsControlTreeModifier.bySelector(oChange.getContent().elementSelector, oAppComponent).getParent().getId()],
 			updateRequired: true
 		};
-
-		// If the form element is currently invisible (defined by the Label), the indicator is on the form
-		// We don't show it on the group because the group could have been removed before, leading to the
-		// element to be implicitly moved to another group, leading to inconsistent results in visualization
-		if (!oLabel.getVisible()) {
-			oReturn.displayControls = [oForm.getId()];
-		}
-
-		return oReturn;
 	};
 
 	return UnhideForm;

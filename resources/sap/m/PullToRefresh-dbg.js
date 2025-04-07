@@ -1,12 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.PullToRefresh.
 sap.ui.define([
-	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
 	'./library',
 	'sap/ui/core/Control',
@@ -18,7 +17,7 @@ sap.ui.define([
 	"sap/m/BusyIndicator",
 	"sap/m/ImageHelper"
 ],
-	function(Library, jQuery, library, Control, Device, PullToRefreshRenderer, KeyCodes, encodeXML, InvisibleText, BusyIndicator, ImageHelper) {
+	function(jQuery, library, Control, Device, PullToRefreshRenderer, KeyCodes, encodeXML, InvisibleText, BusyIndicator, ImageHelper) {
 	"use strict";
 
 	/**
@@ -37,7 +36,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -364,7 +363,7 @@ sap.ui.define([
 	};
 
 	PullToRefresh.prototype._getRB = function(){
-		return Library.getResourceBundleFor("sap.m");
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
 	};
 
 	return PullToRefresh;

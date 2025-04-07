@@ -1,17 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/ui/core/InvisibleText",
-	"sap/ui/core/IconPool", // side effect: required when calling RenderManager#icon
-	"sap/ui/core/Lib"
-], function(
-	InvisibleText,
-	_IconPool,
-	Library
+	"sap/ui/core/IconPool"
+], function (
+	InvisibleText, IconPool
 ) {
 	"use strict";
 
@@ -40,6 +37,7 @@ sap.ui.define([
 		ARIA_CURRENT: "aria-current",
 		ARIA_LABEL: "aria-label",
 		ARIA_HASPOPUP: "aria-haspopup",
+		ARIA_DISABLED: "aria-disabled",
 		ARIA_DESCRIBEDBY: "aria-describedby"
 	};
 
@@ -48,7 +46,7 @@ sap.ui.define([
 			CLASSES: CLASSES,
 			ATTRIBUTES: ATTRIBUTES
 		},
-		oResourceBundle = Library.getResourceBundleFor("sap.m");
+		oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 	WizardProgressNavigatorRenderer.render = function (oRm, oControl) {
 		this.startNavigator(oRm, oControl);
@@ -117,6 +115,8 @@ sap.ui.define([
 	};
 
 	WizardProgressNavigatorRenderer.startStep = function (oRm, oControl, iStepNumber, sStepTitle, sIconUri, sOptionalLabel) {
+		var aSteps = oControl._aCachedSteps;
+		var	oCurrentStep = aSteps[iStepNumber - 1];
 		var bCurrentStepActive = oControl._isActiveStep(iStepNumber);
 		var sStepActive = bCurrentStepActive ? "ACTIVE" : "INACTIVE";
 		var sValueText = oResourceBundle.getText("WIZARD_STEP_" + sStepActive + "_LABEL", [iStepNumber, sStepTitle, sOptionalLabel]);
@@ -124,13 +124,16 @@ sap.ui.define([
 			role: "listitem",
 			label: sValueText
 		};
-		const sStepId = oControl.getId() + "-step-" + oControl._aStepIds[iStepNumber - 1];
 
-		oRm.openStart("li", sStepId )
+		oRm.openStart("li")
 			.class(CLASSES.STEP)
 			.attr(ATTRIBUTES.STEP, iStepNumber)
 			.attr("tabindex", "-1")
 			.accessibilityState(mACCOptions);
+
+		if (!oCurrentStep || parseInt(oCurrentStep.style.zIndex)) {
+			oRm.attr("aria-disabled", "true");
+		}
 
 		oRm.attr("aria-posinset", iStepNumber);
 
@@ -188,7 +191,7 @@ sap.ui.define([
 			oRm.openStart("span")
 				.class(CLASSES.STEP_TITLE_OPTIONAL_LABEL)
 				.openEnd()
-				.text(sOptionalLabel)
+				.text("(" + sOptionalLabel + ")")
 				.close("span");
 		}
 

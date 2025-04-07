@@ -86,15 +86,6 @@
 	right: 0;
 }
 
-.sapFFCL.sapFFLActiveResize {
-	.sapFFCLOverlay {
-		display: block;
-	}
-	.sapFFCLColumnContent {
-		pointer-events: none;
-	}
-}
-
 .sapFFCLOverlay > .sapFFCLOverlaySeparator {
 	position: absolute;
 	z-index: 3;
@@ -147,7 +138,7 @@
 		height: 2rem;
 		line-height: 2rem;
 		position: relative;
-		z-index: 3; // the separator grip must be above the separator so its all area to be clickable/interactive
+		z-index: 1;
 
 		.sapFFCLColumnSeparatorGripIcon {
 			cursor: col-resize;
@@ -264,19 +255,16 @@
 .sapFFCLColumnBegin {
 	z-index: 3;
 	flex-shrink: 0;
-	width: 0;
 }
 
 .sapFFCLColumnMid {
 	z-index: 2;
 	width:100%;
-	overflow-x: auto;
 }
 
 .sapFFCLColumnEnd {
 	z-index: 1;
 	flex-shrink: 0;
-	width: 0;
 }
 
 html[data-sap-ui-animation='on'] {

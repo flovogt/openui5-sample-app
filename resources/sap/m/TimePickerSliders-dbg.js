@@ -1,14 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/date/CalendarType",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
+	'sap/ui/core/library',
 	'sap/ui/core/Control',
 	'sap/ui/model/type/Date',
 	'sap/ui/model/odata/type/ODataType',
@@ -20,13 +17,11 @@ sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/core/Locale',
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration",
 	'sap/ui/core/date/UI5Date'
 ],
 	function(
-		Formatting,
-		CalendarType,
-		Element,
-		Library,
+		coreLibrary,
 		Control,
 		SimpleDateType,
 		ODataType,
@@ -38,11 +33,13 @@ sap.ui.define([
 		Device,
 		Locale,
 		jQuery,
+		Configuration,
 		UI5Date
 	) {
 		"use strict";
 
-		var DEFAULT_STEP = 1;
+		var DEFAULT_STEP = 1,
+			CalendarType = coreLibrary.CalendarType;
 
 		/**
 		 * Constructor for a new <code>TimePickerSliders</code>.
@@ -55,7 +52,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @public
@@ -165,7 +162,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype.init = function () {
-			var oLocale = new Locale(Formatting.getLanguageTag()),
+			var oLocale = Configuration.getFormatSettings().getFormatLocale(),
 				oLocaleData = LocaleData.getInstance(oLocale),
 				aPeriods = oLocaleData.getDayPeriods("abbreviated"),
 				sDefaultDisplayFormat = oLocaleData.getTimePattern("medium");
@@ -692,7 +689,7 @@ sap.ui.define([
 		 */
 		TimePickerSliders.prototype._getLocaleBasedPattern = function (sPlaceholder) {
 			return LocaleData.getInstance(
-				new Locale(Formatting.getLanguageTag())
+				Configuration.getFormatSettings().getFormatLocale()
 			).getTimePattern(sPlaceholder);
 		};
 
@@ -714,7 +711,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype._setupLists = function () {
-			var oRb = Library.getResourceBundleFor("sap.m"),
+			var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
 				sLabelHours = oRb.getText("TIMEPICKER_LBL_HOURS"),
 				sLabelMinutes = oRb.getText("TIMEPICKER_LBL_MINUTES"),
 				sLabelSeconds = oRb.getText("TIMEPICKER_LBL_SECONDS"),
@@ -783,8 +780,8 @@ sap.ui.define([
 			if (sFormat.indexOf("a") !== -1) {
 				this.addAggregation("_columns", new TimePickerSlider(this.getId() + "-listFormat", {
 					items: [
-						new VisibleItem({ key: "am", text: this._sAM }),
-						new VisibleItem({ key: "pm", text: this._sPM })
+						{ key: "am", text: this._sAM },
+						{ key: "pm", text: this._sPM }
 					],
 					expanded: this._onSliderExpanded,
 					collapsed: this._onSliderCollapsed,
@@ -831,7 +828,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype._getHoursSlider = function () {
-			return Element.getElementById(this.getId() + "-listHours") || null;
+			return sap.ui.getCore().byId(this.getId() + "-listHours") || null;
 		};
 
 		/**
@@ -840,7 +837,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype._getMinutesSlider = function () {
-			return Element.getElementById(this.getId() + "-listMins") || null;
+			return sap.ui.getCore().byId(this.getId() + "-listMins") || null;
 		};
 
 		/**
@@ -849,7 +846,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype._getSecondsSlider = function () {
-			return Element.getElementById(this.getId() + "-listSecs") || null;
+			return sap.ui.getCore().byId(this.getId() + "-listSecs") || null;
 		};
 
 		/**
@@ -858,7 +855,7 @@ sap.ui.define([
 		 * @private
 		 */
 		TimePickerSliders.prototype._getFormatSlider = function () {
-			return Element.getElementById(this.getId() + "-listFormat") || null;
+			return sap.ui.getCore().byId(this.getId() + "-listFormat") || null;
 		};
 
 		/**
@@ -916,7 +913,7 @@ sap.ui.define([
 			}
 
 			if (!sCalendarType) {
-				sCalendarType = Formatting.getCalendarType();
+				sCalendarType = Configuration.getCalendarType();
 			}
 
 			return this._getFormatterInstance(sPattern, bRelative, sCalendarType);

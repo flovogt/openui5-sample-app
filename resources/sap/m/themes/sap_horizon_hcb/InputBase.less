@@ -3,54 +3,52 @@
 /* Horizon High Contrast Black theme  */
 /* ================================== */
 
-/* ========================================================================== */
-/* Variables overriding */
-/* ========================================================================== */
+// ==========================================================================
+// Variables overriding
+// ==========================================================================
 
 @_sap_m_InputBase_InnerMinWidth: 2.75rem;
 @_sap_m_InputBase_InnerPadding: 0 0.625rem;
-@_sap_m_InputBase_DisabledOpacity: var(--sapContent_DisabledOpacity);
+@_sap_m_InputBase_DisabledOpacity: @sapUiContentDisabledOpacity;
 @_sap_m_InputBase_IconLineHeight: 2.125rem;
 @_sap_m_InputBase_IconWidth: 2.25rem;
 @_sap_m_InputBase_IconMinWidth: 2.25rem;
 @_sap_m_InputBase_FocusOffset_Busy: 3px;
 
-.sapMInputBaseContentWrapper:not(.sapMInputBaseContentWrapperError):not(.sapMInputBaseContentWrapperWarning):not(.sapMInputBaseContentWrapperInformation):not(.sapMInputBaseDisabledWrapper):not(.sapMInputBaseReadonlyWrapper) {
-	border: var(--sapContent_FocusWidth) var(--sapField_BorderStyle) var(--sapField_BorderColor);
+.sapMInputBaseContentWrapper:not(.sapMInputBaseContentWrapperError):not(.sapMInputBaseContentWrapperWarning):not(.sapMInputBaseContentWrapperInformation):not(.sapMInputBaseDisabledWrapper) {
+	border: @sapUiContentFocusWidth @sapUiFieldBorderStyle @sapUiFieldBorderColor;
 }
 
 .sapMInputBase:not(.sapMInputBaseDisabled):not(.sapMInputBaseIconPressed) .sapMInputBaseIconContainer .sapMInputBaseIcon {
 	box-sizing: border-box;
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 
 	&:hover {
-		background: var(--sapButton_Lite_Hover_Background);
-		border-left: 1px solid var(--sapList_SelectionBorderColor);
+		background: @sapUiButtonLiteHoverBackground;
+		border-left: 1px solid @sapUiListSelectionBorderColor;
 	}
 
 	&:active {
-		background-color: var(--sapButton_Lite_Active_Background);
-		color: var(--sapButton_Active_TextColor);
-		border-left: 1px solid var(--sapList_SelectionBorderColor);
+		background-color: @sapUiButtonLiteActiveBackground;
+		color: @sapUiButtonActiveTextColor;
+		border-left: 1px solid @sapUiListSelectionBorderColor;
 	}
 }
 
 .sapMInputBaseIconPressed .sapMInputBaseIcon {
-	background: var(--sapButton_Selected_Background);
-	border-left: 1px solid var(--sapList_SelectionBorderColor);
+	background: @sapUiButtonSelectedBackground;
+	border-left: 1px solid @sapUiListSelectionBorderColor;
 }
 
 .sapMInputBaseDisabledWrapper .sapMInputBaseIcon {
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 
 	&:hover {
 		background: transparent;
 	}
 }
 
-.sapMInputBaseContentWrapperWarning,
-.sapMInputBaseContentWrapperError {
-
+.sapMInputBaseContentWrapperWarning, .sapMInputBaseContentWrapperError {
 	.sapMInputBaseInner {
 		font-style: italic;
 		font-weight: bold;
@@ -68,12 +66,12 @@
 }
 
 .sapMInputBaseContentWrapperError .sapMInputBaseInner::-webkit-input-placeholder {
-	color: var(--sapField_TextColor);
+	color: @sapUiFieldTextColor;
 	font-weight: bold;
 }
 
 .sapMInputBaseContentWrapperError .sapMInputBaseInner::-moz-placeholder {
-	color: var(--sapField_TextColor);
+	color: @sapUiFieldTextColor;
 	font-weight: bold;
 }
 
@@ -101,25 +99,20 @@
 	text-align: right;
 }
 
-.sapMInputBaseReadonly:not(.sapMInputBaseDisabled) .sapMInputBaseContentWrapper {
-	border: var(--sapElement_BorderWidth) var(--sapField_BorderStyle) var(--sapField_BorderColor);
-}
-
 .sapMLIBActive {
-
 	.sapMInputBaseInner,
 	.sapMInputBaseContentWrapper {
-		color: var(--sapList_Active_TextColor);
+		color: @sapUiListActiveTextColor;
 		background: transparent;
 	}
 
 	.sapMInputDescriptionText {
-		color: var(--sapList_Active_TextColor);
+		color: @sapUiListActiveTextColor;
 	}
 }
 
 .sapMLIBActive .sapMInputBaseInner::-webkit-input-placeholder {
-	color: var(--sapList_Active_TextColor);
+	color: @sapUiListActiveTextColor;
 }
 
 .sapUiSizeCondensed .sapUiTableDataCell .sapMInputBase .sapMInputBaseContentWrapper:not(.sapMInputBaseContentWrapperState) {

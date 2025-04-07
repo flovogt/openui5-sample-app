@@ -1,23 +1,21 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	'./InstanceManager',
-	"sap/ui/core/AnimationMode",
-	"sap/ui/core/ControlBehavior",
 	'sap/ui/core/Popup',
 	'sap/ui/core/library',
 	'sap/ui/core/Control',
 	'sap/ui/core/Element',
-	'sap/ui/core/UIArea',
 	'sap/ui/Device',
 	"sap/base/Log",
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
-	function(InstanceManager, AnimationMode, ControlBehavior, Popup, coreLibrary, Control, Element, UIArea, Device, Log, jQuery) {
+	function(InstanceManager, Popup, coreLibrary, Control, Element, Device, Log, jQuery, Configuration) {
 		"use strict";
 
 		// shortcut for sap.ui.core.Dock
@@ -74,7 +72,7 @@ sap.ui.define([
 		 * The message toast has the same behavior on all devices. However, you can adjust the width of the control, for example, for use on a desktop device.
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @namespace
 		 * @public
@@ -228,7 +226,7 @@ sap.ui.define([
 
 			oMessageToastDomRef.className = CSSCLASS + " " + ENABLESELECTIONCLASS + " " + BELIZECONTRAST + " " + BELIZECONTRASTPLUS;
 
-			if (ControlBehavior.isAccessibilityEnabled()) {
+			if (Configuration.getAccessibility()) {
 				oMessageToastDomRef.setAttribute("role", "alert");
 			}
 
@@ -327,8 +325,8 @@ sap.ui.define([
 		MessageToast._setCloseAnimation = function($MessageToastDomRef, iDuration, fnClose, mSettings) {
 			var sCssTransition = "opacity " + mSettings.animationTimingFunction + " " + mSettings.animationDuration + "ms",
 				sTransitionEnd = "webkitTransitionEnd." + CSSCLASS + " transitionend." + CSSCLASS,
-				sAnimationMode = ControlBehavior.getAnimationMode(),
-				bHasAnimations = sAnimationMode !== AnimationMode.none && sAnimationMode !== AnimationMode.minimal;
+				sAnimationMode = Configuration.getAnimationMode(),
+				bHasAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 			if (bHasAnimations && mSettings.animationDuration > 0) {
 				$MessageToastDomRef[0].style.webkitTransition = sCssTransition;
@@ -407,14 +405,7 @@ sap.ui.define([
 		 * @public
 		 */
 		MessageToast.show = function(sMessage, mOptions) {
-			// disable opening of toasts then notoasts is set to true
-			// required for performance measurements
-			if (/sap-ui-xx-no-toasts=true/.test(document.location.search)) {
-				return;
-			}
-
 			var oOpener = Element.closestTo(document.activeElement);
-			var oUI5Area = oOpener && oOpener.getUIArea && oOpener.getUIArea();
 			var oAccSpan;
 			var that = MessageToast,
 				mSettings = jQuery.extend({}, MessageToast._mSettings, { message: sMessage }),
@@ -425,12 +416,6 @@ sap.ui.define([
 				iMouseLeaveTimeoutId;
 
 			MessageToast._mSettings.opener = oOpener;
-
-			// Find the upper-most parent to attach the keyboard shortcut as we need to be
-			// able to open the message no matter where the focus is currently
-			if (!this._oRootNode || (this._oRootNode && oUI5Area && oUI5Area.getRootNode() !== this._oRootNode)) {
-				this._oRootNode = oUI5Area ? oUI5Area.getRootNode() : document.documentElement;
-			}
 
 			mOptions = normalizeOptions(mOptions);
 
@@ -484,13 +469,7 @@ sap.ui.define([
 			oAccSpan.setAttribute("class", "sapMMessageToastHiddenFocusable");
 
 			oPopup.getContent().prepend(oAccSpan);
-
-			if (this._oRootNode) {
-				this._oRootNode.removeEventListener("keydown", that._fnKeyDown.bind(that));
-				this._oRootNode.addEventListener("keydown", that._fnKeyDown.bind(that));
-
-				oAccSpan.addEventListener("keydown", handleKbdClose.bind(this));
-			}
+			oAccSpan.addEventListener("keydown", handleKbdClose.bind(this));
 
 			// opens the popup's content at the position specified via #setPosition
 			oPopup.open();

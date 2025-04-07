@@ -103,7 +103,7 @@
 				position: absolute;
 				width: 9px;
 				height: 9px;
-				border: solid var(--sapField_Picker_BorderWidth) var(--sapField_Picker_BorderColor);
+				border: 1px solid @sapUiContentNonInteractiveIconColor;
 				border-radius: 6px;
 				pointer-events: none;
 			}
@@ -632,14 +632,15 @@ html[data-sap-ui-browser^="ie"] .sapMPopover .sapUiColorPicker-ColorPickerMatrix
 	}
 	.sapUiCPHSLV {
 		display: flex;
-		& > div:last-child:not(.ColorPickerInputFieldsLeft) {
-			bottom: 2rem;
+		& > div:last-child {
+			visibility: hidden; //hide the not needed input (val or lit) for display flex reasons
 		}
 	}
 	.sapUiCPRGBA {
 		display: flex;
-		& > div:last-child {
-			visibility: hidden;
+		& > div:last-child:not(.ColorPickerInputFieldsLeft) {
+			//move A field down
+			top: 2rem;
 		}
 	}
 	.sapUiCPHSLVText {

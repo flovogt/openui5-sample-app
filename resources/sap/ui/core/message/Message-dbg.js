@@ -1,17 +1,17 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides the implementation for a Message
 sap.ui.define([
 	'./MessageType',
-	'sap/base/future',
+	'sap/base/Log',
 	'sap/base/util/uid',
 	'sap/ui/base/Object'
 ],
-	function(MessageType, future, uid, BaseObject) {
+	function(MessageType, Log, uid, BaseObject) {
 	"use strict";
 
 	const mMessageType2Severity = {
@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @param {object} [mParameters] a map which contains the following parameter properties:
 	 * @param {string} [mParameters.id] The message id: will be generated if no id is set
@@ -43,7 +43,7 @@ sap.ui.define([
 	 * @param {string} [mParameters.description] The message description
 	 * @param {string} [mParameters.descriptionUrl] The message description url to get a more detailed message
 	 * @param {string} [mParameters.additionalText] The message additionalText
-	 * @param {module:sap/ui/core/message/MessageType} [mParameters.type=module:sap/ui/core/message/MessageType.None] The message type
+	 * @param {sap.ui.core.MessageType} [mParameters.type=sap.ui.core.MessageType.None] The message type
 	 * @param {string} [mParameters.code] The message code
 	 * @param {boolean} [mParameters.technical=false] If the message is set as technical message
 	 * @param {object} [mParameters.technicalDetails] An object containing technical details for a message
@@ -270,21 +270,21 @@ sap.ui.define([
 	/**
 	 * Set message type
 	 *
-	 * @param {module:sap/ui/core/message/MessageType} sType The Message type
+	 * @param {sap.ui.core.MessageType} sType The Message type
 	 * @public
 	 */
 	Message.prototype.setType = function(sType) {
 		if (sType in MessageType) {
 			this.type = sType;
 		} else {
-			future.errorThrows("MessageType must be of type sap/ui/core/message/MessageType");
+			Log.error("MessageType must be of type sap.ui.core.MessageType");
 		}
 	};
 
 	/**
 	 * Returns the message type
 	 *
-	 * @returns {module:sap/ui/core/message/MessageType} type
+	 * @returns {sap.ui.core.MessageType} type
 	 * @public
 	 */
 	Message.prototype.getType = function() {
@@ -355,7 +355,7 @@ sap.ui.define([
 		if (BaseObject.isObjectA(oMessageProcessor, "sap.ui.core.message.MessageProcessor")) {
 			this.processor = oMessageProcessor;
 		} else {
-			future.errorThrows("oMessageProcessor must be an instance of 'sap.ui.core.message.MessageProcessor'");
+			Log.error("oMessageProcessor must be an instance of 'sap.ui.core.message.MessageProcessor'");
 		}
 	};
 
@@ -508,7 +508,7 @@ sap.ui.define([
 	 *   <code>0</code> if the message types are equal, a number smaller than <code>0</code> if the
 	 *   first message's type has higher severity, a number larger than <code>0</code> if the
 	 *   first message's type has lower severity and <code>NaN</code> in case one of the given
-	 *   messages has a type not defined in {@link module:sap/ui/core/message/MessageType}
+	 *   messages has a type not defined in {@link sap.ui.core.MessageType}
 	 * @private
 	 */
 	Message.compare = function (oMessage0, oMessage1) {

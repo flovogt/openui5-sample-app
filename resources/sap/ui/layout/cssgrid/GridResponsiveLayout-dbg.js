@@ -1,14 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/ui/layout/cssgrid/GridLayoutBase",
-	"sap/ui/Device",
-	"sap/ui/layout/cssgrid/GridSettings"
-], function (GridLayoutBase, Device, GridSettings) {
+	"sap/ui/Device"
+], function (GridLayoutBase, Device) {
 	"use strict";
 
 	/**
@@ -22,7 +21,7 @@ sap.ui.define([
 	 * Have to possibility to hold multiple sap.ui.layout.cssgrid.GridSettings and apply the currently active GridSettings.
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @extends sap.ui.layout.cssgrid.GridLayoutBase
 	 *
@@ -47,27 +46,27 @@ sap.ui.define([
 				/**
 				 * The sap.ui.layout.cssgrid.GridSettings applied if no settings are provided for a specific size
 				 */
-				layout: { type: "sap.ui.layout.cssgrid.GridSettings", defaultClass: GridSettings, multiple: false },
+				layout: { type: "sap.ui.layout.cssgrid.GridSettings", multiple: false },
 
 				/**
 				 * The sap.ui.layout.cssgrid.GridSettings applied for size "S"
 				 */
-				layoutS: { type: "sap.ui.layout.cssgrid.GridSettings", defaultClass: GridSettings, multiple: false },
+				layoutS: { type: "sap.ui.layout.cssgrid.GridSettings", multiple: false },
 
 				/**
 				 * The sap.ui.layout.cssgrid.GridSettings applied for size "M"
 				 */
-				layoutM: { type: "sap.ui.layout.cssgrid.GridSettings", defaultClass: GridSettings, multiple: false },
+				layoutM: { type: "sap.ui.layout.cssgrid.GridSettings", multiple: false },
 
 				/**
 				 * The sap.ui.layout.cssgrid.GridSettings applied for size "L"
 				 */
-				layoutL: { type: "sap.ui.layout.cssgrid.GridSettings", defaultClass: GridSettings, multiple: false },
+				layoutL: { type: "sap.ui.layout.cssgrid.GridSettings", multiple: false },
 
 				/**
 				 * The sap.ui.layout.cssgrid.GridSettings applied for size "XL"
 				 */
-				layoutXL: { type: "sap.ui.layout.cssgrid.GridSettings", defaultClass: GridSettings, multiple: false }
+				layoutXL: { type: "sap.ui.layout.cssgrid.GridSettings", multiple: false }
 			},
 			events: {
 

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -13,8 +13,9 @@ sap.ui.define([
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/base/ManagedObjectModel",
 	"sap/base/util/JSTokenizer",
+	"sap/base/util/ObjectPath",
 	"sap/base/util/resolveReference",
-	"sap/base/future",
+	"sap/base/Log",
 	"sap/ui/base/DesignTime"
 ],
 	function(
@@ -25,8 +26,9 @@ sap.ui.define([
 		JSONModel,
 		MOM,
 		JSTokenizer,
+		ObjectPath,
 		resolveReference,
-		future,
+		Log,
 		DesignTime
 	) {
 		"use strict";
@@ -90,7 +92,7 @@ sap.ui.define([
 							if (oCommandExecution) {
 								oCommandExecution.trigger();
 							} else {
-								future.errorThrows("Handler '" + sName + "' could not be resolved. No CommandExecution defined for command: " + sCommand);
+								Log.error("Handler '" + sName + "' could not be resolved. No CommandExecution defined for command: " + sCommand);
 							}
 						};
 						fnHandler._sapui_commandName = sCommand;
@@ -123,7 +125,7 @@ sap.ui.define([
 						if (iEndBracket > iStartBracket) {
 
 							if (sName.substring(iStartBracket).indexOf("{=") > -1) {
-								future.warningThrows("It looks like an event handler parameter contains a binding expression ({=...}). This is not allowed " +
+								Log.warning("It looks like an event handler parameter contains a binding expression ({=...}). This is not allowed and will cause an error later on " +
 									"because the entire event handler is already considered an expression: " + sName);
 							}
 
@@ -184,7 +186,7 @@ sap.ui.define([
 								};
 							})(sFunctionName, oController);
 						} else {
-							future.errorThrows("Syntax error in event handler '" + sName + "': arguments must be enclosed in a pair of brackets");
+							Log.error("Syntax error in event handler '" + sName + "': arguments must be enclosed in a pair of brackets");
 						}
 					}
 				}
@@ -197,7 +199,7 @@ sap.ui.define([
 					return [ fnHandler, oController ];
 				}
 
-				future.warningThrows("Event handler name '" + sName + "' could not be resolved to an event handler function");
+				Log.warning("Event handler name '" + sName + "' could not be resolved to an event handler function");
 				// return undefined
 			},
 

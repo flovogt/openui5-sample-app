@@ -1,11 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.SearchField.
 sap.ui.define([
+	'sap/ui/core/Theming',
 	'./library',
 	'sap/ui/core/Control',
 	'sap/ui/core/EnabledPropagator',
@@ -20,6 +21,7 @@ sap.ui.define([
 	"sap/ui/dom/jquery/cursorPos"
 ],
 	function(
+		Theming,
 		library,
 		Control,
 		EnabledPropagator,
@@ -67,7 +69,7 @@ sap.ui.define([
 	* @extends sap.ui.core.Control
 	* @implements sap.ui.core.IFormContent
 	* @author SAP SE
-	* @version 1.134.0
+	* @version 1.120.0
 	*
 	* @constructor
 	* @public
@@ -131,7 +133,7 @@ sap.ui.define([
 
 				/**
 				 * Tooltip text of the refresh button. If it is not set, the Default tooltip text is the word "Refresh" in the current local language (if supported) or in English. Tooltips are not displayed on touch devices.
-				 * @deprecated As of version 1.110.0, the concept has been discarded.
+				 * @deprecated Since version 1.110.0.
 				 * @since 1.16
 				 */
 				refreshButtonTooltip : {type : "string", group : "Misc", defaultValue : null},
@@ -900,7 +902,7 @@ sap.ui.define([
 		if (iNumItems === 1) {
 			sAriaText = oRb.getText("INPUT_SUGGESTIONS_ONE_HIT");
 		} else if (iNumItems > 1) {
-			sAriaText = oRb.getText("INPUT_SUGGESTIONS_MORE_HITS", [iNumItems]);
+			sAriaText = oRb.getText("INPUT_SUGGESTIONS_MORE_HITS", iNumItems);
 		} else {
 			sAriaText = oRb.getText("INPUT_SUGGESTIONS_NO_HIT");
 		}

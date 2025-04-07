@@ -1,15 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides control sap.m.DateTimePicker.
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/Localization",
-	"sap/ui/core/Lib",
-	"sap/ui/core/Locale",
 	"sap/ui/thirdparty/jquery",
 	'./InputBase',
 	'./DatePicker',
@@ -20,6 +16,8 @@ sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/LocaleData',
+	'sap/ui/core/Core',
+	'sap/ui/core/format/TimezoneUtil',
 	'./TimePickerClocks',
 	'./DateTimePickerRenderer',
 	'./SegmentedButton',
@@ -28,15 +26,10 @@ sap.ui.define([
 	'./Button',
 	'sap/ui/core/IconPool',
 	"sap/ui/core/Theming",
+	'sap/ui/core/Configuration',
 	'sap/ui/core/date/UI5Date',
-	"sap/ui/core/InvisibleText",
-	// provides jQuery.fn.cursorPos
-	'sap/ui/dom/jquery/cursorPos'
+	'sap/ui/dom/jquery/cursorPos' // provides jQuery.fn.cursorPos
 ], function(
-	Formatting,
-	Localization,
-	Library,
-	Locale,
 	jQuery,
 	InputBase,
 	DatePicker,
@@ -47,6 +40,8 @@ sap.ui.define([
 	Device,
 	DateFormat,
 	LocaleData,
+	Core,
+	TimezoneUtil,
 	TimePickerClocks,
 	DateTimePickerRenderer,
 	SegmentedButton,
@@ -55,8 +50,8 @@ sap.ui.define([
 	Button,
 	IconPool,
 	Theming,
-	UI5Date,
-	InvisibleText
+	Configuration,
+	UI5Date
 ) {
 	"use strict";
 
@@ -110,8 +105,7 @@ sap.ui.define([
 	 * <ul><li>Use the <code>value</code> property if you want to bind the
 	 * <code>DateTimePicker</code> to a model using the
 	 * <code>sap.ui.model.type.DateTime</code></li>
-     * <caption> binding the <code>value</code> property by using types </caption>
-	 * <pre>
+	 * @example <caption> binding the <code>value</code> property by using types </caption>
 	 * new sap.ui.model.json.JSONModel({date: sap.ui.core.date.UI5Date.getInstance(2022,10,10,12,10,10)});
 	 *
 	 * new sap.m.DateTimePicker({
@@ -120,11 +114,10 @@ sap.ui.define([
 	 *         path: "/date"
 	 *     }
 	 * });
-	 * </pre>
+	 *
 	 * <li>Use the <code>value</code> property if the date is provided as a string from
 	 * the backend or inside the app (for example, as ABAP type DATS field)</li>
-     * <caption> binding the <code>value</code> property by using types </caption>
-	 * <pre>
+	 * @example <caption> binding the <code>value</code> property by using types </caption>
 	 * new sap.ui.model.json.JSONModel({date:"2022-11-10-12-10-10"});
 	 *
 	 * new sap.m.DateTimePicker({
@@ -138,7 +131,7 @@ sap.ui.define([
 	 *          }
 	 *     }
 	 * });
-	 * </pre>
+	 *
 	 * <b>Note:</b> There are multiple binding type choices, such as:
 	 * sap.ui.model.type.Date
 	 * sap.ui.model.odata.type.DateTime
@@ -183,7 +176,7 @@ sap.ui.define([
 	 * mobile devices, it opens in full screen.
 	 *
 	 * @extends sap.m.DatePicker
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -356,7 +349,7 @@ sap.ui.define([
 			var oSwitcher = this.getAggregation("_switcher");
 
 			if (!oSwitcher) {
-				var oResourceBundle = Library.getResourceBundleFor("sap.m");
+				var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 				var sDateText = oResourceBundle.getText("DATETIMEPICKER_DATE");
 				var sTimeText = oResourceBundle.getText("DATETIMEPICKER_TIME");
 
@@ -451,12 +444,10 @@ sap.ui.define([
 	};
 
 	/**
-	 * This setter is overridden because the property is inherited from <code>DatePicker</code> but its usage makes no sense
-	 * in <code>DateTimePicker</code> as it always has a footer with buttons. Setting the property won't have an effect at all.
-	 * @param {boolean} _bFlag Whether to show a footer (ignored, footer will always be shown)
-	 * @returns {this}
+	 * This setter is overriden because the property is inherited from <code>DatePicker</code> but its usage makes no sense
+	 * in <code>DateTimePicker</code> as it always have footer with buttons. Setting the property won't have an effect at all.
 	 */
-	DateTimePicker.prototype.setShowFooter = function(_bFlag) {
+	DateTimePicker.prototype.setShowFooter = function() {
 		return this;
 	};
 
@@ -686,13 +677,13 @@ sap.ui.define([
 			offsetX: 0,
 			offsetY: 3,
 			horizontalScrolling: false,
-			title: this._getTranslatedTimezone(true)
+			title: this._getTimezone(true)
 		});
 
 		this.addDependent(this._oTimezonePopup);
 
 		if (Device.system.phone) {
-			oResourceBundle = Library.getResourceBundleFor("sap.m");
+			oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 
 			this._oTimezonePopup.setEndButton(new Button({
 				text: oResourceBundle.getText("SUGGESTIONSPOPOVER_CLOSE_BUTTON"),
@@ -777,7 +768,7 @@ sap.ui.define([
 		if (oFormatOptions.calendarType === undefined) {
 			oFormatOptions.calendarType = bDisplayFormat
 				? this.getDisplayFormatType()
-				: Formatting.getCalendarType();
+				: Configuration.getCalendarType();
 		}
 
 		if (oFormatOptions.strictParsing === undefined) {
@@ -838,7 +829,7 @@ sap.ui.define([
 			return oBinding.aValues[1];
 		}
 
-		return this.getTimezone() || (bUseDefaultAsFallback && Localization.getTimezone());
+		return this.getTimezone() || (bUseDefaultAsFallback && Core.getConfiguration().getTimezone());
 	};
 
 
@@ -849,7 +840,7 @@ sap.ui.define([
 	 * @private
 	 */
 	DateTimePicker.prototype._getTranslatedTimezone = function(bUseDefaultAsFallback) {
-		return LocaleData.getInstance(new Locale(Formatting.getLanguageTag())).getTimezoneTranslations()[this._getTimezone(bUseDefaultAsFallback)];
+		return LocaleData.getInstance(Core.getConfiguration().getFormatSettings().getFormatLocale()).getTimezoneTranslations()[this._getTimezone(bUseDefaultAsFallback)];
 	};
 
 	DateTimePicker.prototype._checkStyle = function(sPattern){
@@ -896,11 +887,7 @@ sap.ui.define([
 	DateTimePicker.prototype._parseValue = function(sValue, bDisplayFormat, sTimezone) {
 
 		if (this._isTimezoneBinding()) {
-			var aParsedDate = this._getFormatterWithTimezoneInstance().parse(sValue, sTimezone || this._getTimezone(true));
-			if (aParsedDate) {
-				return aParsedDate[0];
-			}
-			return null;
+			return this._getFormatterWithTimezoneInstance().parse(sValue, sTimezone || this._getTimezone(true))[0];
 		}
 
 		return DatePicker.prototype._parseValue.apply(this, arguments);
@@ -934,7 +921,7 @@ sap.ui.define([
 
 	DateTimePicker.prototype._getLocaleBasedPattern = function(sPlaceholder) {
 		var oLocaleData = LocaleData.getInstance(
-				new Locale(Formatting.getLanguageTag())
+				Core.getConfiguration().getFormatSettings().getFormatLocale()
 			),
 			iSlashIndex = sPlaceholder.indexOf("/");
 
@@ -951,7 +938,7 @@ sap.ui.define([
 		var sLabelId, sLabel, oResourceBundle, sOKButtonText, sCancelButtonText, oPopover;
 
 		if (!this._oPopup) {
-			oResourceBundle = Library.getResourceBundleFor("sap.m");
+			oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 			sOKButtonText = oResourceBundle.getText("TIMEPICKER_SET");
 			sCancelButtonText = oResourceBundle.getText("TIMEPICKER_CANCEL");
 
@@ -973,7 +960,6 @@ sap.ui.define([
 					oHeader,
 					this._oPopupContent
 				],
-				ariaLabelledBy: InvisibleText.getStaticId("sap.m", this._getAccessibleNameLabel()),
 				afterOpen: _handleAfterOpen.bind(this),
 				afterClose: _handleAfterClose.bind(this)
 			});
@@ -982,7 +968,7 @@ sap.ui.define([
 
 			if (Device.system.phone) {
 				sLabelId = this.$("inner").attr("aria-labelledby");
-				sLabel = sLabelId ? document.getElementById(sLabelId)?.textContent : "";
+				sLabel = sLabelId ? document.getElementById(sLabelId).textContent : "";
 				this._oPopup.setTitle(sLabel);
 				this._oPopup.setShowHeader(true);
 				this._oPopup.setShowCloseButton(true);
@@ -1009,15 +995,6 @@ sap.ui.define([
 
 		}
 
-	};
-
-	/**
-	 * Returns the message bundle key of the invisible text for the accessible name of the popover.
-	 * @private
-	 * @returns {string} The message bundle key
-	 */
-	DateTimePicker.prototype._getAccessibleNameLabel = function() {
-		return "DATETIMEPICKER_POPOVER_ACCESSIBLE_NAME";
 	};
 
 	DateTimePicker.prototype._openPopup = function(oDomRef){
@@ -1090,13 +1067,13 @@ sap.ui.define([
 				oDate = UI5Date.getInstance();
 				this._oCalendar.removeAllSelectedDates();
 			}
-			this._oOKButton.setEnabled(false);
-		}
 
-		if (oDate.getTime() < this._oMinDate.getTime()) {
-			oDate = this._oMinDate;
-		} else if (oDate.getTime() > this._oMaxDate.getTime()) {
-			oDate = this._oMaxDate;
+			if (oDate.getTime() < this._oMinDate.getTime()) {
+				oDate = this._oMinDate;
+			} else if (oDate.getTime() > this._oMaxDate.getTime()) {
+				oDate = this._oMaxDate;
+			}
+			this._oOKButton.setEnabled(false);
 		}
 
 		// convert the date to local date for the calendar and the clocks if binding is used
@@ -1163,7 +1140,7 @@ sap.ui.define([
 
 	DateTimePicker.prototype.getLocaleId = function(){
 
-		return new Locale(Formatting.getLanguageTag()).toString();
+		return Core.getConfiguration().getFormatSettings().getFormatLocale().toString();
 
 	};
 
@@ -1174,7 +1151,7 @@ sap.ui.define([
 	 */
 	DateTimePicker.prototype.getAccessibilityInfo = function() {
 		var oInfo = DatePicker.prototype.getAccessibilityInfo.apply(this, arguments);
-		oInfo.type = Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_DATETIMEINPUT");
+		oInfo.type = Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_DATETIMEINPUT");
 		return oInfo;
 	};
 
@@ -1247,7 +1224,7 @@ sap.ui.define([
 		}
 
 		if (sDisplayFormat == DateTimeFormatStyles.Short || sDisplayFormat == DateTimeFormatStyles.Medium || sDisplayFormat == DateTimeFormatStyles.Long || sDisplayFormat == DateTimeFormatStyles.Full) {
-			var oLocale = new Locale(Formatting.getLanguageTag());
+			var oLocale = Core.getConfiguration().getFormatSettings().getFormatLocale();
 			var oLocaleData = LocaleData.getInstance(oLocale);
 			sTimePattern = oLocaleData.getTimePattern(sDisplayFormat);
 		} else {

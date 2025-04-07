@@ -1,11 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
+	"sap/base/config",
 	"sap/base/util/now"
 ], function(
+	BaseConfig,
 	now
 ) {
 	"use strict";
@@ -718,6 +720,20 @@ sap.ui.define([
 		}
 		return new Logger(sComponent);
 	};
+
+	// set LogLevel
+	const sLogLevel = BaseConfig.get({
+		name: "sapUiLogLevel",
+		type: BaseConfig.Type.String,
+		defaultValue: undefined,
+		external: true
+	});
+
+	if (sLogLevel) {
+		Log.setLevel(Log.Level[sLogLevel.toUpperCase()] || parseInt(sLogLevel));
+	} else if (!globalThis["sap-ui-optimized"]) {
+		Log.setLevel(Log.Level.DEBUG);
+	}
 
 	return Log;
 });

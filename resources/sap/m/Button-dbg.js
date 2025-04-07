@@ -1,14 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Button.
 sap.ui.define([
 	"./library",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
-	"sap/ui/core/Lib",
 	"sap/ui/core/ShortcutHintsMixin",
 	"sap/ui/core/EnabledPropagator",
 	"sap/ui/core/AccessKeysEnablement",
@@ -25,8 +25,8 @@ sap.ui.define([
 	"sap/m/Image"
 ], function(
 	library,
+	Core,
 	Control,
-	Library,
 	ShortcutHintsMixin,
 	EnabledPropagator,
 	AccessKeysEnablement,
@@ -58,9 +58,6 @@ sap.ui.define([
 
 	// shortcut for sap.m.BadgeState
 	var BadgeState = library.BadgeState;
-
-	// shortcut for sap.m.BadgeStyle
-	var BadgeStyle = library.BadgeStyle;
 
 	// shortcut for sap.ui.core.aria.HasPopup
 	var AriaHasPopup = coreLibrary.aria.HasPopup;
@@ -101,7 +98,7 @@ sap.ui.define([
 	 * @mixes sap.ui.core.ContextMenuSupport
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -209,18 +206,7 @@ sap.ui.define([
 				 *
 				 * @private
 				 */
-				accesskey: { type: "string", defaultValue: "", visibility: "hidden" },
-
-				/**
-				 * Determines the style in which the badge notification will be represented:
-				 * <ul>
-				 * <li><code>BadgeStyle.Default</code> Use for badges that contain numbers </li>
-				 * <li><code>BadgeStyle.Attention</code> This badge is rendered as a single dot designed to capture user attention </li>
-				 * </ul>
-				 * @since 1.132.0
-				 */
-				badgeStyle: {type: "sap.m.BadgeStyle", group : "Misc", defaultValue: BadgeStyle.Default }
-
+				accesskey: { type: "string", defaultValue: "", visibility: "hidden" }
 
 			},
 			associations : {
@@ -280,8 +266,7 @@ sap.ui.define([
 
 		this.initBadgeEnablement({
 			position: "topRight",
-			selector: {suffix: "inner"},
-			style: this.getBadgeStyle()
+			selector: {suffix: "inner"}
 		});
 		this._oBadgeData = {
 			value: "",
@@ -292,13 +277,6 @@ sap.ui.define([
 		this._badgeMaxValue = BADGE_MAX_VALUE;
 
 		AccessKeysEnablement.registerControl(this);
-	};
-
-	Button.prototype.setBadgeStyle = function(sValue) {
-		this._oBadgeConfig.style = sValue;
-		this.setProperty("badgeStyle", sValue);
-
-		return this;
 	};
 
 	//Formatter callback of the badge pre-set value, before it is visualized
@@ -391,7 +369,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Button.prototype._updateBadgeInvisibleText = function(vValue) {
-		var oRb = Library.getResourceBundleFor("sap.m"),
+		var oRb = Core.getLibraryResourceBundle("sap.m"),
 			sInvisibleTextValue,
 			iPlusPos;
 
@@ -400,12 +378,12 @@ sap.ui.define([
 
 		iPlusPos = vValue.indexOf("+");
 		if (iPlusPos !== -1) {
-			sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MORE_THAN_ITEMS", [vValue.substr(0, iPlusPos)]);
+			sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MORE_THAN_ITEMS", vValue.substr(0, iPlusPos));
 		} else {
 			switch (vValue) {
 				case "":		sInvisibleTextValue = ""; break;
-				case "1":		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_ONE_ITEM", [vValue]); break;
-				default:		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MANY_ITEMS", [vValue]);
+				case "1":		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_ONE_ITEM", vValue); break;
+				default:		sInvisibleTextValue = oRb.getText("BUTTON_BADGE_MANY_ITEMS", vValue);
 			}
 		}
 
@@ -555,8 +533,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Button.prototype.ontouchend = function(oEvent) {
-		var sEndingTagId, bShouldSimulateTap,
-			bIsRightClick = oEvent.which === 3 || (oEvent.ctrlKey && oEvent.which === 1);
+		var sEndingTagId;
 
 		this._buttonPressed = oEvent.originalEvent && oEvent.originalEvent.buttons & 1;
 
@@ -565,22 +542,17 @@ sap.ui.define([
 
 		if (this._bRenderActive) {
 			delete this._bRenderActive;
-
-			if (!bIsRightClick) {
-				this.ontap(oEvent, true);
-			}
+			this.ontap(oEvent, true);
 		}
 
 		// get the tag ID where the touch event ended
 		sEndingTagId = oEvent.target.id.replace(this.getId(), '');
 		// there are some cases when tap event won't come. Simulate it:
-		bShouldSimulateTap = this._buttonPressed === 0 && !bIsRightClick && (
-			(this._sTouchStartTargetId === "-BDI-content" && ['-content', '-inner', '-img'].includes(sEndingTagId)) ||
-			(this._sTouchStartTargetId === "-content" && ['-inner', '-img'].includes(sEndingTagId)) ||
-			(this._sTouchStartTargetId === '-img' && sEndingTagId !== '-img')
-		);
-
-		if (bShouldSimulateTap) {
+		if (this._buttonPressed === 0
+			&& ((this._sTouchStartTargetId === "-BDI-content"
+				&& (sEndingTagId === '-content' || sEndingTagId === '-inner' || sEndingTagId === '-img'))
+				|| (this._sTouchStartTargetId === "-content" && (sEndingTagId === '-inner' || sEndingTagId === '-img'))
+				|| (this._sTouchStartTargetId === '-img' && sEndingTagId !== '-img'))) {
 			this.ontap(oEvent, true);
 		}
 
@@ -616,7 +588,7 @@ sap.ui.define([
 		// fire tap event
 		if (this.getEnabled() && this.getVisible()) {
 			// note: on mobile, the press event should be fired after the focus is on the button
-			if (Device.system.desktop && (oEvent.originalEvent && oEvent.originalEvent.type === "touchend")) {
+			if ((oEvent.originalEvent && oEvent.originalEvent.type === "touchend")) {
 					this.focus();
 			}
 
@@ -979,7 +951,7 @@ sap.ui.define([
 
 		return {
 			role: sAccessibleRole === ButtonAccessibleRole.Default ? "button" : sAccessibleRole.toLowerCase(),
-			type: Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_BUTTON"),
+			type: Core.getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_BUTTON"),
 			description: sDesc,
 			focusable: this.getEnabled(),
 			enabled: this.getEnabled()

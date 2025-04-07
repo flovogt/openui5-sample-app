@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -11,33 +11,31 @@
  * This API is independent from any other part of the UI5 framework. This allows it to be loaded beforehand, if it is needed, to create the UI5 bootstrap
  * dynamically depending on the capabilities of the browser or device.
  *
- * @version 1.134.0
+ * @version 1.120.0
  * @namespace
  * @name sap.ui.Device
  * @public
  */
 
-// Introduce namespace if it does not yet exist
-// ui5lint-disable no-globals
+/*global console */
+
+//Introduce namespace if it does not yet exist
 if (typeof window.sap !== "object" && typeof window.sap !== "function") {
 	window.sap = {};
 }
 if (typeof window.sap.ui !== "object") {
 	window.sap.ui = {};
 }
-// ui5lint-enable no-globals
 
 (function() {
 	"use strict";
 
-	// Skip initialization if API is already available
-	// ui5lint-disable no-globals
+	//Skip initialization if API is already available
 	if (typeof window.sap.ui.Device === "object" || typeof window.sap.ui.Device === "function") {
-		var apiVersion = "1.134.0";
+		var apiVersion = "1.120.0";
 		window.sap.ui.Device._checkAPIVersion(apiVersion);
 		return;
 	}
-	// ui5lint-enable no-globals
 
 	var Device = {};
 
@@ -107,7 +105,7 @@ if (typeof window.sap.ui !== "object") {
 
 	//Only used internal to make clear when Device API is loaded in wrong version
 	Device._checkAPIVersion = function(sVersion) {
-		var v = "1.134.0";
+		var v = "1.120.0";
 		if (v != sVersion) {
 			oLogger.log(WARNING, "Device API version differs: " + v + " <-> " + sVersion);
 		}
@@ -162,7 +160,6 @@ if (typeof window.sap.ui !== "object") {
 	var setDefaultNavigator = function () {
 		oReducedNavigator = {
 			userAgent: window.navigator.userAgent,
-			userAgentData: window.navigator.userAgentData,
 			platform: window.navigator.platform
 		};
 		// Only add property standalone in case navigator has this property
@@ -200,11 +197,6 @@ if (typeof window.sap.ui !== "object") {
 	 *
 	 * Might be empty if no version can reliably be determined.
 	 *
-	 * **Note:** The property <code>versionStr</code> may not contain the correct version
-	 * for Windows 11 onwards, depending on the point in time, the property is accessed
-	 * or the browser's capability to provide the version.
-	 * In this case the <code>versionStr</code> property may contain <code>10</code>.
-	 *
 	 * @name sap.ui.Device.os.versionStr
 	 * @type string
 	 * @public
@@ -213,11 +205,6 @@ if (typeof window.sap.ui !== "object") {
 	 * The version of the operating system as <code>float</code>.
 	 *
 	 * Might be <code>-1</code> if no version can reliably be determined.
-	 *
-	 * **Note:** The property <code>version</code> may not contain the correct version
-	 * for Windows 11 onwards, depending on the point in time, the property is accessed
-	 * or the browser's capability to provide the version.
-	 * In this case the <code>version</code> property may contain <code>10</code>.
 	 *
 	 * @name sap.ui.Device.os.version
 	 * @type float
@@ -303,7 +290,6 @@ if (typeof window.sap.ui !== "object") {
 		"IOS": "iOS",
 		"ANDROID": "Android"
 	};
-	let oPlatform;
 
 	function getOS() { // may return null!!
 
@@ -399,51 +385,10 @@ if (typeof window.sap.ui !== "object") {
 				}
 			}
 		}
-
-		/**
-		 * Provides the operating system version of the Device using browser client hints.
-		 * In case the browser does not support client hints, the versionStr detected from the userAgent is returned.
-		 * @returns {Promise<float>} A promise that resolves with the version of the operating system as <code>string</code>.
-		 * @ui5-restricted sap.ui.core
-		 */
-		Device.os.getPlatformInfo = function () {
-			if (oPlatform || !oReducedNavigator.userAgentData) {
-				return Promise.resolve(Device.os);
-			}
-			return oReducedNavigator.userAgentData.getHighEntropyValues(["platformVersion"]).then((oClientHints) => {
-				oPlatform = {
-					OS,
-					version: parseFloat(oClientHints.platformVersion),
-					versionStr: oClientHints.platformVersion,
-					name: oClientHints.platform,
-					getPlatformInfo: () => Promise.resolve(Device.os)
-				};
-
-				if (oClientHints.platform === "macOS") {
-					oPlatform.name = "MACINTOSH";
-				} else if (oClientHints.platform === "Windows") {
-					// Map windows version according to
-					// https://learn.microsoft.com/en-us/microsoft-edge/web-platform/how-to-detect-win11#detecting-specific-windows-versions
-					if (oPlatform.version >= 13) {
-						oPlatform.versionStr = "11";
-						oPlatform.version = 11;
-					} else if (oPlatform.version > 0) {
-						oPlatform.versionStr = "10";
-						oPlatform.version = 10;
-					} else {
-						oPlatform.versionStr = Device.os.versionStr;
-						oPlatform.version = Device.os.version;
-					}
-				}
-				oPlatform[oPlatform.name.toLowerCase()] = true;
-				oPlatform.name = OS[oPlatform.name.toUpperCase()];
-
-				Device.os = oPlatform;
-				return Device.os;
-			});
-		};
 	}
 	setOS();
+
+
 
 	//******** Browser Detection ********
 
@@ -470,15 +415,6 @@ if (typeof window.sap.ui !== "object") {
 	 * @name sap.ui.Device.browser.name
 	 * @type string
 	 * @public
-	 */
-	/**
-	 * The name of the browser for reporting use cases.
-	 *
-	 * @see sap.ui.Device.browser.BROWSER
-	 * @name sap.ui.Device.browser.reportingName
-	 * @type string
-	 * @private
-	 * @ui5-restricted sap.ui.core
 	 */
 	/**
 	 * The version of the browser as <code>string</code>.
@@ -630,17 +566,8 @@ if (typeof window.sap.ui !== "object") {
 	 * @name sap.ui.Device.browser.BROWSER.ANDROID
 	 * @public
 	 */
-	/**
-	 * Edge stock browser name.
-	 *
-	 * @see sap.ui.Device.browser.name
-	 * @name sap.ui.Device.browser.BROWSER.EDGE
-	 * @private
-	 * @ui5-restricted sap.ui.core
-	 */
 
-	const BROWSER = {
-		"EDGE": "ed",
+	var BROWSER = {
 		"FIREFOX": "ff",
 		"CHROME": "cr",
 		"SAFARI": "sf",
@@ -696,8 +623,7 @@ if (typeof window.sap.ui !== "object") {
 					versionStr: "" + fVersion,
 					version: fVersion,
 					mozilla: true,
-					mobile: oExpMobile.test(sUserAgent),
-					reportingName: BROWSER.FIREFOX
+					mobile: oExpMobile.test(sUserAgent)
 				};
 			} else {
 				// unknown mozilla browser
@@ -716,10 +642,8 @@ if (typeof window.sap.ui !== "object") {
 			}
 			oExpMobile = /Mobile/;
 			var aChromeMatch = sUserAgent.match(/(Chrome|CriOS)\/(\d+\.\d+).\d+/);
-			var aEdgeMatch = sUserAgent.match(/(Edg)\/(\d+\.\d+).\d+/);
 			var aFirefoxMatch = sUserAgent.match(/FxiOS\/(\d+\.\d+)/);
 			var aAndroidMatch = sUserAgent.match(/Android .+ Version\/(\d+\.\d+)/);
-			let sReportingName;
 
 			if (aChromeMatch || aFirefoxMatch || aAndroidMatch) {
 				var sName, sVersion, bMobile;
@@ -727,13 +651,12 @@ if (typeof window.sap.ui !== "object") {
 					sName = BROWSER.CHROME;
 					bMobile = oExpMobile.test(sUserAgent);
 					sVersion = parseFloat(aChromeMatch[2]);
-					sReportingName = aEdgeMatch ? BROWSER.EDGE : BROWSER.CHROME;
 				} else if (aFirefoxMatch) {
-					sName = sReportingName = BROWSER.FIREFOX;
+					sName = BROWSER.FIREFOX;
 					bMobile = true;
 					sVersion = parseFloat(aFirefoxMatch[1]);
 				} else if (aAndroidMatch) {
-					sName = sReportingName = BROWSER.ANDROID;
+					sName = BROWSER.ANDROID;
 					bMobile = oExpMobile.test(sUserAgent);
 					sVersion = parseFloat(aAndroidMatch[1]);
 				}
@@ -744,8 +667,7 @@ if (typeof window.sap.ui !== "object") {
 					versionStr: "" + sVersion,
 					version: sVersion,
 					webkit: true,
-					webkitVersion: webkitVersion,
-					reportingName: sReportingName
+					webkitVersion: webkitVersion
 				};
 			} else { // Safari might have an issue with sUserAgent.match(...); thus changing
 				var oExp = /Version\/(\d+\.\d+).*Safari/;
@@ -754,14 +676,10 @@ if (typeof window.sap.ui !== "object") {
 					oResult =  {
 						name: BROWSER.SAFARI,
 						fullscreen: bStandalone === undefined ? false : bStandalone,
-						/**
-						 * @deprecated as of version 1.98
-						 */
 						webview: /SAPFioriClient/.test(sUserAgent),
 						mobile: oExpMobile.test(sUserAgent),
 						webkit: true,
-						webkitVersion: webkitVersion,
-						reportingName: BROWSER.SAFARI
+						webkitVersion: webkitVersion
 					};
 					var aParts = oExp.exec(sUserAgent);
 					if (aParts) {
@@ -785,8 +703,7 @@ if (typeof window.sap.ui !== "object") {
 				name: "",
 				versionStr: "",
 				version: -1,
-				mobile: false,
-				reportingName: ""
+				mobile: false
 			};
 		}
 
@@ -1951,8 +1868,7 @@ if (typeof window.sap.ui !== "object") {
 	setResizeInfo(Device.resize);
 	setOrientationInfo(Device.orientation);
 
-	// Add API to global namespace
-	// ui5lint-disable-next-line no-globals
+	//Add API to global namespace
 	window.sap.ui.Device = Device;
 
 	// Add handler for orientationchange and resize after initialization of Device API
@@ -1978,13 +1894,7 @@ if (typeof window.sap.ui !== "object") {
 		} else {
 			Device.support.touch = bTouch;
 			oReducedNavigator = Object.assign(oReducedNavigator, oCustomNavigator);
-			// In case no client hints are provided we don't add it to the reduced navigator
-			// to simulate browser without client hints API
-			if (!oCustomNavigator.userAgentData) {
-				delete oReducedNavigator.userAgentData;
-			}
 		}
-		oPlatform = undefined;
 
 		setOS();
 		setBrowser();

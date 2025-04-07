@@ -1,16 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.f.Avatar.
 sap.ui.define([
-	"sap/m/Avatar",
+  "sap/m/Avatar",
 	"sap/m/AvatarRenderer",
-	"sap/ui/core/Lib",
 	"./library"
-], function(MAvatar, AvatarRenderer/*, library */, Library) {
+], function(MAvatar, AvatarRenderer/*, library */) {
 	"use strict";
 
 	/**
@@ -41,7 +40,7 @@ sap.ui.define([
 	 * @extends sap.m.Avatar
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -61,7 +60,7 @@ sap.ui.define([
 	});
 
 	Avatar.prototype._getDefaultTooltip = function() {
-		return Library.getResourceBundleFor("sap.f").getText("AVATAR_TOOLTIP");
+		return sap.ui.getCore().getLibraryResourceBundle("sap.f").getText("AVATAR_TOOLTIP");
 	};
 
 	return Avatar;

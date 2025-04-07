@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo", "sap/ui/core/Lib"],
-		function(oCore, VersionInfo, Lib) {
+sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo"],
+		function(oCore, VersionInfo) {
 	"use strict";
 
 	/**
@@ -53,7 +53,7 @@ sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo", "sap/ui/core/Lib"],
 	 * @namespace
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @since 1.48.0
@@ -266,7 +266,7 @@ sap.ui.define(['sap/ui/core/Core', "sap/ui/VersionInfo", "sap/ui/core/Lib"],
 			})
 			.then(function() {
 				// get a shallow copy the loaded library metadata
-				var mLibraries = Lib.all();
+				var mLibraries = oCore.getLoadedLibraries();
 				// filter libraries out that have not been requested
 				for (var sLibName in mLibraries) {
 					if (!fnFilter(sLibName)) {

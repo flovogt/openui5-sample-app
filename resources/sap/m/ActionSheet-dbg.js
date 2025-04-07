@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,30 +10,26 @@ sap.ui.define([
 	'./Popover',
 	'./library',
 	'sap/ui/core/Control',
-	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	'sap/ui/core/delegate/ItemNavigation',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/Device',
 	'./ActionSheetRenderer',
 	'./Button',
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
 	function(
 		Dialog,
 		Popover,
 		library,
 		Control,
-		ControlBehavior,
-		Element,
-		Library,
 		ItemNavigation,
 		InvisibleText,
 		Device,
 		ActionSheetRenderer,
 		Button,
-		jQuery
+		jQuery,
+		Configuration
 	) {
 	"use strict";
 
@@ -76,7 +72,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -452,7 +448,7 @@ sap.ui.define([
 
 	ActionSheet.prototype._createCancelButton = function() {
 		if (!this._oCancelButton) {
-			var sCancelButtonText = (this.getCancelButtonText()) ? this.getCancelButtonText() : Library.getResourceBundleFor("sap.m").getText("ACTIONSHEET_CANCELBUTTON_TEXT"),
+			var sCancelButtonText = (this.getCancelButtonText()) ? this.getCancelButtonText() : sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACTIONSHEET_CANCELBUTTON_TEXT"),
 				that = this;
 	//			var sButtonStyle = (Device.os.ios) ? ButtonType.Unstyled : ButtonType.Default;
 			this._oCancelButton = new Button(this.getId() + '-cancelBtn', {
@@ -523,7 +519,7 @@ sap.ui.define([
 	ActionSheet.prototype._addAriaHiddenTexts = function(oButton) {
 		var sButtonId = oButton.getId(),
 			oInvisibleText;
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			oInvisibleText = new InvisibleText(sButtonId + "-actionSheetHiddenText");
 
 			this.addAggregation("_invisibleAriaTexts", oInvisibleText, false);
@@ -533,7 +529,7 @@ sap.ui.define([
 
 	ActionSheet.prototype._removeAriaHiddenTexts = function(oButton) {
 		oButton.getAriaDescribedBy().forEach(function(sId) {
-			var oControl = Element.getElementById(sId);
+			var oControl = sap.ui.getCore().byId(sId);
 
 			if (oControl instanceof InvisibleText && sId.indexOf("actionSheetHiddenText") > -1) {
 				this.removeAggregation("_invisibleAriaTexts", oControl, false);

@@ -1,12 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.form.FormLayout.
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/Element',
 	'sap/ui/layout/library',
@@ -14,9 +13,10 @@ sap.ui.define([
 	'./FormHelper',
 	'sap/ui/core/theming/Parameters',
 	'sap/ui/thirdparty/jquery',
+	"sap/ui/core/Configuration",
 	// jQuery custom selectors ":sapFocusable"
 	'sap/ui/dom/jquery/Selectors'
-], function(Localization, Control, Element, library, FormLayoutRenderer, FormHelper, Parameters, jQuery) {
+], function(Control, Element, library, FormLayoutRenderer, FormHelper, Parameters, jQuery, Configuration) {
 	"use strict";
 
 	// shortcut for sap.ui.layout.BackgroundDesign
@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -153,7 +153,7 @@ sap.ui.define([
 	FormLayout.prototype.onsapright = function(oEvent){
 
 		if (FormHelper.isArrowKeySupported()) { // no async call needed here
-			var bRtl = Localization.getRTL();
+			var bRtl = Configuration.getRTL();
 
 			if (!bRtl) {
 				this.navigateForward(oEvent);
@@ -167,7 +167,7 @@ sap.ui.define([
 	FormLayout.prototype.onsapleft = function(oEvent){
 
 		if (FormHelper.isArrowKeySupported()) { // no async call needed here
-			var bRtl = Localization.getRTL();
+			var bRtl = Configuration.getRTL();
 
 			if (!bRtl) {
 				this.navigateBack(oEvent);
@@ -1021,48 +1021,6 @@ sap.ui.define([
 				this.invalidate(); // re-render
 			}
 		}
-
-	};
-
-	/**
-	 * Checks if the <code>Form</code> contains <code>FormContainers</code> that have a <code>Title</code>, <code>Toolbar</code> or <code>AriaLabelledBy</code>.
-	 *
-	 * This is used to determine the role for screenreader support
-	 *
-	 * @param {sap.ui.layout.form.Form} oForm Form
-	 * @return {boolean} <code>true</code> if there is a container with own label
-	 * @private
-	 * @since: 1.126.0
-	 */
-	FormLayout.prototype.hasLabelledContainers = function(oForm) {
-
-		const aContainers = oForm.getFormContainers();
-		let bResult = false;
-
-		for (let i = 0; i < aContainers.length; i++) {
-			if (this.isContainerLabelled(aContainers[i])) {
-				bResult = true;
-				break;
-			}
-		}
-
-		return bResult;
-
-	};
-
-	/**
-	 * Checks if the <code>FormContainer</code> has a <code>Title</code>, <code>Toolbar</code> or <code>AriaLabelledBy</code>.
-	 *
-	 * This is used to determine the role for screenreader support
-	 *
-	 * @param {sap.ui.layout.form.FormContainer} oContainer FormContainer
-	 * @return {boolean} <code>true</code> if the  <code>FormContainer</code> is labelled
-	 * @private
-	 * @since: 1.126.0
-	 */
-	FormLayout.prototype.isContainerLabelled = function(oContainer) {
-
-		return !!oContainer.getTitle() || !!oContainer.getToolbar() || oContainer.getAriaLabelledBy().length > 0 || oContainer.getExpandable();
 
 	};
 

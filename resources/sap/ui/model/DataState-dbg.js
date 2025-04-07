@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -65,7 +65,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.DataState
@@ -75,22 +75,8 @@ sap.ui.define([
 		constructor : function () {
 			this.mProperties = DataState.getInitialProperties();
 			this.mChangedProperties = DataState.getInitialProperties();
-			// parent data state is set by the CompositeDataState if this data state is part of a composite data state
-			// this.oParentDataState = undefined;
 		}
 	});
-
-	/**
-	 * Sets the parent data state. If a parent data state is set, it is used to check whether the associated control is
-	 * dirty.
-	 * @param {sap.ui.model.DataState} oParentDataState The parent data state
-	 *
-	 * @private
-	 * @see sap.ui.model.DataState#isControlDirty
-	 */
-	DataState.prototype.setParent = function(oParentDataState) {
-		this.oParentDataState = oParentDataState;
-	};
 
 	/**
 	 * Updates the given property with the given value.
@@ -106,7 +92,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * @deprecated As of version 1.74, the concept has been discarded.
+	 * @deprecated Likely unused method
 	 * @returns {this} <code>this</code> to allow method chaining
 	 * @private
 	 */
@@ -140,7 +126,7 @@ sap.ui.define([
 	 * Returns an array of all model and control messages, regardless of whether they are old or
 	 * new.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of all messages
+	 * @returns {sap.ui.core.Message[]} The array of all messages
 	 *
 	 * @public
 	 * @since 1.98.0
@@ -158,7 +144,7 @@ sap.ui.define([
 	 * Returns the array of this data state's current messages combining the model and control
 	 * messages. The array is sorted descendingly by message severity.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The sorted array of all messages
+	 * @returns {sap.ui.core.Message[]} The sorted array of all messages
 	 *
 	 * @public
 	 */
@@ -170,7 +156,7 @@ sap.ui.define([
 	 * Returns the array of this data state's old messages combining the model and control messages.
 	 * The array is sorted descendingly by message severity.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The sorted array of all old messages
+	 * @returns {sap.ui.core.Message[]} The sorted array of all old messages
 	 * @private
 	 */
 	DataState.prototype._getOldMessages = function() {
@@ -183,8 +169,8 @@ sap.ui.define([
 	 *
 	 * @param {object} mProperties
 	 *   Object with properties <code>controlMessages</code> and <code>modelMessages</code> which
-	 *   are both arrays of <code>sap.ui.core.message.Message</code> objects
-	 * @returns {sap.ui.core.message.Message[]} The sorted array of messages
+	 *   are both arrays of <code>sap.ui.core.Message</code> objects
+	 * @returns {sap.ui.core.Message[]} The sorted array of messages
 	 * @private
 	 */
 	DataState.getMessagesForProperties = function (mProperties) {
@@ -202,7 +188,7 @@ sap.ui.define([
 	/**
 	 * Sets an array of model state messages.
 	 *
-	 * @param {sap.ui.core.message.Message[]} [aMessages=[]] The model messages for this data state.
+	 * @param {sap.ui.core.Message[]} [aMessages=[]] The model messages for this data state.
 	 * @returns {this} <code>this</code> to allow method chaining
 	 * @public
 	 */
@@ -214,7 +200,7 @@ sap.ui.define([
 	/**
 	 * Returns the array of this data state's current model messages.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of messages of the model
+	 * @returns {sap.ui.core.Message[]} The array of messages of the model
 	 *
 	 * @public
 	 */
@@ -225,7 +211,7 @@ sap.ui.define([
 	/**
 	 * Sets an array of control state messages.
 	 *
-	 * @param {sap.ui.core.message.Message[]} aMessages - The control messages
+	 * @param {sap.ui.core.Message[]} aMessages - The control messages
 	 * @return {this} <code>this</code> to allow method chaining
 	 * @protected
 	 */
@@ -237,7 +223,7 @@ sap.ui.define([
 	/**
 	 * Returns the array of this data state's current control messages.
 	 *
-	 * @returns {sap.ui.core.message.Message[]} The array of control messages
+	 * @returns {sap.ui.core.Message[]} The array of control messages
 	 *
 	 * @public
 	 */
@@ -262,27 +248,13 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns whether the data state is dirty in the UI control. A data state is dirty in the UI control if an entered
-	 * value did not pass the type validation. If the data state is used by a composite data state, it is also checked
-	 * whether the composite data state is dirty in the UI control.
+	 * Returns whether the data state is dirty in the UI control.
+	 * A data state is dirty in the UI control if the entered value did not yet pass the type validation.
 	 *
-	 * @returns {boolean} Whether the data state is dirty in the UI control
+	 * @returns {boolean} Whether the data state is dirty
 	 * @public
 	 */
-	DataState.prototype.isControlDirty = function () {
-		return this.oParentDataState
-			? this.oParentDataState.isControlDirty()
-			: this.isControlDirtyInternal();
-	};
-
-	/**
-	 * Returns whether the data state is dirty in the UI control. If the data state is used by a composite data state,
-	 * the composite data state is not considered.
-	 *
-	 * @returns {boolean} Whether this data state is dirty in the UI control
-	 * @private
-	 */
-	DataState.prototype.isControlDirtyInternal = function () {
+	DataState.prototype.isControlDirty = function() {
 		return this.mChangedProperties["invalidValue"] !== undefined;
 	};
 

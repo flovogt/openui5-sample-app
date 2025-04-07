@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -13,10 +13,16 @@ sap.ui.define([
 	return {
 		"moveControls": "default",
 		"combineButtons": {
-			"changeHandler": CombineButtonsHandler
+			"changeHandler": CombineButtonsHandler,
+			"layers": {
+				"CUSTOMER": false
+			}
 		},
 		"splitMenuButton": {
-			"changeHandler": SplitMenuButtonHandler
+			"changeHandler": SplitMenuButtonHandler,
+			"layers": {
+				"CUSTOMER": false
+			}
 		}
 	};
 }, /* bExport= */ true);

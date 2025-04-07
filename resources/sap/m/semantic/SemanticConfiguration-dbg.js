@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -17,10 +17,8 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/m/OverflowToolbarLayoutData",
 	"sap/ui/core/IconPool",
-	"sap/ui/core/InvisibleText",
-	"sap/ui/core/Messaging",
-	"sap/ui/core/Lib"
-], function(BaseObject, library, OverflowToolbarLayoutData, IconPool, InvisibleText, Messaging, Library) {
+	"sap/ui/core/InvisibleText"
+], function(BaseObject, library, OverflowToolbarLayoutData, IconPool, InvisibleText) {
 	"use strict";
 
 	// shortcut for sap.m.ButtonType
@@ -38,7 +36,7 @@ sap.ui.define([
 	 * Constructor for an sap.m.semantic.SemanticConfiguration.
 	 *
 	 * @class Defines the visual properties and positioning for each supported semantic type
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @private
 	 * @since 1.30.0
 	 * @alias sap.m.semantic.SemanticConfiguration
@@ -124,7 +122,7 @@ sap.ui.define([
 	SemanticConfiguration._oTypeConfigs = (function () { //TODO: set from outside?
 
 	var oTypeConfigs = {},
-			oBundle = Library.getResourceBundleFor("sap.m");
+			oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 		oTypeConfigs["sap.m.semantic.MultiSelectAction"] = {
 			position: SemanticConfiguration.prototype._PositionInPage.headerRight,
@@ -467,6 +465,7 @@ sap.ui.define([
 		oTypeConfigs["sap.m.semantic.MessagesIndicator"] = {
 			position: SemanticConfiguration.prototype._PositionInPage.footerLeft,
 			getSettings: function() {
+				var sTooltipId = InvisibleText.getStaticId("sap.m", "SEMANTIC_CONTROL_MESSAGES_INDICATOR");
 				return {
 					icon: IconPool.getIconURI("message-popup"),
 					text: {
@@ -475,12 +474,7 @@ sap.ui.define([
 							return aMessages.length || 0;
 						}
 					},
-					tooltip: {
-						path: "message>/",
-						formatter: function (aMessages) {
-							return oBundle.getText("SEMANTIC_CONTROL_MESSAGES_INDICATOR", [aMessages?.length || 0]);
-						}
-					},
+					ariaDescribedBy: sTooltipId,
 					type: ButtonType.Emphasized,
 					visible: {
 						path: "message>/",
@@ -488,7 +482,7 @@ sap.ui.define([
 							return aMessages && aMessages.length > 0;
 						}
 					},
-					models: {message: Messaging.getMessageModel()},
+					models: {message: sap.ui.getCore().getMessageManager().getMessageModel()},
 					layoutData: new OverflowToolbarLayoutData({
 						priority: OverflowToolbarPriority.NeverOverflow
 					})

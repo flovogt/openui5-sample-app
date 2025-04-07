@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,20 +9,17 @@ sap.ui.define([
 	'./library',
 	"sap/ui/core/Configuration",
 	'sap/ui/core/Control',
-	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/Element",
+	"sap/ui/core/Core",
 	'sap/ui/core/RenderManager',
 	'./NavContainerRenderer',
 	"sap/ui/thirdparty/jquery",
 	"sap/base/Log",
-	// jQuery Plugin "firstFocusableDomRef"
-	"sap/ui/dom/jquery/Focusable"
+	"sap/ui/dom/jquery/Focusable" // jQuery Plugin "firstFocusableDomRef"
 ], function(
 	library,
 	Configuration,
 	Control,
-	ControlBehavior,
-	Element,
+	Core,
 	RenderManager,
 	NavContainerRenderer,
 	jQuery,
@@ -48,7 +45,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -327,7 +324,7 @@ sap.ui.define([
 	};
 
 	var fnGetDelay = function (iDelay) {
-		var sAnimationMode = ControlBehavior.getAnimationMode(),
+		var sAnimationMode = Configuration.getAnimationMode(),
 			bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 		return bUseAnimations ? iDelay : 0;
@@ -457,7 +454,7 @@ sap.ui.define([
 	NavContainer.prototype._getActualInitialPage = function () {
 		var pageId = this.getInitialPage();
 		if (pageId) {
-			var page = Element.getElementById(pageId);
+			var page = sap.ui.getCore().byId(pageId);
 			if (page) {
 				return page;
 			} else {
@@ -902,7 +899,7 @@ sap.ui.define([
 				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || RenderManager.isPreservedContent(oToPageDomRef)) {
 					oToPage.addStyleClass("sapMNavItemRendering");
 					Log.debug("Rendering 'to' page '" + oToPage.toString() + "' for 'to' navigation");
-					var rm = new RenderManager().getInterface();
+					var rm = sap.ui.getCore().createRenderManager();
 					rm.render(oToPage, this.getDomRef());
 					rm.destroy();
 					oToPage.addStyleClass("sapMNavItemHidden").removeStyleClass("sapMNavItemRendering");
@@ -1071,7 +1068,7 @@ sap.ui.define([
 					Log.error(this.toString() + ": Cannot navigate backToPage('" + sRequestedPageId + "') because target page was not found among the previous pages.");
 					return this;
 				}
-				oToPage = Element.getElementById(info.id);
+				oToPage = sap.ui.getCore().byId(info.id);
 				if (!oToPage) {
 					Log.error(this.toString() + ": Cannot navigate backToPage('" + sRequestedPageId + "') because target page does not exist anymore.");
 					return this;
@@ -1172,7 +1169,7 @@ sap.ui.define([
 				if (!(oToPageDomRef = oToPage.getDomRef()) || oToPageDomRef.parentNode != this.getDomRef() || RenderManager.isPreservedContent(oToPageDomRef)) {
 					oToPage.addStyleClass("sapMNavItemRendering");
 					Log.debug("Rendering 'to' page '" + oToPage.toString() + "' for back navigation");
-					var rm = new RenderManager().getInterface();
+					var rm = sap.ui.getCore().createRenderManager();
 					var childPos = this.$().children().index(oFromPage.getDomRef());
 					rm.renderControl(oToPage);
 					rm.flush(this.getDomRef(), false, childPos);
@@ -1786,7 +1783,7 @@ sap.ui.define([
 	/**
 	 * Removes a page.
 	 *
-	 * @param {int | sap.ui.core.ID | sap.ui.core.Control}
+	 * @param {int | string | sap.ui.core.Control}
 	 *            vPage the position or ID of the <code>Control</code> that should be removed
 	 *            or that <code>Control</code> itself;
 	 *            if <code>vPage</code> is invalid, a negative value or a value greater or equal than the current size
@@ -1800,7 +1797,7 @@ sap.ui.define([
 		if (typeof (vPage) == "number") {
 			oPage = this.getPages()[vPage];
 		} else if (typeof (vPage) == "string") {
-			oPage = Element.getElementById(vPage);
+			oPage = sap.ui.getCore().byId(vPage);
 		} else {
 			oPage = vPage;
 		}

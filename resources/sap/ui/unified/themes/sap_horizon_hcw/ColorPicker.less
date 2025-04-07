@@ -131,6 +131,10 @@
 	line-height: 2.75rem;
 }
 
+.sapUiColorPicker-ColorPickerMatrix.sapUnifiedColorPicker .sapUiColorPicker-ColorPickerCircle:after {
+	border-color: @sapUiFieldBorderColor;
+}
+
 .sapUiColorPicker-ColorPickerMatrix {
 	&.sapUnifiedColorPicker{
 		.sapUiColorPicker-ColorPickerCircle {
@@ -139,6 +143,7 @@
 			&:after {
 				width: 5px;
 				height: 5px;
+				border: 0.125rem solid @sapUiFieldBackground;
 			}
 		}
 	}

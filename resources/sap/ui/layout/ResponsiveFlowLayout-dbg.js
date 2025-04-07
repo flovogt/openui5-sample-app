@@ -1,26 +1,23 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.ResponsiveFlowLayout.
 sap.ui.define([
-	"sap/base/i18n/Localization",
+	'sap/ui/core/Configuration',
 	'sap/ui/core/Control',
-	"sap/ui/core/RenderManager",
 	'sap/ui/core/ResizeHandler',
 	'./library',
 	'./ResponsiveFlowLayoutData',
 	'./ResponsiveFlowLayoutRenderer',
 	'sap/ui/thirdparty/jquery',
-	// jQuery Plugin "rect"
-	'sap/ui/dom/jquery/rect'
+	'sap/ui/dom/jquery/rect' // jQuery Plugin "rect"
 ],
 	function(
-		Localization,
+		Configuration,
 		Control,
-		RenderManager,
 		ResizeHandler,
 		library,
 		ResponsiveFlowLayoutData,
@@ -42,7 +39,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -216,7 +213,7 @@ sap.ui.define([
 			};
 
 			// Find out the "rows" within a row
-			if (Localization.getRTL()) {
+			if (Configuration.getRTL()) {
 				// for RTL-mode the elements have to be checked the other way round
 				for (var i = oRow.cont.length - 1; i >= 0; i--) {
 					fnCurrentWrapping(i);
@@ -585,7 +582,7 @@ sap.ui.define([
 				if (!this._resizeHandlerComputeWidthsID) {
 					// Trigger rerendering when the control is resized so width recalculations
 					// are handled in the on after rendering hook the same way as the initial width calculations.
-					this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, this._proxyComputeWidths.bind(this));
+					this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, ResponsiveFlowLayout.prototype.rerender.bind(this));
 				}
 			}
 		};
@@ -597,7 +594,7 @@ sap.ui.define([
 			if (this.getResponsive() && !this._resizeHandlerComputeWidthsID) {
 				// Trigger rerendering when the control is resized so width recalculations
 				// are handled in the on after rendering hook the same way as the initial width calculations.
-				this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, this._proxyComputeWidths.bind(this));
+				this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, ResponsiveFlowLayout.prototype.rerender.bind(this));
 			}
 
 			updateRows(this);
@@ -609,7 +606,7 @@ sap.ui.define([
 			if (bResponsive && !this._resizeHandlerComputeWidthsID) {
 				// Trigger rerendering when the control is resized so width recalculations
 				// are handled in the on after rendering hook the same way as the initial width calculations.
-				this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, this._proxyComputeWidths.bind(this));
+				this._resizeHandlerComputeWidthsID = ResizeHandler.register(this, ResponsiveFlowLayout.prototype.rerender.bind(this));
 			} else if (this._resizeHandlerComputeWidthsID) {
 				if (this._resizeHandlerComputeWidthsID) {
 					ResizeHandler.deregister(this._resizeHandlerComputeWidthsID);
@@ -686,7 +683,7 @@ sap.ui.define([
 		 * This function needs to be overridden to prevent any rendering while some
 		 * content is still being added.
 		 *
-		 * @param {int|sap.ui.core.ID|sap.ui.core.Control} oContent The content that should be removed from the layout
+		 * @param {int|string|sap.ui.core.Control} oContent The content that should be removed from the layout
 		 * @public
 		 */
 		ResponsiveFlowLayout.prototype.removeContent = function(oContent) {
@@ -749,7 +746,7 @@ sap.ui.define([
 		 */
 		ResponsiveFlowLayout.prototype._getRenderManager = function () {
 			if (!this.oRm) {
-				this.oRm = new RenderManager().getInterface();
+				this.oRm = sap.ui.getCore().createRenderManager();
 				this.oRm.writeHeader = function(sId, oStyles, aClasses) {
 					this.openStart("div", sId);
 

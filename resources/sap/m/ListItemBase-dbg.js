@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,11 +9,11 @@ sap.ui.define([
 	"sap/ui/base/DataType",
 	"sap/ui/model/BindingMode",
 	"sap/ui/Device",
+	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
 	"sap/ui/core/Icon",
 	"sap/ui/core/InvisibleText",
-	"sap/ui/core/message/MessageType",
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/core/ShortcutHintsMixin",
 	"./library",
@@ -31,11 +31,11 @@ function(
 	DataType,
 	BindingMode,
 	Device,
+	coreLibrary,
 	Control,
 	IconPool,
 	Icon,
 	InvisibleText,
-	MessageType,
 	ThemeParameters,
 	ShortcutHintsMixin,
 	library,
@@ -59,6 +59,9 @@ function(
 	// shortcut for sap.m.ButtonType
 	var ButtonType = library.ButtonType;
 
+	// shortcut for sap.ui.core.MessageType
+	var MessageType = coreLibrary.MessageType;
+
 
 	/**
 	 * Constructor for a new ListItemBase.
@@ -72,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @public
@@ -114,12 +117,11 @@ function(
 				/**
 				 * Defines the highlight state of the list items.
 				 *
-				 * Valid values for the <code>highlight</code> property are values of the enumerations {@link module:sap/ui/core/message/MessageType} or
-				 * {@link sap.ui.core.IndicationColor} (only values of <code>Indication01</code> to <code>Indication10</code> are supported
-				 * for accessibility contrast reasons).
+				 * Valid values for the <code>highlight</code> property are values of the enumerations {@link sap.ui.core.MessageType} or
+				 * {@link sap.ui.core.IndicationColor}.
 				 *
 				 * Accessibility support is provided through the associated {@link sap.m.ListItemBase#setHighlightText highlightText} property.
-				 * If the <code>highlight</code> property is set to a value of {@link module:sap/ui/core/message/MessageType}, the <code>highlightText</code>
+				 * If the <code>highlight</code> property is set to a value of {@link sap.ui.core.MessageType}, the <code>highlightText</code>
 				 * property does not need to be set because a default text is used. However, the default text can be overridden by setting the
 				 * <code>highlightText</code> property.
 				 * In all other cases the <code>highlightText</code> property must be set.
@@ -390,8 +392,7 @@ function(
 	};
 
 	ListItemBase.prototype.getGroupAnnouncement = function() {
-		const oList = this.getList();
-		return oList?.getAriaRole() === "listbox" ? this.$().prevAll(".sapMGHLI:first").text() : "";
+		return this.$().prevAll(".sapMGHLI:first").text();
 	};
 
 	ListItemBase.prototype.getAccessibilityDescription = function(oBundle) {
@@ -424,11 +425,12 @@ function(
 
 		if (sType == ListItemType.Navigation) {
 			aOutput.push(oBundle.getText("LIST_ITEM_NAVIGATION"));
-		} else if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
-			aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
+		} else {
+			if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
+				aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
+			}
 		}
 
-		// Do not announce group header if List
 		var sGroupAnnouncement = this.getGroupAnnouncement() || "";
 		if (sGroupAnnouncement) {
 			aOutput.push(sGroupAnnouncement);
@@ -528,7 +530,7 @@ function(
 			this._oDeleteControl, {
 				messageBundleKey: "LIST_ITEM_DELETE_SHORTCUT"
 			},
-		this._oDeleteControl);
+		this);
 
 		this._oDeleteControl.useEnabledPropagator(false);
 
@@ -569,7 +571,7 @@ function(
 			this._oDetailControl, {
 				messageBundleKey: Device.os.macintosh ? "LIST_ITEM_EDIT_SHORTCUT_MAC" : "LIST_ITEM_EDIT_SHORTCUT"
 			},
-		this._oDetailControl);
+		this);
 
 		this._oDetailControl.useEnabledPropagator(false);
 
@@ -756,8 +758,8 @@ function(
 	ListItemBase.prototype.setHighlight = function(sValue) {
 		if (sValue == null) {
 			sValue = MessageType.None;
-		} else if (!DataType.getType("sap.ui.core.message.MessageType").isValid(sValue) && !DataType.getType("sap.ui.core.IndicationColor").isValid(sValue)) {
-			throw new Error('"' + sValue + '" is not a value of the enums sap/ui/core/message/MessageType or sap.ui.core.IndicationColor for property "highlight" of ' + this);
+		} else if (!DataType.getType("sap.ui.core.MessageType").isValid(sValue) && !DataType.getType("sap.ui.core.IndicationColor").isValid(sValue)) {
+			throw new Error('"' + sValue + '" is not a value of the enums sap.ui.core.MessageType or sap.ui.core.IndicationColor for property "highlight" of ' + this);
 		}
 
 		return this.setProperty("highlight", sValue);
@@ -817,9 +819,6 @@ function(
 
 		// set the property and do not invalidate
 		this.setProperty("selected", bSelected, true);
-
-		// let the list know the selected property is changed
-		this.informList("AfterSelectedChange", bSelected);
 
 		return this;
 	};
@@ -1135,7 +1134,6 @@ function(
 
 			// support old bug and mimic space key handling and
 			// do not fire item's press event when item is included into selection
-			oEvent.type = "sapspace";
 			this.onsapspace(oEvent);
 
 		} else if (this.hasActiveType()) {
@@ -1178,8 +1176,8 @@ function(
 			return;
 		}
 
-		// Ctrl+E fires detail event or handle editing
-		if (this.getType().startsWith("Detail") && oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey)) {
+		// F2 fire detail event or handle editing
+		if (oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey)) {
 			if (oEvent.target === this.getDomRef() && (this.hasListeners("detailPress") || this.hasListeners("detailTap"))) {
 				this.fireDetailTap();
 				this.fireDetailPress();
@@ -1222,23 +1220,22 @@ function(
 	/**
 	 * Returns the tabbable DOM elements as a jQuery collection
 	 *
-	 * @param [bContentOnly] Whether only tabbables of the content area
 	 * @returns {jQuery} jQuery object
 	 * @protected
 	 * @since 1.26
 	 */
-	ListItemBase.prototype.getTabbables = function(bContentOnly) {
-		return this.$(bContentOnly ? "content" : "").find(":sapTabbable");
+	ListItemBase.prototype.getTabbables = function() {
+		return this.$().find(":sapTabbable");
 	};
 
 	// handle propagated focus to make the item row focusable
 	ListItemBase.prototype.onfocusin = function(oEvent) {
-		const oList = this.getList();
+		var oList = this.getList();
 		if (!oList || oEvent.isMarked()) {
 			return;
 		}
 
-		this.informList("FocusIn", oEvent.srcControl, oEvent);
+		this.informList("FocusIn", oEvent.srcControl);
 		oEvent.setMarked();
 	};
 
@@ -1272,7 +1269,7 @@ function(
 
 		// allow the context menu to open on the SingleSelect or MultiSelect control
 		if (oEvent.srcControl == this.getModeControl() ||
-			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow,.sapMListTblSubCnt")) {
+			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow")) {
 			this.informList("ContextMenu", oEvent);
 		}
 	};

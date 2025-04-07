@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /* global FontFace */
@@ -79,7 +79,7 @@ sap.ui.define([
 				'photo-voltaic': 0xe017,
 				'phone': 0xe018,
 				'pending': 0xe019,
-				'pdf-attachment': 0x1e01a,
+				'pdf-attachment': 0xe01a,
 				'past': 0x1e01b,
 				'outgoing-call': 0xe01c,
 				'opportunity': 0xe01d,
@@ -738,10 +738,6 @@ sap.ui.define([
 				'da': 0x1e2a3,
 				'da-2': 0x1e2a4,
 				'ai': 0x1e2a5,
-				'in-progress-2': 0x1e2a6,
-				'unsynchronize': 0x1e2a7,
-				'verified': 0x1e2a8,
-				'walk-me': 0x1e2a9,
 				'gender-male-and-female': 0x1e300,
 				'rotate': 0xe301,
 				'locate-me-2': 0xe302,

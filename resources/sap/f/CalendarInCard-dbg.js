@@ -1,14 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides control sap.f.CalendarInCard.
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/m/Button',
 	'sap/m/Toolbar',
-	"sap/ui/core/Lib",
+	'sap/ui/core/Core',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/IconPool',
 	'sap/ui/core/InvisibleText',
@@ -18,10 +17,9 @@ sap.ui.define([
 	'./CalendarInCardRenderer',
 	"sap/ui/core/date/UI5Date"
 ], function(
-	Localization,
 	Button,
 	Toolbar,
-	Library,
+	Core,
 	DateFormat,
 	IconPool,
 	InvisibleText,
@@ -45,7 +43,7 @@ sap.ui.define([
 	 * <code>sap.m.Toolbar</code> with <code>sap.m.Buttons</code>.
 	 *
 	 * @extends sap.ui.unified.Calendar
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 *
 	 * @constructor
 	 * @private
@@ -110,7 +108,7 @@ sap.ui.define([
 	 */
 	CalendarInCard.prototype._initializeHeader = function() {
 		var sNavToolbarId = this.getId() + "--Head",
-			oRB = Library.getResourceBundleFor("sap.f"),
+			oRB = Core.getLibraryResourceBundle("sap.f"),
 			oPrevBtn = new Button(sNavToolbarId + "-PrevBtn", {
 				icon: IconPool.getIconURI('slim-arrow-left'),
 				tooltip: oRB.getText("CALENDAR_BTN_PREV"),
@@ -218,7 +216,7 @@ sap.ui.define([
 	 */
 	CalendarInCard.prototype._formatPickerText = function (oFocusedDate) {
 		var oDate = oFocusedDate ? oFocusedDate : this.getSelectedDates()[0].getStartDate(),
-			bRTL = Localization.getRTL(),
+			bRTL = Core.getConfiguration().getRTL(),
 			oDateFormat = DateFormat.getDateInstance({format: "yMMMM"}),
 			sBeginningResult = oDateFormat.format(oDate),
 			sResult,

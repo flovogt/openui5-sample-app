@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -10,9 +10,8 @@ sap.ui.define([
 	'./P13nConditionPanel',
 	'./P13nPanel',
 	'./P13nGroupItem',
-	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery"
-], function(library, P13nConditionPanel, P13nPanel, P13nGroupItem, Library, jQuery) {
+], function(library, P13nConditionPanel, P13nPanel, P13nGroupItem, jQuery) {
 	"use strict";
 
 	// shortcut for sap.m.P13nPanelType
@@ -28,9 +27,9 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The P13nGroupPanel control is used to define group-specific settings for table personalization.
 	 * @extends sap.m.P13nPanel
-	 * @version 1.134.0
+	 * @version 1.120.0
 	 * @constructor
-	 * @deprecated As of version 1.98. Use the {@link sap.m.p13n.GroupPanel} instead.
+	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.GroupPanel} instead.
 	 * @public
 	 * @since 1.26.0
 	 * @alias sap.m.P13nGroupPanel
@@ -222,7 +221,7 @@ sap.ui.define([
 
 	P13nGroupPanel.prototype.init = function() {
 		this.setType(P13nPanelType.group);
-		this.setTitle(Library.getResourceBundleFor("sap.m").getText("GROUPPANEL_TITLE"));
+		this.setTitle(sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("GROUPPANEL_TITLE"));
 
 		this._aKeyFields = [];
 
@@ -281,7 +280,7 @@ sap.ui.define([
 			});
 			aKeyFields.splice(0, 0, {
 				key: null,
-				text: Library.getResourceBundleFor("sap.m").getText("P13NDIALOG_SELECTION_NONE")
+				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("P13NDIALOG_SELECTION_NONE")
 			});
 			this._oGroupPanel.setKeyFields(aKeyFields);
 

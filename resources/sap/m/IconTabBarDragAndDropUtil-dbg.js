@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,13 +8,13 @@
  * Contains functionality that is used in sap.m.IconTabBar Drag&Drop
  */
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/core/dnd/DragInfo',
 	'sap/ui/core/dnd/DropInfo',
 	"sap/ui/events/KeyCodes",
-	'sap/ui/core/library'
+	'sap/ui/core/library',
+	'sap/ui/core/Configuration'
 ],
-	function(Localization, DragInfo, DropInfo, KeyCodes, coreLibrary) {
+	function(DragInfo, DropInfo, KeyCodes, coreLibrary, Configuration) {
 		"use strict";
 
 		// shortcut for sap.ui.core.dnd.DropPosition
@@ -94,7 +94,7 @@ sap.ui.define([
 				var iBeginDragIndex = oContext.indexOfItem(oDraggedControl),
 					iDropIndex = oContext.indexOfItem(oDroppedControl),
 					iAggregationDropIndex = 0,
-					bRtl = Localization.getRTL(),
+					bRtl = Configuration.getRTL(),
 					bIsDropPositionBefore = sDropPosition === INSERT_POSITION_BEFORE,
 					//_getNestedLevel returns 1 there is no nesting
 					currentNestedLevel = oDroppedControl._getNestedLevel() - 1;
@@ -264,7 +264,7 @@ sap.ui.define([
 			moveItem: function (oDraggedControl, iKeyCode, iMaxIndex) {
 				var aItems = this.getItems(),
 					iBeginDragIndex = this.indexOfItem(oDraggedControl),
-					bRtl = Localization.getRTL(),
+					bRtl = Configuration.getRTL(),
 					iNewDropIndex,
 					bPrevent;
 

@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define(['sap/ui/core/Element'],
-	(Element) => {
+	function (Element) {
 		"use strict";
 
 		/**
@@ -20,17 +20,17 @@ sap.ui.define(['sap/ui/core/Element'],
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.0
 		 *
 		 * @constructor
 		 * @alias sap.m.p13n.AbstractContainerItem
 		 * @author SAP SE
-		 * @version 1.134.0
-		 * @since 1.96
-		 * @private
+		 * @version 1.120.0
+	 	 * @since 1.96
+	 	 * @private
 		 * @ui5-restricted
 		 */
-		const AbstractContainerItem = Element.extend("sap.m.p13n.AbstractContainerItem", {
+		var AbstractContainerItem = Element.extend("sap.m.p13n.AbstractContainerItem", {
 			metadata: {
 				library: "sap.m",
 				defaultAggregation: "content",
@@ -55,13 +55,6 @@ sap.ui.define(['sap/ui/core/Element'],
 					icon: {
 						type: "string",
 						defaultValue: null
-					},
-					/**
-					 * Item type.
-					 */
-					type: {
-						type: "string",
-						defaultValue: "Active"
 					}
 				},
 				aggregations: {
@@ -76,7 +69,7 @@ sap.ui.define(['sap/ui/core/Element'],
 			}
 		});
 
-		AbstractContainerItem.prototype.exit = function() {
+		AbstractContainerItem.prototype.exit = function () {
 			Element.prototype.exit.apply(this, arguments);
 			if (this._oContent) {
 				this._oContent.destroy();

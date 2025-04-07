@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -87,11 +87,11 @@ sap.ui.define([
 		 *     <code>true</code>, bindings shall have type and constraints information
 		 *   <li> <code>ignoreAsPrefix</code>: {string} an optional prefix to be ignored in a path
 		 *     expression (for example, binding parameter name)
-		 *   <li> <code>model</code>: {sap.ui.model.odata.v4.ODataMetaModel} the meta model
-		 *   <li> <code>path</code>: {string} the path in the meta model that leads to the value
+		 *   <li> <code>model</code>: {sap.ui.model.odata.v4.ODataMetaModel} the metamodel
+		 *   <li> <code>path</code>: {string} the path in the metamodel that leads to the value
 		 *   <li> <code>prefix</code>: {string} used in a path expression as a prefix for the
 		 *     value; is either an empty string or a path ending with a "/"
-		 *   <li> <code>value</code>: {any} the value of the (sub) expression from the meta model
+		 *   <li> <code>value</code>: {any} the value of the (sub) expression from the metamodel
 		 * </ul>
 		 *
 		 * Unless specified otherwise all functions return a result object with the following
@@ -412,7 +412,7 @@ sap.ui.define([
 					"$Ge", "$Gt", "$Guid", "$If", "$Int", "$Le", "$Lt", "$Name", "$Ne", "$Not",
 					"$Null", "$Or", "$Path", "$PropertyPath", "$TimeOfDay", "$LabeledElement"
 				].forEach(function (sProperty) {
-					if (sProperty in oRawValue) {
+					if (oRawValue.hasOwnProperty(sProperty)) {
 						sType = sProperty.slice(1);
 						oSubPathValue = Basics.descend(oPathValue, sProperty);
 					}
@@ -521,7 +521,7 @@ sap.ui.define([
 			return oModel.fetchObject(sPath + "/$").then(function (oTarget) {
 				var sCompositeConstraints
 						= oModel.getObject(oPathValue.path
-							+ "@com.sap.vocabularies.UI.v1.DoNotCheckScaleOfMeasuredQuantity")
+							+ "@com.sap.vocabularies.UI.v1.DoNotCheckScaleOfMeasureQuantity")
 						? ",constraints:{'skipDecimalsValidation':true}"
 						: "";
 
