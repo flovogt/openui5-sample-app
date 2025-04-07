@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -26,13 +26,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.core
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @since 0.8
 	 * @public
 	 */
 	 var thisLib = Library.init({
 		 name: "sap.ui.core",
-		 version: "1.120.0",
+		 version: "1.120.7",
 		 designtime: "sap/ui/core/designtime/library.designtime",
 		 // "apiVersion" is still WIP and in 1.120 restricted to the sap.ui.core library only!
 		 // TODO: Remove spread operator once UI5 Tooling can validate this new property
@@ -1608,7 +1608,7 @@ sap.ui.define([
 	/**
 	 * Sort order of a column.
 	 *
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @enum {string}
 	 * @public
 	 * @since 1.61.0
@@ -2354,8 +2354,14 @@ sap.ui.define([
 	 * @borrows module:sap/ui/core/message/MessageType.Warning as Warning
 	 * @borrows module:sap/ui/core/message/MessageType.Success as Success
 	 * @borrows module:sap/ui/core/message/MessageType.None as None
+	 * @deprecated As of version 1.120. Please use {@link sap.ui.core.message.MessageType} instead.
 	 */
 	thisLib.MessageType = MessageType;
+
+	/**
+	 * @deprecated As of version 1.120.
+	 */
+	DataType.registerEnum("sap.ui.core.MessageType", thisLib.MessageType);
 
 	/**
 	 * Specifies possible view types.

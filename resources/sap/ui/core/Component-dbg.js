@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,14 +8,13 @@
 sap.ui.define([
 	'./Manifest',
 	'./ComponentMetadata',
-	'./Element',
+	'./ElementRegistry',
 	'sap/base/config',
 	'sap/base/i18n/Localization',
 	'sap/base/util/extend',
 	'sap/base/util/deepExtend',
 	'sap/base/util/merge',
 	'sap/ui/base/ManagedObject',
-	'sap/ui/base/ManagedObjectRegistry',
 	'sap/ui/core/Lib',
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/thirdparty/URI',
@@ -30,18 +29,19 @@ sap.ui.define([
 	'sap/ui/core/_UrlResolver',
 	'sap/ui/VersionInfo',
 	'sap/ui/core/mvc/ViewType',
-	'sap/ui/core/Configuration'
+	'sap/ui/core/Configuration',
+	'sap/ui/core/ComponentRegistry',
+	'sap/ui/core/util/_LocalizationHelper'
 ], function(
 	Manifest,
 	ComponentMetadata,
-	Element,
+	ElementRegistry,
 	BaseConfig,
 	Localization,
 	extend,
 	deepExtend,
 	merge,
 	ManagedObject,
-	ManagedObjectRegistry,
 	Library,
 	ResizeHandler,
 	URI,
@@ -56,7 +56,9 @@ sap.ui.define([
 	_UrlResolver,
 	VersionInfo,
 	ViewType,
-	Configuration
+	Configuration,
+	ComponentRegistry,
+	_LocalizationHelper
 ) {
 	"use strict";
 
@@ -234,7 +236,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -377,17 +379,7 @@ sap.ui.define([
 
 	}, /* Metadata constructor */ ComponentMetadata);
 
-	// apply the registry plugin
-	ManagedObjectRegistry.apply(Component, {
-		onDeregister: function(sComponentId) {
-			forEachChildElement(function(oElement) {
-				if ( oElement._sapui_candidateForDestroy) {
-					Log.debug("destroying dangling template " + oElement + " when destroying the owner component");
-					oElement.destroy();
-				}
-			}, sComponentId);
-		}
-	});
+	ComponentRegistry.init(Component);
 
 	/**
 	 * Creates a new subclass of class <code>sap.ui.core.Component</code> with name
@@ -440,7 +432,7 @@ sap.ui.define([
 	 * @param {sap.ui.core.ID} sComponentId the component ID used for the owner check
 	 */
 	function forEachChildElement(fn, sComponentId) {
-		Element.registry.forEach(function(oElement, sId) {
+		ElementRegistry.forEach(function(oElement, sId) {
 			var sElementOwnerId = Component.getOwnerIdFor(oElement);
 			if (sElementOwnerId === sComponentId && !oElement.getParent()) {
 				fn(oElement, sId);
@@ -473,7 +465,7 @@ sap.ui.define([
 		}
 
 		if (sComponentId) {
-			oComponent = Component.get(sComponentId);
+			oComponent = Component.getComponentById(sComponentId);
 		}
 
 		if (oComponent) {
@@ -744,7 +736,7 @@ sap.ui.define([
 	 * @since 1.25.1
 	 */
 	Component.getOwnerComponentFor = function(oObject) {
-		return Component.get(Component.getOwnerIdFor(oObject));
+		return Component.getComponentById(Component.getOwnerIdFor(oObject));
 	};
 
 	/**
@@ -857,7 +849,7 @@ sap.ui.define([
 	 */
 	Component.prototype._getDestroyables = function() {
 		if (!this._aDestroyables) {
-			Log.error("Mandatory super constructor not called for Component: '" + this.getManifestObject().getComponentName() + "'.",
+			Log.error("[FUTURE FATAL] Mandatory super constructor not called for Component: '" + this.getManifestObject().getComponentName() + "'.",
 				null,
 				"sap.ui.support",
 				function() {
@@ -1628,7 +1620,7 @@ sap.ui.define([
 									// 2.0 is the default in case no version is provided
 									oModelConfig.type = 'sap.ui.model.odata.v2.ODataModel';
 								} else {
-									Log.error('Component Manifest: Provided OData version "' + sODataVersion + '" in ' +
+									Log.error('[FUTURE FATAL] Component Manifest: Provided OData version "' + sODataVersion + '" in ' +
 									'dataSource "' + oModelConfig.dataSource + '" for model "' + sModelName + '" is unknown. ' +
 									'Falling back to default model type "sap.ui.model.odata.v2.ODataModel".',
 									'["sap.app"]["dataSources"]["' + oModelConfig.dataSource + '"]', sLogComponentName);
@@ -1650,7 +1642,7 @@ sap.ui.define([
 
 			// model type is required!
 			if (!oModelConfig.type) {
-				Log.error("Component Manifest: Missing \"type\" for model \"" + sModelName + "\"", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
+				Log.error("[FUTURE FATAL] Component Manifest: Missing \"type\" for model \"" + sModelName + "\"", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 				continue;
 			}
 
@@ -1733,7 +1725,7 @@ sap.ui.define([
 			}
 			// class could not be loaded by _loadManifestModelClasses
 			if (!fnClass) {
-				Log.error("Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be found", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
+				Log.error("[FUTURE FATAL] Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be found", "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 				continue;
 			}
 			var oClassMetadata = fnClass.getMetadata();
@@ -1801,19 +1793,19 @@ sap.ui.define([
 
 								// dataSource entry should be defined!
 								if (!oAnnotation) {
-									Log.error("Component Manifest: ODataAnnotation \"" + sAnnotation + "\" for dataSource \"" + oModelConfig.dataSource + "\" could not be found in manifest", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									Log.error("[FUTURE FATAL] Component Manifest: ODataAnnotation \"" + sAnnotation + "\" for dataSource \"" + oModelConfig.dataSource + "\" could not be found in manifest", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
 								// type should be ODataAnnotation!
 								if (oAnnotation.type !== 'ODataAnnotation') {
-									Log.error("Component Manifest: dataSource \"" + sAnnotation + "\" was expected to have type \"ODataAnnotation\" but was \"" + oAnnotation.type + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									Log.error("[FUTURE FATAL] Component Manifest: dataSource \"" + sAnnotation + "\" was expected to have type \"ODataAnnotation\" but was \"" + oAnnotation.type + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
 								// uri is required!
 								if (!oAnnotation.uri) {
-									Log.error("Component Manifest: Missing \"uri\" for ODataAnnotation \"" + sAnnotation + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
+									Log.error("[FUTURE FATAL] Component Manifest: Missing \"uri\" for ODataAnnotation \"" + sAnnotation + "\"", "[\"sap.app\"][\"dataSources\"][\"" + sAnnotation + "\"]", sLogComponentName);
 									continue;
 								}
 
@@ -1852,7 +1844,7 @@ sap.ui.define([
 					}
 
 				} else {
-					Log.error("Component Manifest: dataSource \"" + oModelConfig.dataSource + "\" for model \"" + sModelName + "\" not found or invalid", "[\"sap.app\"][\"dataSources\"][\"" + oModelConfig.dataSource + "\"]", sLogComponentName);
+					Log.error("[FUTURE FATAL] Component Manifest: dataSource \"" + oModelConfig.dataSource + "\" for model \"" + sModelName + "\" not found or invalid", "[\"sap.app\"][\"dataSources\"][\"" + oModelConfig.dataSource + "\"]", sLogComponentName);
 					continue;
 				}
 			}
@@ -2054,13 +2046,12 @@ sap.ui.define([
 	Component._loadManifestModelClasses = function(mModelConfigurations, sLogComponentName) {
 		for (var sModelName in mModelConfigurations) {
 			var oModelConfig = mModelConfigurations[sModelName];
-
 			// load model class and log error message if it couldn't be loaded.
 			// error gets caught to continue creating the other models and not breaking the execution here
 			try {
 				sap.ui.requireSync(oModelConfig.type.replace(/\./g, "/"));
 			} catch (oError) {
-				Log.error("Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be loaded. " + oError, "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
+				Log.error("[FUTURE FATAL] Component Manifest: Class \"" + oModelConfig.type + "\" for model \"" + sModelName + "\" could not be loaded. " + oError, "[\"sap.ui5\"][\"models\"][\"" + sModelName + "\"]", sLogComponentName);
 				continue;
 			}
 		}
@@ -2531,7 +2522,7 @@ sap.ui.define([
 				"Use 'Component.get' instead", "sap.ui.component", null, fnLogProperties.bind(null, vConfig));
 			// when only a string is given, then this function behaves like a
 			// getter and returns an existing component instance
-			return Component.get(vConfig);
+			return Component.getComponentById(vConfig);
 		}
 
 		if (vConfig.async) {
@@ -2609,7 +2600,7 @@ sap.ui.define([
 		const def = new Deferred();
 
 		sap.ui.require([sModuleName], def.resolve, (err) => {
-			Log.warning(`Cannot load module '${sModuleName}'. ` +
+			Log.warning(`[FUTURE FATAL] Cannot load module '${sModuleName}'. ` +
 				"This will most probably cause an error once the module is used later on.",
 				sComponentName, "sap.ui.core.Component");
 			Log.warning(err);
@@ -2624,7 +2615,7 @@ sap.ui.define([
 	 * Part of the old sap.ui.component implementation than can be re-used by the new factory
 	 */
 	function componentFactory(vConfig, bLegacy) {
-		var oOwnerComponent = Component.get(ManagedObject._sOwnerId);
+		var oOwnerComponent = Component.getComponentById(ManagedObject._sOwnerId);
 
 		if (Array.isArray(vConfig.activeTerminologies) && vConfig.activeTerminologies.length &&
 			Array.isArray(Localization.getActiveTerminologies()) && Localization.getActiveTerminologies().length) {
@@ -2869,10 +2860,25 @@ sap.ui.define([
 	 * @since 1.56.0
 	 * @static
 	 * @public
+	 * @deprecated As of version 1.120, please use the static {@link sap.ui.core.Component.getComponentById getComponentById} instead.
 	 */
 	Component.get = function (sId) {
 		// lookup and return the component
-		return Component.registry.get(sId);
+		return Component.getComponentById(sId);
+	};
+
+	/**
+	 * Returns an existing component instance, identified by its ID.
+	 *
+	 * @param {string} sId ID of the component.
+	 * @returns {sap.ui.core.Component|undefined} Component instance or <code>undefined</code> when no component
+	 *     with the given ID exists.
+	 * @since 1.120
+	 * @static
+	 * @public
+	 */
+	Component.getComponentById = function(sId) {
+		return ComponentRegistry.get(sId);
 	};
 
 	/**
@@ -3029,7 +3035,7 @@ sap.ui.define([
 			// determine the semantic of the manifest property
 			bManifestFirst = !!vManifest;
 			sManifestUrl = vManifest && typeof vManifest === 'string' ? vManifest : undefined;
-			oManifest = vManifest && typeof vManifest === 'object' ? createSanitizedManifest(vManifest, {url: oConfig && oConfig.altManifestUrl, activeTerminologies: aActiveTerminologies}) : undefined;
+			oManifest = vManifest && typeof vManifest === 'object' ? createSanitizedManifest(vManifest, {url: oConfig && oConfig.altManifestUrl, activeTerminologies: aActiveTerminologies, process: !oConfig.async}) : undefined;
 		}
 
 		// if we find a manifest URL in the configuration
@@ -3103,7 +3109,7 @@ sap.ui.define([
 				if (mOptions.failOnError) {
 					throw new Error(sMsg);
 				} else {
-					Log.warning(sMsg);
+					Log.warning("[FUTURE FATAL] " + sMsg);
 				}
 			}
 
@@ -3539,7 +3545,7 @@ sap.ui.define([
 						try {
 							return Component._fnLoadComponentCallback(oConfigCopy, oLoadedManifest);
 						} catch (oError) {
-							Log.error("Callback for loading the component \"" + oLoadedManifest.getComponentName() +
+							Log.error("[FUTURE FATAL] Callback for loading the component \"" + oLoadedManifest.getComponentName() +
 								"\" run into an error. The callback was skipped and the component loading resumed.",
 								oError, "sap.ui.core.Component");
 						}
@@ -3758,117 +3764,14 @@ sap.ui.define([
 	 * @namespace sap.ui.core.Component.registry
 	 * @public
 	 * @since 1.67
+	 * @deprecated As of version 1.120. Use {@link module:sap/ui/core/ComponentRegistry} instead.
+	 * @borrows module:sap/ui/core/ComponentRegistry.size as size
+	 * @borrows module:sap/ui/core/ComponentRegistry.all as all
+	 * @borrows module:sap/ui/core/ComponentRegistry.get as get
+	 * @borrows module:sap/ui/core/ComponentRegistry.forEach as forEach
+	 * @borrows module:sap/ui/core/ComponentRegistry.filter as filter
 	 */
-
-	/**
-	 * Number of existing components.
-	 *
-	 * @type {int}
-	 * @readonly
-	 * @name sap.ui.core.Component.registry.size
-	 * @public
-	 */
-
-	/**
-	 * Return an object with all instances of <code>sap.ui.core.Component</code>,
-	 * keyed by their ID.
-	 *
-	 * Each call creates a new snapshot object. Depending on the size of the UI,
-	 * this operation therefore might be expensive. Consider to use the <code>forEach</code>
-	 * or <code>filter</code> method instead of executing similar operations on the returned
-	 * object.
-	 *
-	 * <b>Note</b>: The returned object is created by a call to <code>Object.create(null)</code>,
-	 * and therefore lacks all methods of <code>Object.prototype</code>, e.g. <code>toString</code> etc.
-	 *
-	 * @returns {Object<sap.ui.core.ID,sap.ui.core.Component>} Object with all components, keyed by their ID
-	 * @name sap.ui.core.Component.registry.all
-	 * @function
-	 * @public
-	 */
-
-	/**
-	 * Retrieves a Component by its ID.
-	 *
-	 * When the ID is <code>null</code> or <code>undefined</code> or when there's no Component with
-	 * the given ID, then <code>undefined</code> is returned.
-	 *
-	 * @param {sap.ui.core.ID} id ID of the Component to retrieve
-	 * @returns {sap.ui.core.Component|undefined} Component with the given ID or <code>undefined</code>
-	 * @name sap.ui.core.Component.registry.get
-	 * @function
-	 * @public
-	 */
-
-	/**
-	 * Calls the given <code>callback</code> for each existing component.
-	 *
-	 * The expected signature of the callback is
-	 * <pre>
-	 *    function callback(oComponent, sID)
-	 * </pre>
-	 * where <code>oComponent</code> is the currently visited component instance and <code>sID</code>
-	 * is the ID of that instance.
-	 *
-	 * The order in which the callback is called for components is not specified and might change between
-	 * calls (over time and across different versions of UI5).
-	 *
-	 * If components are created or destroyed within the <code>callback</code>, then the behavior is
-	 * not specified. Newly added objects might or might not be visited. When a component is destroyed during
-	 * the filtering and was not visited yet, it might or might not be visited. As the behavior for such
-	 * concurrent modifications is not specified, it may change in newer releases.
-	 *
-	 * If a <code>thisArg</code> is given, it will be provided as <code>this</code> context when calling
-	 * <code>callback</code>. The <code>this</code> value that the implementation of <code>callback</code>
-	 * sees, depends on the usual resolution mechanism. E.g. when <code>callback</code> was bound to some
-	 * context object, that object wins over the given <code>thisArg</code>.
-	 *
-	 * @param {function(sap.ui.core.Component,sap.ui.core.ID)} callback
-	 *        Function to call for each Component
-	 * @param {Object} [thisArg=undefined]
-	 *        Context object to provide as <code>this</code> in each call of <code>callback</code>
-	 * @throws {TypeError} If <code>callback</code> is not a function
-	 * @name sap.ui.core.Component.registry.forEach
-	 * @function
-	 * @public
-	 */
-
-	/**
-	 * Returns an array with components for which the given <code>callback</code> returns a value that coerces
-	 * to <code>true</code>.
-	 *
-	 * The expected signature of the callback is
-	 * <pre>
-	 *    function callback(oComponent, sID)
-	 * </pre>
-	 * where <code>oComponent</code> is the currently visited component instance and <code>sID</code>
-	 * is the ID of that instance.
-	 *
-	 * If components are created or destroyed within the <code>callback</code>, then the behavior is
-	 * not specified. Newly added objects might or might not be visited. When a component is destroyed during
-	 * the filtering and was not visited yet, it might or might not be visited. As the behavior for such
-	 * concurrent modifications is not specified, it may change in newer releases.
-	 *
-	 * If a <code>thisArg</code> is given, it will be provided as <code>this</code> context when calling
-	 * <code>callback</code>. The <code>this</code> value that the implementation of <code>callback</code>
-	 * sees, depends on the usual resolution mechanism. E.g. when <code>callback</code> was bound to some
-	 * context object, that object wins over the given <code>thisArg</code>.
-	 *
-	 * This function returns an array with all components matching the given predicate. The order of the
-	 * components in the array is not specified and might change between calls (over time and across different
-	 * versions of UI5).
-	 *
-	 * @param {function(sap.ui.core.Component,sap.ui.core.ID):boolean} callback
-	 *        predicate against which each Component is tested
-	 * @param {Object} [thisArg=undefined]
-	 *        context object to provide as <code>this</code> in each call of <code>callback</code>
-	 * @returns {sap.ui.core.Component[]}
-	 *        Array of components matching the predicate; order is undefined and might change in newer versions of UI5
-	 * @throws {TypeError} If <code>callback</code> is not a function
-	 * @name sap.ui.core.Component.registry.filter
-	 * @function
-	 * @public
-	 */
+	Component.registry = ComponentRegistry;
 
 	/**
 	 * Returns the information defined in the manifests command section. If a command name
@@ -3944,7 +3847,7 @@ sap.ui.define([
 		}, this.getId());
 
 		// deactivate all child components
-		Component.registry.forEach(function(oComponent) {
+		ComponentRegistry.forEach(function(oComponent) {
 			var sOwnerId = Component.getOwnerIdFor(oComponent);
 			if (sOwnerId === this.getId()) {
 				oComponent.deactivate();
@@ -4007,7 +3910,7 @@ sap.ui.define([
 		}, this.getId());
 
 		// activate all child components
-		Component.registry.forEach(function(oComponent) {
+		ComponentRegistry.forEach(function(oComponent) {
 			var sOwnerId = Component.getOwnerIdFor(oComponent);
 			if (sOwnerId === this.getId()) {
 				oComponent.activate();
@@ -4090,6 +3993,8 @@ sap.ui.define([
 	 * @since 1.88
 	 * @protected
 	 */
+
+	_LocalizationHelper.registerForUpdate("Components", ComponentRegistry.all);
 
 	return Component;
 });

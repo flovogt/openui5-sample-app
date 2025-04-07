@@ -6955,6 +6955,68 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	});
 
 	//*********************************************************************************************
+	// Scenario: The key predicate of an entity contains an encoded * character (='%2A'). Ensure
+	// that the message targets (target and full target) are normalized in the same way as the
+	// enitity key.
+	// BCP: 2370146338
+	QUnit.test("Messages: normalize target and full target paths", function (assert) {
+		const oModel = createSalesOrdersModel();
+		const sView = '\
+<FlexBox id="flexbox">\
+	<Table id="table" growing="true" items="{ToLineItems}">\
+		<Text id="itemPosition" text="{ItemPosition}"/>\
+		<Input id="note" value="{Note}"/>\
+	</Table>\
+</FlexBox>';
+
+		return this.createView(assert, sView, oModel).then(() => {
+			this.expectHeadRequest()
+				.expectRequest({
+					deepPath : "/BusinessPartnerSet('4711')/ToSalesOrders('42')/ToLineItems",
+					method : "GET",
+					requestUri : "SalesOrderSet('42')/ToLineItems?$skip=0&$top=20"
+				}, {
+					results : [{
+						__metadata : {
+							uri : "/SalesOrderLineItemSet(SalesOrderID='42',ItemPosition='1%2A%30%2F')"
+						},
+						ItemPosition : "1*0/",
+						Note : "Position 10",
+						SalesOrderID : "42"
+					}]
+				}, {"sap-message" : getMessageHeader(this.createResponseMessage(
+					"(SalesOrderID='42',ItemPosition='1%2A%30%2F')/Note", "Foo"))})
+				.expectMessages([{
+					code : "code-0",
+					fullTarget : "/BusinessPartnerSet('4711')/ToSalesOrders('42')"
+						+ "/ToLineItems(SalesOrderID='42',ItemPosition='1*0%2F')/Note",
+					message : "Foo",
+					persistent : false,
+					target : "/SalesOrderLineItemSet(SalesOrderID='42',ItemPosition='1*0%2F')/Note",
+					technical : false,
+					type : "Error"
+				}])
+				.expectValue("itemPosition", ["1*0/"])
+				.expectValue("note", ["Position 10"]);
+
+			// code under test - relative binding context
+			this.oView.byId("flexbox").setBindingContext(new Context(oModel, "/SalesOrderSet('42')",
+				"/BusinessPartnerSet('4711')/ToSalesOrders('42')"));
+
+			return this.waitForChanges(assert);
+		}).then(() => {
+			const oInput = this.oView.byId("table").getItems()[0].getCells()[1];
+			this.expectValueState(oInput, "Error", "Foo");
+
+			assert.strictEqual(oInput.getBinding("value").oContext.getDeepPath(),
+				"/BusinessPartnerSet('4711')/ToSalesOrders('42')/ToLineItems(SalesOrderID='42',ItemPosition='1*0%2F')");
+			assert.strictEqual(oInput.getBinding("value").getResolvedPath(),
+				"/SalesOrderLineItemSet(SalesOrderID='42',ItemPosition='1*0%2F')/Note");
+			return this.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
 	// Scenario: Function import parameters need to be encoded when creating the default target
 	// path for for a function import. Otherwise messages cannot be assigned properly and it might
 	// lead to duplicate messages.
@@ -8610,6 +8672,168 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			return that.waitForChanges(assert);
 		});
 	});
+
+	//*********************************************************************************************
+	// Scenario: Grouping by a property of type "Edm.Time" is possible with the AnalyticalBinding.
+	// The AnalyticalBinding has to ensure that the generated IDs e.g. multi-unit ID, group ID are
+	// different for different "Edm.Time" values. "Edm.Time" objects are the only ones that do not
+	// provide a useful toString representation.
+	// SNOW: CS20230006325114
+[{
+	sTitle: "no multi-unit case ([a, b, c,| d, e,| f, g, h, i, j])",
+	aLengths: [551, 551, 551],
+	aKeyIndexForRoot: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+	aMultiUnitIndices: [],
+	aMultiUnitKeysForRoot: undefined,
+	aSkip: [5, 3],
+	aTop: [5, 2],
+	aVisibleRow: [7, 2],
+	bWithWarning: false
+}, {
+	sTitle: "multi-unit at the end of the gap ([a, a, b,| c, d, d, e, f,| f, g, h, ...]); case c) II",
+	aKeyIndexForRoot: ["ZERO", 2, 3, -4, 6, -7, 9, 10, 11, 12, 13, 14, 15],
+	aLengths: [550, 550, 548],
+	aMultiUnitIndices: [[0, 1], [4,5], [7, 8]],
+	aMultiUnitKeysForRoot: [
+		",,,0,*,,,-multiple-units-not-dereferencable",
+		undefined,
+		undefined,
+		",,,4,*,,,-multiple-units-not-dereferencable",
+		undefined,
+		",,,7,*,,,-multiple-units-not-dereferencable"
+	],
+	aSkip: [8, 3],
+	aTop: [8, 5],
+	aVisibleRow: [9, 2],
+	bWithWarning: true
+}, {
+	sTitle: "multi-unit in block one and at the beginning and the end of last block"
+		+ " ([a, a, b,| b, c, d, e, e,| e, g, h, ...])",
+	aKeyIndexForRoot: ["ZERO", -2, 4, 5, -6, 9, 10, 11, 12, 13, 14, 15],
+	aLengths: [550, 550, 547],
+	aMultiUnitIndices: [[0, 1], [2, 3], [6, 8]],
+	aMultiUnitKeysForRoot: [
+		",,,0,*,,,-multiple-units-not-dereferencable",
+		",,,2,*,,,-multiple-units-not-dereferencable",
+		undefined,
+		undefined,
+		",,,6,*,,,-multiple-units-not-dereferencable"
+	],
+	aSkip: [8, 3],
+	aTop: [8, 5],
+	aVisibleRow: [9, 2],
+	bWithWarning: true
+}].forEach(function (oFixture) {
+	QUnit.test("AnalyticalBinding: grouping by property of type Edm.Time, " + oFixture.sTitle, function (assert) {
+		var oBinding, oTable,
+			oModel = createModel("/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS", {
+				tokenHandling : false
+			}),
+			sView = '\
+<t:AnalyticalTable id="table" rows="{path : \'/Items\', parameters : {useBatchRequests : true}}"\
+		threshold="2" visibleRowCount="2">\
+	<t:AnalyticalColumn grouped="true" leadingProperty="CreationTime">\
+		<Label text="CreationTime"/>\
+		<t:template><Text wrapping="false" text="{CreationTime}"/></t:template>\
+	</t:AnalyticalColumn>\
+	<t:AnalyticalColumn summed="true" leadingProperty="AmountInCompanyCodeCurrency">\
+		<Label text="AmountInCompanyCodeCurrency"/>\
+		<t:template><Text wrapping="false" text="{AmountInCompanyCodeCurrency}"/></t:template>\
+	</t:AnalyticalColumn>\
+</t:AnalyticalTable>',
+			that = this;
+
+		var aItems = [];
+		for (var i = 0; i < 50; i += 1) {
+			aItems.push({
+				__metadata : {uri : "/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS/Items(" + i + ")"},
+				CreationTime : {ms: i, __edmType: 'Edm.Time'},
+				AmountInCompanyCodeCurrency : String(i),
+				Currency : "USD"
+			});
+		}
+		// create multi-unit situations by reusing the dimension value of the grouped column (CreationTime) of the first
+		// item of the range for all others in the range; a multi-unit situation requires also a different dimension
+		// value of the measure's dimension, so use different the Currency values.
+		oFixture.aMultiUnitIndices.forEach(function (aMultiUnitRange) {
+			var iFrom = aMultiUnitRange[0],
+				iTo = aMultiUnitRange[1];
+
+			for (var i = iFrom + 1; i <= iTo; i += 1) {
+				aItems[i].CreationTime = aItems[iFrom].CreationTime;
+				aItems[i].Currency = aItems[iFrom].Currency + i;
+			}
+		});
+
+		this.oLogMock.expects("warning")
+			.withExactArgs("Detected a multi-unit case, so sorting is only possible on leaves", "/Items",
+				"sap.ui.model.analytics.AnalyticalBinding", undefined)
+			.exactly(oFixture.bWithWarning ? 1 : 0);
+
+		this.expectRequest({
+				encodeRequestUri : false,
+				requestUri : "Items" // Grand Total Request
+					+ "?$select=AmountInCompanyCodeCurrency,Currency&$top=100"
+					+ "&$inlinecount=allpages"
+			}, {
+				__count : "1",
+				results : [{
+					__metadata : {uri : "/sap/opu/odata/sap/FAR_CUSTOMER_LINE_ITEMS/Items('grandTotal')"},
+					AmountInCompanyCodeCurrency : "42.00",
+					Currency : "USD"
+				}]
+			})
+			.expectRequest({
+				encodeRequestUri : false,
+				requestUri : "Items" // Data and Count Request
+					+ "?$select=CreationTime,AmountInCompanyCodeCurrency,Currency"
+					+ "&$orderby=CreationTime%20asc&$top=3&$inlinecount=allpages"
+			}, {
+				__count : "550",
+				results : aItems.slice(0, 3)
+			});
+
+		function readBlock(i) {
+			assert.strictEqual(oBinding.getLength(), oFixture.aLengths[i]);
+
+			var iSkip = oFixture.aSkip[i];
+			var iTop = oFixture.aTop[i];
+			that.expectRequest({
+					encodeRequestUri : false,
+					requestUri : "Items"
+						+ "?$select=CreationTime,AmountInCompanyCodeCurrency,"
+						+ "Currency&$orderby=CreationTime%20asc&$skip=" + iSkip + "&$top=" + iTop
+				}, {
+					results : aItems.slice(iSkip, iSkip + iTop)
+				});
+
+			// code under test
+			oTable.setFirstVisibleRow(oFixture.aVisibleRow[i]);
+
+			return that.waitForChanges(assert);
+		}
+
+		return this.createView(assert, sView, oModel).then(function () {
+			oTable = that.oView.byId("table");
+			oBinding = oTable.getBinding("rows");
+
+			return readBlock(0);
+		}).then(function () {
+			return readBlock(1);
+		}).then(function () {
+			assert.strictEqual(oBinding.getLength(), oFixture.aLengths[2]);
+			var aMultiUnitKeysForRoot = oBinding.mMultiUnitKey["/"];
+			// strip trailing |<number> to before comparing; number is a global counter of multi-unit situations
+			if (aMultiUnitKeysForRoot) {
+				aMultiUnitKeysForRoot = aMultiUnitKeysForRoot.map(function (sKey) {
+					return sKey.split("|")[0];
+				});
+			}
+			assert.deepEqual(aMultiUnitKeysForRoot, oFixture.aMultiUnitKeysForRoot);
+			assert.deepEqual(oBinding.mKeyIndex["/"], oFixture.aKeyIndexForRoot);
+		});
+	});
+});
 
 	//*********************************************************************************************
 	// Scenario: A user scrolls in an AnalyticalTable. Further data needs to be requested. The first
@@ -11085,6 +11309,112 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			return this.waitForChanges(assert, "scroll up again");
 		}).then(() => {
 			assert.deepEqual(getTableContent(oTable), [["0"], ["1"]]);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: All contexts created by ODataTreeBinding consider the deep path of the tree binding that the OData
+	// messages can be properly assigned.
+	// JIRA: CPOUI5MODELS-1529, SNOW: CS20230006644418
+	QUnit.test("ODataTreeBinding: Message handling", function (assert) {
+		const oModel = createSpecialCasesModel();
+		const oResponseMessage = this.createResponseMessage("to_C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
+			"~errorMessage");
+		const sView = '\
+<VBox binding="{/DummySet(\'42\')}">\
+<t:TreeTable id="table"\
+		rows="{\
+			parameters: {\
+				countMode : \'Request\',\
+				numberOfExpandedLevels: 2,\
+				transitionMessagesOnly: true,\
+				treeAnnotationProperties: {\
+					hierarchyDrillStateFor: \'OrderOperationIsExpanded\',\
+					hierarchyLevelFor: \'OrderOperationRowLevel\',\
+					hierarchyNodeFor: \'OrderOperationRowID\',\
+					hierarchyParentNodeFor: \'OrderOperationParentRowID\'\
+				}\
+			},\
+			path: \'to_C_RSHMaintSchedSmltdOrdAndOp\'\
+		}"\
+		threshold="0"\
+		visibleRowCount="2">\
+	<Text id="maintenanceOrder" text="{MaintenanceOrder}" />\
+</t:TreeTable>\
+</VBox>';
+
+		this.expectHeadRequest()
+			.expectRequest("DummySet('42')", {
+				__metadata: {uri: "/DummySet('42')"},
+				DummyID: "42"
+			}, {"sap-message" : getMessageHeader(oResponseMessage)})
+			// triggered by ODataTreeBinding#_getCountForNodeId
+			.expectRequest("DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp/$count?$filter=OrderOperationRowLevel eq 0",
+				"273")
+			.expectRequest({ // triggered by ODataTreeBinding#_loadSubNodes
+					headers: {"sap-messages": "transientOnly"},
+					requestUri: "DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp?"
+						+ "$filter=OrderOperationRowLevel eq 0&$skip=0&$top=2"
+				}, {
+					results: [{
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0')"},
+						MaintenanceOrder: "0",
+						OrderOperationIsExpanded: "collapsed",
+						OrderOperationRowID: "id-0",
+						OrderOperationRowLevel: 0
+					}, {
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-1')"},
+						MaintenanceOrder: "1",
+						OrderOperationIsExpanded: "leaf",
+						OrderOperationRowID: "id-1",
+						OrderOperationRowLevel: 0
+					}]
+				})
+			// triggered by ODataTreeBinding#_getCountForNodeId
+			.expectRequest(
+				"DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp/$count?$filter=OrderOperationParentRowID eq 'id-0'",
+				"2")
+			.expectRequest({ // triggered by ODataTreeBinding#_loadSubNodes
+					headers: {"sap-messages": "transientOnly"},
+					requestUri: "DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp?"
+						+ "$filter=OrderOperationParentRowID eq 'id-0'&$skip=0&$top=2"
+				}, {
+					results: [{
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.0')"},
+						MaintenanceOrder: "0.0",
+						OrderOperationIsExpanded: "leaf",
+						OrderOperationParentRowID: "id-0",
+						OrderOperationRowID: "id-0.0",
+						OrderOperationRowLevel: 1
+					}, {
+						__metadata: {uri: "C_RSHMaintSchedSmltdOrdAndOp('id-0.1')"},
+						MaintenanceOrder: "0.1",
+						OrderOperationIsExpanded: "leaf",
+						OrderOperationParentRowID: "id-0",
+						OrderOperationRowID: "id-0.1",
+						OrderOperationRowLevel: 1
+					}]
+				})
+			.expectMessages([{
+				code : oResponseMessage.code,
+				fullTarget : "/DummySet('42')/to_C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
+				message : oResponseMessage.message,
+				persistent : false,
+				target : "/C_RSHMaintSchedSmltdOrdAndOp('id-0')/MaintenanceOrder",
+				type : mSeverityMap[oResponseMessage.severity]
+			}]);
+
+		return this.createView(assert, sView, oModel).then(() => {
+			const oTable = this.oView.byId("table");
+			// don't use expectValue to avoid timing issues causing flaky tests
+			assert.deepEqual(getTableContent(oTable), [["0"], ["0.0"]]);
+
+			let aMessages = oTable.getBindingContext().getMessages();
+			assert.strictEqual(aMessages.length, 1);
+			assert.strictEqual(aMessages[0].code, oResponseMessage.code);
+			aMessages = oTable.getRows()[0].getBindingContext().getMessages(); // binding context of first row
+			assert.strictEqual(aMessages.length, 1);
+			assert.strictEqual(aMessages[0].code, oResponseMessage.code);
 		});
 	});
 
@@ -21199,6 +21529,8 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 	// BCP: 2370088390
 	// When the list is filtered only the transient entry is shown and no entries are requested.
 	// JIRA: CPOUI5MODELS-1421
+	// BCP: 2380132519; it has to be possible to have control filters even if application filters are set to
+	// Filter.NONE and vice versa.
 	QUnit.test("Filter table where only transient items have messages", function (assert) {
 		let oCreatedContext, oRowsBinding;
 		const oModel = createSalesOrdersModel({preliminaryContext : true});
@@ -21264,6 +21596,11 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 				.expectValue("note", "", 1);
 
 			oRowsBinding.filter(aResults[0], FilterType.Application);
+
+			return this.waitForChanges(assert);
+		}).then(() => {
+			// code under test - adding a control filter does not lead to an error and still no request is needed
+			oRowsBinding.filter(new Filter("itemPosition", FilterOperator.GE, "10"), FilterType.Control);
 
 			return this.waitForChanges(assert);
 		});
@@ -21541,6 +21878,219 @@ ToProduct/ToSupplier/BusinessPartnerID\'}}">\
 			);
 
 			return this.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
+	// property. The binding is using the operation mode "Client".
+	// SNOW: CS20230006626867
+	QUnit.test("Filter via a complex type property addressed via navigation property (client)", function (assert) {
+		var oModel = createSalesOrdersModel({defaultOperationMode : "Client"}),
+			sView = '\
+<t:Table id="Table" rows="{\
+			path: \'/SalesOrderSet\',\
+			parameters: {\
+				expand: \'ToBusinessPartner\',\
+				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
+			}\
+		}" visibleRowCount="2">\
+	<Text id="SalesOrderID" text="{SalesOrderID}" />\
+	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
+</t:Table>',
+			that = this;
+
+		this.expectHeadRequest()
+			.expectRequest("SalesOrderSet?$expand=ToBusinessPartner"
+					+ "&$select=SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address", {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('42')"},
+						BusinessPartnerID: "42",
+						Address: {City: "Foo"}
+					}
+				}, {
+					__metadata: {uri: "/SalesOrderSet('2')"},
+					SalesOrderID: "2",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('43')"},
+						BusinessPartnerID: "43",
+						Address: {City: "Bar"}
+					}
+				}]
+			})
+			.expectValue("SalesOrderID", ["1", "2"])
+			.expectValue("City", ["Foo", "Bar"]);
+
+		return this.createView(assert, sView, oModel).then(function () {
+			that.expectValue("SalesOrderID", "", 1)
+				.expectValue("City", "", 1);
+
+			// code under test
+			that.oView.byId("Table").getBinding("rows").filter(
+				new Filter({
+					path: "ToBusinessPartner/Address/City",
+					operator: FilterOperator.EQ,
+					value1: "Foo"
+				})
+			);
+
+			return that.waitForChanges(assert);
+		});
+	});
+
+	//*********************************************************************************************
+	// Scenario: A table is filtered via a property of a complex type which is addressed via a navigation
+	// property. The binding is using the operation mode "Server".
+	// SNOW: CS20230006626867
+	QUnit.test("Filter via a complex type property addressed via navigation property (server)", function (assert) {
+		var oModel = createSalesOrdersModel(),
+			sView = '\
+<t:Table id="Table" rows="{\
+			path: \'/SalesOrderSet\',\
+			parameters: {\
+				expand: \'ToBusinessPartner\',\
+				select: \'SalesOrderID,ToBusinessPartner/BusinessPartnerID,ToBusinessPartner/Address\'\
+			},\
+			filters : [{path: \'ToBusinessPartner/Address/City\', operator: \'EQ\', value1: \'Foo\'}]\
+		}" visibleRowCount="2">\
+	<Text id="SalesOrderID" text="{SalesOrderID}" />\
+	<Text id="City" text="{ToBusinessPartner/Address/City}" />\
+</t:Table>';
+
+		this.expectHeadRequest()
+			.expectRequest({
+				encodeRequestUri: false, // the / in the filter is not escaped
+				requestUri: "SalesOrderSet?$skip=0&$top=102"
+					+ "&$filter=ToBusinessPartner/Address/City%20eq%20%27Foo%27"
+					+ "&$expand=ToBusinessPartner"
+					+ "&$select=SalesOrderID%2cToBusinessPartner%2fBusinessPartnerID%2cToBusinessPartner%2fAddress"
+			}, {
+				results: [{
+					__metadata: {uri: "/SalesOrderSet('1')"},
+					SalesOrderID: "1",
+					ToBusinessPartner: {
+						__metadata: {uri: "/BusinessPartnerSet('42')"},
+						BusinessPartnerID: "42",
+						Address: {City: "Foo"}
+					}
+				}]
+			})
+			.expectValue("SalesOrderID", ["1", ""])
+			.expectValue("City", ["Foo", ""]);
+
+		return this.createView(assert, sView, oModel);
+	});
+
+	//*********************************************************************************************
+	// Scenario: Custom headers are applied to *all* change requests when the $batch containing them is sent on
+	// ODataModel#submitChangesWithChangeHeaders.
+	// SNOW: CS20230004859105
+	QUnit.test("ODataModel#submitChangesWithChangeHeaders: Custom headers for change requests", function (assert) {
+		var oModel = createSalesOrdersModel({
+				defaultBindingMode : BindingMode.TwoWay,
+				refreshAfterChange : false // suppress GETs on collection after POST to reduce test complexity
+			}),
+			mModelHeaders = {
+				"my-custom0" : "~custom0Global",
+				"my-custom1" : "~custom1Global",
+				"my-custom2" : "~custom2Global"
+			},
+			sView = '\
+<t:Table id="table" rows="{/SalesOrderSet}" visibleRowCount="2">\
+	<Text id="id" text="{SalesOrderID}" />\
+	<Input id="note" value="{Note}" />\
+</t:Table>',
+			that = this;
+
+		this.expectHeadRequest(mModelHeaders)
+			.expectRequest({
+				headers : mModelHeaders,
+				requestUri : "SalesOrderSet?$skip=0&$top=102"
+			}, {
+				results : [{
+					__metadata : { uri : "/SalesOrderSet('1')" },
+					SalesOrderID : "1",
+					Note : "foo"
+				}, {
+					__metadata : { uri : "/SalesOrderSet('2')" },
+					SalesOrderID : "2",
+					Note : "bar"
+				}]
+			})
+			.expectValue("id", ["1", "2"])
+			.expectValue("note", ["foo", "bar"]);
+
+		oModel.setHeaders(mModelHeaders); // set global custom headers
+		return this.createView(assert, sView, oModel).then(function () {
+			that.expectRequest({
+					data : {
+						__metadata : { "uri": "/SalesOrderSet('1')" },
+						Note : "baz"
+					},
+					headers : {
+						"my-custom0" : "~custom0Global",
+						"my-custom1" : "~custom1Global",
+						"my-custom2" : "~custom2Change",
+						"my-custom-change" : "~customChange"
+					},
+					key : "SalesOrderSet('1')",
+					method : "MERGE",
+					requestUri : "SalesOrderSet('1')"
+				}, NO_CONTENT)
+				.expectRequest({
+					created : true,
+					data : {
+						__metadata : { type : "GWSAMPLE_BASIC.SalesOrder" }
+					},
+					headers : {
+						"my-create" : "~create",
+						"my-custom0" : "~custom0Create",
+						"my-custom1" : "~custom1Global",
+						"my-custom2" : "~custom2Change",
+						"my-custom-change" : "~customChange"
+					},
+					method : "POST",
+					requestUri : "SalesOrderSet"
+				}, {
+					data : {
+						__metadata : { uri : "SalesOrderSet('3')" },
+						SalesOrderID : "3"
+					},
+					statusCode : 201
+				})
+				.expectRequest({
+					headers : {
+						"my-remove" : "~remove",
+						"my-custom0" : "~custom0Remove",
+						"my-custom1" : "~custom1Global",
+						"my-custom2" : "~custom2Change",
+						"my-custom-change" : "~customChange"
+					},
+					method : "DELETE",
+					requestUri : "SalesOrderSet('2')"
+				}, NO_CONTENT)
+				.expectValue("id", "", 1)
+				.expectValue("note", ["baz", ""]);
+
+			// code under test: update (via two-way binding), createEntry, remove apply headers from
+			//   global model headers, headers from API calls and submitChangesWithChangeHeaders in expected prio
+			that.oView.byId("table").getRows()[0].getCells()[1].setValue("baz");
+			oModel.createEntry("/SalesOrderSet", {
+				properties : {},
+				headers : {"my-create" : "~create", "my-custom0" : "~custom0Create"}
+			});
+			oModel.remove("/SalesOrderSet('2')", {
+				groupId : "changes", // use same batch group as update and create
+				headers : {"my-remove" : "~remove", "my-custom0" : "~custom0Remove"}
+			});
+			oModel.submitChangesWithChangeHeaders(
+				{changeHeaders : {"my-custom-change" : "~customChange", "my-custom2" : "~custom2Change"}}
+			);
+
+			return that.waitForChanges(assert);
 		});
 	});
 });

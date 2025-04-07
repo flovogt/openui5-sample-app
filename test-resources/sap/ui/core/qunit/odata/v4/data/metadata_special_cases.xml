@@ -87,6 +87,7 @@
 				<Property Name="CValue" Type="Edm.Int16"/>
 				<NavigationProperty Name="CtoA" Partner="AtoCs" Type="special.cases.A"/>
 				<NavigationProperty Name="CtoD" Partner="DtoC" Type="special.cases.D"/>
+				<NavigationProperty Name="CtoEs" Partner="EtoC" Type="Collection(special.cases.E)"/>
 			</EntityType>
 			<EntityType Name="D">
 				<Key>
@@ -96,6 +97,14 @@
 				<Property Name="DValue" Type="Edm.Int16"/>
 				<NavigationProperty Name="DtoB" Partner="BtoDs" Type="special.cases.B"/>
 				<NavigationProperty Name="DtoC" Partner="CtoD" Type="special.cases.C"/>
+			</EntityType>
+			<EntityType Name="E">
+				<Key>
+					<PropertyRef Name="EID"/>
+				</Key>
+				<Property Name="EID" Type="Edm.Int16" Nullable="false"/>
+				<Property Name="EValue" Type="Edm.Int16"/>
+				<NavigationProperty Name="EtoC" Partner="CtoEs" Type="special.cases.C"/>
 			</EntityType>
 			<ComplexType Name="Address">
 				<Property Name="City" Type="Edm.String"/>
@@ -303,7 +312,41 @@
 					</Collection>
 				</Annotation>
 			</Annotations>
+			<Annotations Target="special.cases.E/EValue">
+				<Annotation Term="com.sap.vocabularies.Common.v1.ValueList" Qualifier="same">
+					<Record>
+						<PropertyValue Property="Label" String="Same label ;-)" />
+					</Record>
+				</Annotation>
+				<Annotation Term="com.sap.vocabularies.Common.v1.ValueListRelevantQualifiers">
+					<Collection>
+						<If>
+							<Eq>
+								<Path>EtoC/CValue</Path>
+								<Path>EtoC/CtoA/AValue</Path>
+							</Eq>
+							<String>same</String>
+						</If>
+					</Collection>
+				</Annotation>
+			</Annotations>
 			<Annotations Target="special.cases.ArtistsType">
+				<Annotation Qualifier="OldChart" Term="Org.OData.Aggregation.V1.RecursiveHierarchy">
+					<Record>
+						<PropertyValue Property="NodeProperty" PropertyPath="_/NodeID"/>
+						<PropertyValue Property="ParentNavigationProperty" NavigationPropertyPath="BestFriend"/>
+					</Record>
+				</Annotation>
+				<Annotation Qualifier="OldChart" Term="com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy">
+					<Record>
+						<!--Edm.Int64-->
+						<PropertyValue Property="DistanceFromRootProperty" PropertyPath="_/DistanceFromRoot"/>
+						<!--Edm.String: collapsed,expanded,leaf-->
+						<PropertyValue Property="DrillStateProperty" PropertyPath="_/DrillState"/>
+						<!--Edm.Int64-->
+						<PropertyValue Property="LimitedDescendantCountProperty" PropertyPath="_/DescendantCount"/>
+					</Record>
+				</Annotation>
 				<Annotation Qualifier="OrgChart" Term="Org.OData.Aggregation.V1.RecursiveHierarchy">
 					<Record>
 						<PropertyValue Property="NodeProperty" PropertyPath="_/NodeID"/>
@@ -313,11 +356,13 @@
 				<Annotation Qualifier="OrgChart" Term="com.sap.vocabularies.Hierarchy.v1.RecursiveHierarchy">
 					<Record>
 						<!--Edm.Int64-->
-						<PropertyValue Property="DistanceFromRootProperty" PropertyPath="_/DistanceFromRoot"/>
+						<PropertyValue Property="DistanceFromRoot" Path="_/DistanceFromRoot"/>
 						<!--Edm.String: collapsed,expanded,leaf-->
-						<PropertyValue Property="DrillStateProperty" PropertyPath="_/DrillState"/>
+						<PropertyValue Property="DrillState" Path="_/DrillState"/>
 						<!--Edm.Int64-->
-						<PropertyValue Property="LimitedDescendantCountProperty" PropertyPath="_/DescendantCount"/>
+						<PropertyValue Property="LimitedDescendantCount" Path="_/DescendantCount"/>
+						<!--Edm.Int64-->
+						<PropertyValue Property="LimitedRank" Path="_/Limited_Rank"/>
 					</Record>
 				</Annotation>
 			</Annotations>

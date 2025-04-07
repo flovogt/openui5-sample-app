@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.ui.core.date.Islamic
-sap.ui.define(['./UniversalDate', '../CalendarType', 'sap/base/Log', './_Calendars', 'sap/ui/core/Configuration'],
-	function(UniversalDate, CalendarType, Log, _Calendars, Configuration) {
+sap.ui.define(['./UniversalDate', '../CalendarType', 'sap/base/Log', 'sap/base/i18n/Formatting', './_Calendars'],
+	function(UniversalDate, CalendarType, Log, Formatting, _Calendars) {
 	"use strict";
 
 
@@ -212,9 +212,9 @@ sap.ui.define(['./UniversalDate', '../CalendarType', 'sap/base/Log', './_Calenda
 
 		oCustomizationMap = {};
 
-		sDateFormat = Configuration.getFormatSettings().getLegacyDateFormat();
+		sDateFormat = Formatting.getABAPDateFormat();
 		sDateFormat = _isSupportedIslamicCalendarType(sDateFormat) ? sDateFormat : "A"; // set "A" as a fall-back format always
-		oCustomizationJSON = Configuration.getFormatSettings().getLegacyDateCalendarCustomizing();
+		oCustomizationJSON = Formatting.getCustomIslamicCalendarData();
 		oCustomizationJSON = oCustomizationJSON || [];
 
 

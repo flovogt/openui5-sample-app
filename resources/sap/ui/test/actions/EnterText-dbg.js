@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -152,7 +152,7 @@ sap.ui.define([
 			var iCursorPosition = oActionDomRef.selectionStart;
 			this.getText().split("").forEach(function (sChar) {
 
-				if (iCursorPosition === 0 || iCursorPosition === null) {
+				if (iCursorPosition === 0 || typeof iCursorPosition !== 'number') {
 					sValueBuffer += sChar;
 				} else {
 					var sLeftPart = sValueBuffer.slice(0, iCursorPosition);

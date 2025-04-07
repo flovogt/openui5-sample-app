@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -22,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @public
 	 * @alias sap.m.p13n.SortController
 	 */
@@ -72,7 +72,8 @@ sap.ui.define([
     SortController.prototype.getChangeOperations = function() {
         return {
             add: "addSort",
-            remove: "removeSort"
+            remove: "removeSort",
+            move: "moveSort"
         };
     };
 
@@ -92,26 +93,6 @@ sap.ui.define([
             }
         };
         return oAddRemoveChange;
-    };
-
-    SortController.prototype._createMoveChange = function(sId, sPropertykey, iNewIndex, sMoveOperation, oControl, bPersistId){
-        var oMoveChange =  {
-            selectorElement: oControl,
-            changeSpecificData: {
-                changeType: sMoveOperation,
-                content: {
-                    id: sId,
-                    key: sPropertykey,
-                    index: iNewIndex
-                }
-            }
-        };
-
-        if (!bPersistId) {
-            delete oMoveChange.changeSpecificData.content.id;
-        }
-
-        return oMoveChange;
     };
 
     SortController.prototype._getPresenceAttribute = function(bexternalAppliance){

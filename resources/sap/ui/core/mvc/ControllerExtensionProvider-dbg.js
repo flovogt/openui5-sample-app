@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component) {
@@ -68,7 +68,7 @@ sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component
 			providerControllers: []           // extensions loaded via external provider
 		};
 
-		var oComponent = Component.get(sComponentId);
+		var oComponent = Component.getComponentById(sComponentId);
 		// the view ID used in the customizing definition in the manifest.json
 		// must not contain a reference to the runtime ID of the component itself
 		if (oComponent && oComponent.getLocalId) {
@@ -104,7 +104,7 @@ sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component
 						// add provider-extensions
 						mControllerExtensions.providerControllers = aExternalExtensions;
 					} else {
-						Log.error("Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
+						Log.error("[FUTURE FATAL] Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
 								" - no valid extensions returned. Return value must be an array of ControllerExtensions.");
 					}
 				}

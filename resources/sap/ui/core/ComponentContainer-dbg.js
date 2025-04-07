@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -61,7 +61,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -219,7 +219,7 @@ sap.ui.define([
 	 */
 	function setContainerComponent(oComponentContainer, vComponent, bSuppressInvalidate, bDestroyOldComponent) {
 		// find the reference to the current component and to the old component
-		var oComponent = typeof vComponent === "string" ? Component.get(vComponent) : vComponent;
+		var oComponent = typeof vComponent === "string" ? Component.getComponentById(vComponent) : vComponent;
 		var oOldComponent = oComponentContainer.getComponentInstance();
 		// if there is no difference between the old and the new component just skip this setter
 		if (oOldComponent !== oComponent) {
@@ -251,7 +251,7 @@ sap.ui.define([
 	 */
 	ComponentContainer.prototype.getComponentInstance = function () {
 		var sComponentId = this.getComponent();
-		return sComponentId && Component.get(sComponentId);
+		return sComponentId && Component.getComponentById(sComponentId);
 	};
 
 	// Delegate registered by the ComponentContainer#showPlaceholder function
@@ -406,7 +406,7 @@ sap.ui.define([
 			if (oOwnerComponent) {
 				mConfig = oOwnerComponent._enhanceWithUsageConfig(sUsageId, mConfig);
 			} else {
-				Log.error("ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
+				Log.error("[FUTURE FATAL] ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
 			}
 		}
 
@@ -457,7 +457,7 @@ sap.ui.define([
 					delete this._oComponentPromise;
 					// listeners can prevent the default log entry
 					if ( this.fireComponentFailed({ reason: oReason }) ) {
-						Log.error("Failed to load component for container " + this.getId(), oReason);
+						Log.error("[FUTURE FATAL] Failed to load component for container " + this.getId(), oReason);
 					}
 				}.bind(this));
 			} else if (oComponent) {

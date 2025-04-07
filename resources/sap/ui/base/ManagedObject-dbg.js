@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -260,7 +260,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.base.EventProvider
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @public
 	 * @alias sap.ui.base.ManagedObject
 	 */
@@ -1345,7 +1345,7 @@ sap.ui.define([
 						if (Array.isArray(oValue)){
 							// assumption: we have an extensionPoint here which is always an array, even if it contains a single control
 							if (oValue.length > 1){
-								Log.error("Tried to add an array of controls to a single aggregation");
+								Log.error("[FUTURE FATAL] Tried to add an array of controls to a single aggregation");
 							}
 							oValue = oValue[0];
 						}
@@ -1923,7 +1923,7 @@ sap.ui.define([
 
 		if (typeof (vObject) == "number") { // "object" is the index now
 			if (vObject < 0 || vObject >= aIds.length) {
-				Log.warning("ManagedObject.removeAssociation called with invalid index: " + sAssociationName + ", " + vObject);
+				Log.warning("[FUTURE FATAL] ManagedObject.removeAssociation called with invalid index: " + sAssociationName + ", " + vObject);
 			} else {
 				sId = aIds[vObject];
 				aIds.splice(vObject, 1);
@@ -2306,7 +2306,7 @@ sap.ui.define([
 			i = iIndex;
 		}
 		if (i !== iIndex) {
-			Log.warning("ManagedObject.insertAggregation: index '" + iIndex + "' out of range [0," + aChildren.length + "], forced to " + i);
+			Log.warning("[FUTURE FATAL] ManagedObject.insertAggregation: index '" + iIndex + "' out of range [0," + aChildren.length + "], forced to " + i);
 		}
 		aChildren.splice(i, 0, oObject);
 		oObject.setParent(this, sAggregationName, bSuppressInvalidate);
@@ -2425,7 +2425,7 @@ sap.ui.define([
 
 		if (typeof (vObject) == "number") { // "vObject" is the index now
 			if (vObject < 0 || vObject >= aChildren.length) {
-				Log.warning("ManagedObject.removeAggregation called with invalid index: " + sAggregationName + ", " + vObject);
+				Log.warning("[FUTURE FATAL] ManagedObject.removeAggregation called with invalid index: " + sAggregationName + ", " + vObject);
 
 			} else {
 				oChild = aChildren[vObject];
@@ -2651,7 +2651,7 @@ sap.ui.define([
 	ManagedObject.prototype._removeChild = function(oChild, sAggregationName, bSuppressInvalidate) {
 		if (!sAggregationName) {
 			// an aggregation name has to be specified!
-			Log.error("Cannot remove aggregated child without aggregation name.", null, this);
+			Log.error("[FUTURE FATAL] Cannot remove aggregated child without aggregation name.", null, this);
 		} else {
 			// set suppress invalidate flag
 			if (bSuppressInvalidate) {
@@ -3250,7 +3250,7 @@ sap.ui.define([
 	};
 
 	function logError(sFunctionName) {
-		Log.error("Unexpected call of '" + sFunctionName + "'.");
+		Log.error("[FUTURE FATAL] Unexpected call of '" + sFunctionName + "'.");
 	}
 
 	/**
@@ -3713,7 +3713,7 @@ sap.ui.define([
 			throw new Error("Aggregation \"" + sName + "\" does not exist in " + this);
 		}
 		if (!oAggregationInfo.multiple) {
-			Log.error("Binding of single aggregation \"" + sName + "\" of " + this + " is not supported!");
+			Log.error("[FUTURE FATAL] Binding of single aggregation \"" + sName + "\" of " + this + " is not supported!");
 		}
 
 		// Old API compatibility (sName, sPath, oTemplate, oSorter, aFilters)
@@ -3903,7 +3903,7 @@ sap.ui.define([
 	* @since 1.28
 	*/
 	ManagedObject.prototype.propagateMessages = function(sName, aMessages) {
-		Log.warning("Message for " + this + ", Property " + sName);
+		Log.warning("[FUTURE FATAL] ]Message for " + this + ", Property " + sName);
 	};
 
 	/**
@@ -4669,62 +4669,6 @@ sap.ui.define([
 
 		return oClone;
 	};
-
-	/**
-	 * Update all localization dependent objects that this managed object can reach,
-	 * except for its aggregated children (which will be updated by the Core).
-	 *
-	 * To make the update work as smooth as possible, it happens in two phases:
-	 * <ol>
-	 *  <li>In phase 1 all known models are updated.</li>
-	 *  <li>In phase 2 all bindings are updated.</li>
-	 * </ol>
-	 * This separation is necessary as the models for the bindings might be updated
-	 * in some ManagedObject or in the Core and the order in which the objects are visited
-	 * is not defined.
-	 *
-	 * @private
-	 */
-	ManagedObject._handleLocalizationChange = function(iPhase) {
-		var oModel, sName, oBindingInfo, i;
-
-		if ( iPhase === 1 ) {
-
-			/*
-			 * phase 1: update the models
-			 */
-			for (sName in this.oModels) {
-				oModel = this.oModels[sName];
-				if ( oModel && oModel._handleLocalizationChange ) {
-					oModel._handleLocalizationChange();
-				}
-			}
-
-		} else if ( iPhase === 2 ) {
-
-			/*
-			 * phase 2: update bindings and types
-			 */
-			for (sName in this.mBindingInfos) {
-				oBindingInfo = this.mBindingInfos[sName];
-				var aParts = oBindingInfo.parts;
-				if (aParts) {
-					// property or composite binding: visit all parts
-					for (i = 0; i < aParts.length; i++) {
-						if ( oBindingInfo.type && oBindingInfo.type._handleLocalizationChange ) {
-							oBindingInfo.type._handleLocalizationChange();
-						}
-					}
-					if ( oBindingInfo.modelChangeHandler ) {
-						oBindingInfo.modelChangeHandler();
-					}
-				} // else: don't update list bindings
-				// Note: the template for a list binding will be visited by the core!
-			}
-
-		}
-	};
-
 
 	/**
 	 * Searches and returns all aggregated objects that pass the given check function.

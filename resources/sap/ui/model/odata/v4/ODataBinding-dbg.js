@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 //Provides mixin sap.ui.model.odata.v4.ODataBinding for classes extending sap.ui.model.Binding
@@ -695,6 +695,9 @@ sap.ui.define([
 				.then(function (sReducedPath) {
 					if (sReducedPath) {
 						vQueryOptions = undefined;
+					} else if (!vQueryOptions) {
+						// fetchCache only creates a cache if there are query options
+						vQueryOptions = {};
 					}
 					return wrapQueryOptions(false, sReducedPath);
 				});

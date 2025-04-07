@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 *
 	 * @constructor
 	 * @public
@@ -897,12 +897,19 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype.onBeforeRendering = function () {
+		var oColumns = this._$columns;
 		if (!this._oInvisibleMessage) {
 			this._oInvisibleMessage = InvisibleMessage.getInstance();
 		}
 
 		this._deregisterResizeHandler();
 		this._oAnimationEndListener.cancelAll();
+
+		if (this.$().length) {
+			FlexibleColumnLayout.COLUMN_ORDER.slice().forEach(function (sColumn) {
+				oColumns && oColumns[sColumn] && oColumns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
+			});
+		}
 	};
 
 	FlexibleColumnLayout.prototype.onAfterRendering = function () {
@@ -1219,6 +1226,11 @@ sap.ui.define([
 			// detach all listeners to any previous unfinished animation
 			this._oAnimationEndListener.cancelAll();
 		}
+
+		aColumns.slice().forEach(function (sColumn) {
+			this._$columns[sColumn].removeClass(FlexibleColumnLayout.ANIMATED_COLUMN_CLASS_NAME);
+		}.bind(this));
+
 		// update separator visibility only after pinning the columns
 		// to prevent unnecessary resize in the concealed column due to
 		// change of its width upon hiding its preceding separator
@@ -1495,9 +1507,9 @@ sap.ui.define([
 
 	FlexibleColumnLayout.prototype._getDraggedSeparatorStartOffset = function (oSeparator, bRtl) {
 		if (bRtl) {
-			return window.innerWidth - oSeparator.getBoundingClientRect().right;
+			return this.getDomRef().clientWidth - oSeparator.offsetLeft - oSeparator.offsetWidth;
 		}
-		return oSeparator.getBoundingClientRect().left;
+		return oSeparator.offsetLeft;
 	};
 
 	FlexibleColumnLayout.prototype._onColumnSeparatorMove = function (oEvent) {
@@ -3196,6 +3208,7 @@ sap.ui.define([
 		this._aPendingPromises = [];
 		this._oCancelPromises = {};
 		this._oPendingPromiseAll = null;
+		this._oListeners = {};
 		if (this.iTimer) {
 			clearTimeout(this.iTimer);
 			this.iTimer = null;

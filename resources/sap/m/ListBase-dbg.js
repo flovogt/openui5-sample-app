@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 *
 	 * @constructor
 	 * @public
@@ -1050,7 +1050,7 @@ function(
 
 		var aChangedListItems = [];
 		this.getItems(true).forEach(function(oItem) {
-			if (!oItem.getSelected()) {
+			if (oItem.isSelectable() && !oItem.getSelected()) {
 				oItem.setSelected(true, true);
 				aChangedListItems.push(oItem);
 				this._updateSelectedPaths(oItem);
@@ -2856,7 +2856,7 @@ function(
 			}
 
 			if (bFirstInteractiveElement === true) {
-				var $InteractiveElements = oItem.getTabbables();
+				var $InteractiveElements = oItem.getTabbables(true /* bContentOnly */);
 				if ($InteractiveElements.length) {
 					$InteractiveElements[0].focus();
 					return resolve();

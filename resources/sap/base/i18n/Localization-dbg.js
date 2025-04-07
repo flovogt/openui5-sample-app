@@ -1,6 +1,6 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 sap.ui.define([
@@ -42,6 +42,7 @@ sap.ui.define([
 		"ZH" : "zh-Hans",
 		"ZF" : "zh-Hant",
 		"SH" : "sr-Latn",
+		"CT" : "cnr",
 		"6N" : "en-GB",
 		"1P" : "pt-PT",
 		"1X" : "es-MX",
@@ -117,7 +118,7 @@ sap.ui.define([
 	 * List of locales for which translated texts have been bundled with the UI5 runtime.
 	 * @private
 	 */
-	const _coreI18nLocales = getDesigntimePropertyAsArray("$core-i18n-locales:,ar,bg,ca,cs,da,de,el,en,en_GB,es,es_MX,et,fi,fr,hi,hr,hu,it,iw,ja,kk,ko,lt,lv,ms,nl,no,pl,pt,ro,ru,sh,sk,sl,sv,th,tr,uk,vi,zh_CN,zh_TW$");
+	const _coreI18nLocales = getDesigntimePropertyAsArray("$core-i18n-locales:,ar,bg,ca,cnr,cs,cy,da,de,el,en,en_GB,es,es_MX,et,fi,fr,fr_CA,hi,hr,hu,id,it,iw,ja,kk,ko,lt,lv,mk,ms,nl,no,pl,pt,pt_PT,ro,ru,sh,sk,sl,sr,sv,th,tr,uk,vi,zh_CN,zh_TW$");
 
 	/**
 	 * Retrieves a Locale for the given SAP logon language or BCP47 tag.
@@ -401,8 +402,7 @@ sap.ui.define([
 		 *     bindings in existing Elements, Controls, UIAreas or Components</li>
 		 * <li>ResourceModels currently assigned to the Core, a UIArea, Component,
 		 *     Element or Control</li>
-		 * <li>Elements or Controls that implement the <code>onlocalizationChanged</code> hook
-		 *     (note the lowercase 'l' in onlocalizationChanged)</li>
+		 * <li>Elements or Controls that implement the <code>onLocalizationChanged</code> hook</li>
 		 * </ul>
 		 *
 		 * It furthermore derives the RTL mode from the new language, if no explicit RTL

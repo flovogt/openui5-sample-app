@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -44,7 +44,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @author SAP SE
 	 *
 	 * @public
@@ -152,7 +152,7 @@ sap.ui.define([
 			if (isKeyCombination(oEvent, KeyCodes.SPACE, true, false)) {
 				if (this._inSelection(oEvent.target)) {
 					var oInfo = this.getConfig("getCellInfo", this.getControl(), oEvent.target);
-					this.getConfig("selectRows", this.getControl(), mBounds.from.rowIndex, mBounds.to.rowIndex, oInfo.rowIndex) && this.removeSelection();
+					this.getConfig("selectRows", this.getControl(), mBounds.from.rowIndex, mBounds.to.rowIndex, oInfo.rowIndex);
 					oEvent.setMarked();
 				}
 
@@ -171,7 +171,7 @@ sap.ui.define([
 			}
 		},
 		onmousedown: function(oEvent) {
-			if (oEvent.isMarked && oEvent.isMarked()) {
+			if (oEvent.isMarked?.() || oEvent.button != 0) {
 				return;
 			}
 
@@ -179,9 +179,9 @@ sap.ui.define([
 				this._startSelection(oEvent);
 			}
 
-			this._bMouseDown = true;
 			var oSelectableCell = this._getSelectableCell(oEvent.target);
 			if (oSelectableCell) {
+				this._bMouseDown = true;
 				this._mClickedCell = this.getConfig("getCellInfo", this.getControl(), oSelectableCell);
 			}
 		},
@@ -211,9 +211,11 @@ sap.ui.define([
 		this._fnOnMouseOut = this._onmouseout.bind(this);
 		this._fnOnMouseMove = this._onmousemove.bind(this);
 		this._fnOnMouseUp = PriorityDelegate.onmouseup.bind(this);
+		this._fnRemoveSelection = this.removeSelection.bind(this);
 
 		// Register Events, as adding dependent does not trigger rerendering
 		this._registerEvents();
+		this._onSelectableChange();
 	};
 
 	CellSelector.prototype.onDeactivate = function (oControl) {
@@ -227,6 +229,7 @@ sap.ui.define([
 		}
 
 		this._deregisterEvents();
+		this._onSelectableChange();
 	};
 
 	CellSelector.prototype.exit = function() {
@@ -240,10 +243,27 @@ sap.ui.define([
 		PluginBase.prototype.exit.call(this);
 	};
 
+	/**
+	 * Determines whether cells are selectable or not.
+	 *
+	 * @private
+	 * @ui5-restricted sap.m.plugins.CopyProvider
+	 */
+	CellSelector.prototype.isSelectable = function() {
+		return this.isActive() ? this.getConfig("isSupported", this.getControl()) : false;
+	};
+
+	CellSelector.prototype._onSelectableChange = function() {
+		const oCopyProvider = this.getPlugin("sap.m.plugins.CopyProvider");
+		oCopyProvider?.onCellSelectorSelectableChange(this.isSelectable());
+	};
+
 	CellSelector.prototype._registerEvents = function() {
-		if (this.getControl()) {
-			this.getControl().attachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
-			var oScrollArea = this.getControl().getDomRef(this.getConfig("scrollArea"));
+		var oControl = this.getControl();
+		if (oControl) {
+			oControl.attachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
+			this.getConfig("attachSelectionChange", oControl, this._fnRemoveSelection);
+			var oScrollArea = oControl.getDomRef(this.getConfig("scrollArea"));
 			if (oScrollArea) {
 				oScrollArea.addEventListener("mouseleave", this._fnOnMouseOut);
 				oScrollArea.addEventListener("mouseenter", this._fnOnMouseEnter);
@@ -254,9 +274,11 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype._deregisterEvents = function() {
-		if (this.getControl()) {
-			this.getControl().detachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
-			var oScrollArea = this.getControl().getDomRef(this.getConfig("scrollArea"));
+		var oControl = this.getControl();
+		if (oControl) {
+			oControl.detachEvent(this.getConfig("scrollEvent"), this._fnControlUpdate);
+			this.getConfig("detachSelectionChange", oControl, this._fnRemoveSelection);
+			var oScrollArea = oControl.getDomRef(this.getConfig("scrollArea"));
 			if (oScrollArea) {
 				oScrollArea.removeEventListener("mouseleave", this._fnOnMouseOut);
 				oScrollArea.removeEventListener("mouseenter", this._fnOnMouseEnter);
@@ -724,7 +746,7 @@ sap.ui.define([
 	};
 
 	CellSelector.prototype._clearSelection = function() {
-		this._oSession.cellRefs.forEach(function(oCellRef) {
+		this._oSession?.cellRefs?.forEach(function(oCellRef) {
 			oCellRef.classList.remove("sapMPluginsCellSelectorSelected", "sapMPluginsCellSelectorTop", "sapMPluginsCellSelectorBottom", "sapMPluginsCellSelectorLeft", "sapMPluginsCellSelectorRight");
 			oCellRef.removeAttribute("aria-selected");
 		});
@@ -799,6 +821,20 @@ sap.ui.define([
 			scrollArea: "sapUiTableCtrlScr",
 			scrollEvent: "_rowsUpdated",
 			eventClearedAll: "sapUiTableClearAll",
+			onActivate: function(oTable, oPlugin) {
+				oTable.attachEvent("_change", oPlugin, this._onPropertyChange);
+				oTable.attachEvent("EventHandlerChange", oPlugin, this._onEventHandlerChange);
+			},
+			onDeactivate: function(oTable, oPlugin) {
+				oTable.detachEvent("_change", this._onPropertyChange);
+				oTable.detachEvent("EventHandlerChange", this._onEventHandlerChange);
+			},
+			_onPropertyChange: function(oEvent, oPlugin) {
+				oEvent.getParameter("name") == "selectionBehavior" && oPlugin._onSelectableChange();
+			},
+			_onEventHandlerChange: function(oEvent, oPlugin) {
+				oEvent.getParameter("EventId") == "cellClick" && oPlugin._onSelectableChange();
+			},
 			/**
 			 * Checks if the table is compatible with cell selection.
 			 * @param {sap.ui.table.Table} oTable table instance
@@ -913,7 +949,7 @@ sap.ui.define([
 			 * @param {int} mFocus focused row index
 			 */
 			selectRows: function(oTable, iFrom, iTo, iFocus) {
-				var oSelectionOwner = PluginBase.getPlugin(oTable, "sap.ui.table.plugins.SelectionPlugin") || oTable;
+				var oSelectionOwner = this._getSelectionOwner(oTable);
 				var sSelectionMode = oTable.getSelectionMode();
 
 				if (sSelectionMode == "None") {
@@ -937,7 +973,7 @@ sap.ui.define([
 				return true;
 			},
 			isRowSelected: function(oTable, iRow) {
-				var oSelectionOwner = PluginBase.getPlugin(oTable, "sap.ui.table.plugins.SelectionPlugin") || oTable;
+				var oSelectionOwner = this._getSelectionOwner(oTable);
 				var oRow = oTable.getRows().find(function(oRow) {
 					return oRow.getIndex() == iRow;
 				});
@@ -971,6 +1007,25 @@ sap.ui.define([
 					return Promise.resolve();
 				}
 				return false;
+			},
+			attachSelectionChange: function(oTable, fnCallback) {
+				var oSelectionOwner = this._getSelectionOwner(oTable);
+				if (oSelectionOwner.attachSelectionChange) {
+					oSelectionOwner.attachSelectionChange(fnCallback);
+					return;
+				}
+				oSelectionOwner.attachRowSelectionChange(fnCallback);
+			},
+			detachSelectionChange: function(oTable, fnCallback) {
+				var oSelectionOwner = this._getSelectionOwner(oTable);
+				if (oSelectionOwner.detachSelectionChange) {
+					oSelectionOwner.detachSelectionChange(fnCallback);
+					return;
+				}
+				oSelectionOwner.detachRowSelectionChange(fnCallback);
+			},
+			_getSelectionOwner: function(oTable) {
+				return PluginBase.getPlugin(oTable, "sap.ui.table.plugins.SelectionPlugin") || oTable;
 			}
 		}
 	}, CellSelector);

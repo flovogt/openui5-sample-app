@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -23,8 +23,11 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 	 * Groups filters according to their path and combines filters on the same path using "OR" and filters on
 	 * different paths using "AND", all multi-filters contained are ANDed.
 	 *
-	 * @param {sap.ui.model.Filter[]} aFilters the filters to be grouped
-	 * @return {sap.ui.model.Filter} Single Filter containing all filters of the array combined or undefined
+	 * @param {sap.ui.model.Filter[]} [aFilters] The filters to be grouped
+	 * @return {sap.ui.model.Filter|undefined} A single filter containing all filters of the array combined or
+	 *   <code>undefined</code> if no filters are given
+	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} is contained in <code>aFilters</code> together
+	 *   with other filters
 	 * @public
 	 * @since 1.71
 	 * @static
@@ -49,11 +52,9 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 		if (aFilters.length === 1) {
 			return aFilters[0];
 		}
+		Filter.checkFilterNone(aFilters);
 		// Collect filters on same path, make sure to keep order as before for compatibility with tests
-		if (aFilters.some(function(oFilter) {
-			if (oFilter === Filter.NONE) {
-				return true;
-			}
+		aFilters.forEach(function(oFilter) {
 			if (oFilter.aFilters || oFilter.sVariable) { // multi/lambda filter
 				sCurPath = "__multiFilter";
 			} else {
@@ -63,11 +64,7 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 				mSamePath[sCurPath] = [];
 			}
 			mSamePath[sCurPath].push(oFilter);
-
-			return false;
-		})) {
-			return Filter.NONE;
-		}
+		});
 		// Create ORed multifilters for all filter groups
 		for (var sPath in mSamePath) {
 			aResult.push(getFilter(mSamePath[sPath], sPath === "__multiFilter")); // multi filters are ANDed
@@ -79,9 +76,12 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 	/**
 	 * Combines control filters and application filters using AND and returns the resulting filter
 	 *
-	 * @param {sap.ui.model.Filter[]} aFilters control filters
-	 * @param {sap.ui.model.Filter[]} aApplicationFilters application filters
-	 * @return {sap.ui.model.Filter} Single Filter containing all filters of the array combined or undefined
+	 * @param {sap.ui.model.Filter[]} [aFilters] The control filters
+	 * @param {sap.ui.model.Filter[]} [aApplicationFilters] The application filters
+	 * @return {sap.ui.model.Filter|undefined} A single filter containing all filters of the arrays combined or
+	 *   <code>undefined</code> if no filters are given
+	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} is contained in <code>aFilters</code> or
+	 *   <code>aApplicationFilters</code> together with other filters
 	 * @private
 	 * @since 1.58
 	 * @static
@@ -89,8 +89,9 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 	FilterProcessor.combineFilters = function(aFilters, aApplicationFilters) {
 		var oGroupedFilter, oGroupedApplicationFilter, oFilter, aCombinedFilters = [];
 
-		oGroupedFilter = this.groupFilters(aFilters);
-		oGroupedApplicationFilter = this.groupFilters(aApplicationFilters);
+		oGroupedFilter = FilterProcessor.groupFilters(aFilters);
+		oGroupedApplicationFilter = FilterProcessor.groupFilters(aApplicationFilters);
+
 		if (oGroupedFilter === Filter.NONE || oGroupedApplicationFilter === Filter.NONE) {
 			return Filter.NONE;
 		}
@@ -119,6 +120,8 @@ sap.ui.define(['./Filter', 'sap/base/Log'],
 	 * @param {function} fnGetValue the method to get the actual value to filter on
 	 * @param {object} [mNormalizeCache] cache for normalized filter values
 	 * @return {array} a new array instance containing the filtered data set
+	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} is contained in <code>vFilters</code> together
+	 *   with other filters
 	 * @private
 	 * @static
 	 */

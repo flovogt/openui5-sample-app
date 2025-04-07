@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -18,7 +18,7 @@
  * sap.ui.lazyRequire("sap.ui.core.Control");
  * sap.ui.lazyRequire("sap.m.Button");
  *
- * @version 1.120.0
+ * @version 1.120.7
  * @author  SAP SE
  * @public
  */
@@ -48,7 +48,7 @@ sap.ui.define([
 	 * The <code>sap</code> namespace is automatically registered with the
 	 * OpenAjax hub if it exists.
 	 *
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @namespace
 	 * @public
 	 * @name sap
@@ -61,7 +61,7 @@ sap.ui.define([
 	 * The <code>sap.ui</code> namespace is the central OpenAjax compliant entry
 	 * point for UI related JavaScript functionality provided by SAP.
 	 *
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @namespace
 	 * @name sap.ui
 	 * @public
@@ -75,9 +75,9 @@ sap.ui.define([
 		 * The version of the SAP UI Library
 		 * @type string
 		 */
-		version: "1.120.0",
+		version: "1.120.7",
 		// buildinfo.lastchange is deprecated and is therefore defaulted to empty string
-		buildinfo : { lastchange : "", buildtime : "20250407-0908" }
+		buildinfo : { lastchange : "", buildtime : "20250407-0914" }
 	});
 
 	var syncCallBehavior = sap.ui.loader._.getSyncCallBehavior();

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -60,7 +60,7 @@ function(
 	 * @class
 	 * @extends sap.ui.base.ManagedObject
 	 * @author SAP SE
-	 * @version 1.120.0
+	 * @version 1.120.7
 	 * @public
 	 * @alias sap.ui.core.Fragment
 	 */
@@ -145,7 +145,7 @@ function(
 	 */
 	Fragment.registerType = function(sType, oFragmentImpl) {
 		if (typeof (sType) !== "string") {
-			Log.error("Ignoring non-string Fragment type: " + sType);
+			Log.error("[FUTURE FATAL] Ignoring non-string Fragment type: " + sType);
 			return;
 		}
 
@@ -179,7 +179,7 @@ function(
 		this.fnScopedRunWithOwner = mSettings.containingView && mSettings.containingView.fnScopedRunWithOwner;
 
 		if (!this.fnScopedRunWithOwner && this._sOwnerId) {
-			var oOwnerComponent = Component.get(this._sOwnerId);
+			var oOwnerComponent = Component.getComponentById(this._sOwnerId);
 			this.fnScopedRunWithOwner = function(fnCallbackToBeScoped) {
 				return oOwnerComponent.runAsOwner(fnCallbackToBeScoped);
 			};
@@ -230,7 +230,7 @@ function(
 	 */
 	Fragment.byId = function(sFragmentId, sId) {
 		if (!(typeof (sFragmentId) === "string" && typeof (sId) === "string")) {
-			Log.error("sap.ui.core.Fragment.byId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
+			Log.error("[FUTURE FATAL] sap.ui.core.Fragment.byId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
 			return undefined;
 		}
 		return Element.getElementById(sFragmentId + "--" + sId);
@@ -248,7 +248,7 @@ function(
 	 */
 	Fragment.createId = function(sFragmentId, sId) {
 		if (!(typeof (sFragmentId) === "string" && typeof (sId) === "string")) {
-			Log.error("sap.ui.core.Fragment.createId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
+			Log.error("[FUTURE FATAL] sap.ui.core.Fragment.createId: two strings must be given as parameters, but are: " + sFragmentId + " and " + sId);
 			return undefined;
 		}
 		return sFragmentId + "--" + sId;
@@ -386,7 +386,7 @@ function(
 					// owner-id is either available because the async factory was called in a sync block
 					// or: the containing view carries the owner id for us
 					var sOwnerId = mSettings.sOwnerId || mSettings.containingView && mSettings.containingView._sOwnerId;
-					var oOwnerComponent = Component.get(sOwnerId);
+					var oOwnerComponent = Component.getComponentById(sOwnerId);
 					if (oOwnerComponent) {
 						return oOwnerComponent.runAsOwner(function () {
 							return new Fragment(mSettings);
@@ -832,7 +832,7 @@ function(
 				try {
 					pContentPromise.unwrap();
 				} catch (e) {
-					Log.error("An Error occured during XML processing of '" +
+					Log.error("[FUTURE FATAL] An Error occured during XML processing of '" +
 							this.getMetadata().getName() +
 							"' with id '" +
 							this.getId() +

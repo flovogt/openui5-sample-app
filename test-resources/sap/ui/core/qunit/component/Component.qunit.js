@@ -3,6 +3,7 @@ sap.ui.define([
 	"sap/ui/qunit/utils/nextUIUpdate",
 	'sap/ui/core/Component',
 	'sap/ui/core/ComponentContainer',
+	'sap/ui/core/ComponentRegistry',
 	'sap/ui/core/Messaging',
 	'sap/ui/core/UIComponentMetadata',
 	'sap/ui/test/routing/Component',
@@ -12,13 +13,13 @@ sap.ui.define([
 	'sap/base/util/LoaderExtensions',
 	'sap/ui/core/Manifest',
 	'sap/base/i18n/ResourceBundle'
-], function (createAndAppendDiv, nextUIUpdate, Component, ComponentContainer, Messaging, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle) {
+], function (createAndAppendDiv, nextUIUpdate, Component, ComponentContainer, ComponentRegistry, Messaging, UIComponentMetadata, SamplesRoutingComponent, SamplesRouterExtension, Log, deepExtend, LoaderExtensions, Manifest, ResourceBundle) {
 
 	"use strict";
 	/*global sinon, QUnit, foo*/
 
 	function cleanUpRegistry() {
-		Component.registry.forEach(function(oComponent) {
+		ComponentRegistry.forEach(function(oComponent) {
 			oComponent.destroy();
 		});
 	}
@@ -129,7 +130,7 @@ sap.ui.define([
 
 	QUnit.test("Factory Function", function(assert){
 		var oComp = this.oComp;
-		var oComponent = Component.get(oComp.getId());
+		var oComponent = Component.getComponentById(oComp.getId());
 		assert.equal(oComponent, oComp, "Factory function returns the same instance!");
 
 		return Component.create({
@@ -146,7 +147,7 @@ sap.ui.define([
 		var oCompCont1 = this.oCompCont1;
 		assert.ok(!!oComp.getComponentData(), "Component has component data");
 		assert.equal(oComp.getComponentData().foo, "bar", "Component data is correct");
-		var oComponent = Component.registry.get(oCompCont1.getComponent());
+		var oComponent = ComponentRegistry.get(oCompCont1.getComponent());
 		assert.ok(!!oComponent.getComponentData(), "Component has component data");
 		assert.equal(oComponent.getComponentData().foo, "bar", "Component data is correct");
 	});
@@ -434,7 +435,7 @@ sap.ui.define([
 		// check the nested component having the ID of the parent component
 		var oNestedComponentContainer = this.oComp.byId("ContButton");
 		var sNestedComponentId = oNestedComponentContainer.getComponent();
-		var oNestedComponent = Component.get(sNestedComponentId);
+		var oNestedComponent = Component.getComponentById(sNestedComponentId);
 		assert.equal(sRefComponentId, Component.getOwnerIdFor(oNestedComponent), "The nested component has the correct component context");
 		// check the control in the nested component to have the correct component context
 		var oNestedControl = oNestedComponent.byId("mybutn");
@@ -739,7 +740,7 @@ sap.ui.define([
 			manifest: "anylocation/manifest.json"
 		}).then(function(oComponent) {
 			assert.ok(true, "Component is loaded properly!");
-			assert.equal(oComponent, Component.get("myTestComp"), "Component.get returns right component");
+			assert.equal(oComponent, Component.getComponentById("myTestComp"), "Component.get returns right component");
 		}, function(oError) {
 			assert.ok(false, "Component should be loaded!");
 		});
@@ -1540,6 +1541,29 @@ sap.ui.define([
 
 	});
 
+	QUnit.test("Component.create with loaded manifest content", function(assert) {
+		var oProcessI18nSpy = this.spy(Manifest.prototype, "_processI18n");
+		// there's still one sync path where the i18n file is processed synchronously
+		// it's documented in BLI CPOUI5FRAMEWORK-286
+		var iExpectedSyncCallCount = 1;
+		return LoaderExtensions.loadResource(
+			"sap/ui/test/mixed/manifest.json",
+			{async: true}
+		).then(function(oManifest) {
+			return Component.create({
+				manifest: oManifest
+			});
+		}).then(function(oComponent) {
+			assert.ok(oComponent, "Component instance is created");
+			var iSyncCall = oProcessI18nSpy.getCalls().reduce(function(acc, oCall) {
+				if (oCall.args.length === 0 || !oCall.args[0]) {
+					acc++;
+				}
+				return acc;
+			}, 0);
+			assert.equal(iSyncCall, iExpectedSyncCallCount, "The number of sync loading of i18n file is the same as expectation");
+		});
+	});
 
 	QUnit.module("Models", {
 		beforeEach : function() {
@@ -1937,14 +1961,14 @@ sap.ui.define([
 		var aFilteredComponents = [];
 
 		assert.ok(Component.hasOwnProperty("registry"), "Component has static method to access registry");
-		assert.equal(Component.registry.size, 3, "Return number of registered component instances");
-		assert.deepEqual(Object.keys(Component.registry.all()).sort(), ["A", "B", "C"], "Return all registered component instances");
-		assert.ok(Component.registry.get("B") === oFooB, "Return reference of component B from registry by ID");
+		assert.equal(ComponentRegistry.size, 3, "Return number of registered component instances");
+		assert.deepEqual(Object.keys(ComponentRegistry.all()).sort(), ["A", "B", "C"], "Return all registered component instances");
+		assert.ok(ComponentRegistry.get("B") === oFooB, "Return reference of component B from registry by ID");
 
-		Component.registry.forEach(fnCallbackSpy);
+		ComponentRegistry.forEach(fnCallbackSpy);
 		assert.ok(fnCallbackSpy.calledThrice, "Callback was executed 3 times");
 
-		aFilteredComponents = Component.registry.filter(function(oComponent) {
+		aFilteredComponents = ComponentRegistry.filter(function(oComponent) {
 			return ["B", "C"].indexOf(oComponent.getId()) > -1;
 		});
 

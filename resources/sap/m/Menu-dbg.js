@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -70,7 +70,7 @@ sap.ui.define([
 		 * @implements sap.ui.core.IContextMenu
 		 *
 		 * @author SAP SE
-		 * @version 1.120.0
+		 * @version 1.120.7
 		 *
 		 * @constructor
 		 * @public
@@ -925,7 +925,7 @@ sap.ui.define([
 					this._initPageForParent(oParentItem);
 					oParentItem._setVisualChild(oParentItem.getItems()[0]._getVisualParent());
 					oLI = sap.ui.getCore().byId(oParentItem._getVisualControl());
-					oLI.invalidate();
+					oLI && oLI.invalidate();
 				} else {
 					this._initMenuForItems(oParentItem.getItems(), sap.ui.getCore().byId(oParentItem._getVisualControl()));
 					oParentItem._setVisualChild(oParentItem.getItems()[0]._getVisualParent());

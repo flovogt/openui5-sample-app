@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2023 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -911,14 +911,15 @@ sap.ui.define([
 			this.mCanUseCachePromiseByChildPath[sChildPath] = oCanUseCachePromise;
 		}
 		this.aChildCanUseCachePromises.push(oCanUseCachePromise);
-		this.oCachePromise = SyncPromise.all([this.oCachePromise, oCanUseCachePromise])
-			.then(function (aResult) {
+		// If the cache is immutable, only mLateQueryOptions may have changed
+		const oPromise = bCacheImmutable
+			? oCanUseCachePromise
+			: SyncPromise.all([this.oCachePromise, oCanUseCachePromise]).then(function (aResult) {
 				var oCache = aResult[0];
 
 				// Note: in operation bindings mAggregatedQueryOptions misses the options from
 				// $$inheritExpandSelect
-				// If the cache is immutable, only mLateQueryOptions may have changed
-				if (!bCacheImmutable && oCache && !oCache.hasSentRequest() && !that.oOperation) {
+				if (oCache && !oCache.hasSentRequest() && !that.oOperation) {
 					if (that.bSharedRequest) {
 						oCache.setActive(false);
 						oCache = that.createAndSetCache(that.mAggregatedQueryOptions,
@@ -931,11 +932,13 @@ sap.ui.define([
 				return oCache;
 			});
 		// catch the error, but keep the rejected promise
-		this.oCachePromise.catch(function (oError) {
+		oPromise.catch(function (oError) {
 			that.oModel.reportError(that + ": Failed to enhance query options for "
 				+ "auto-$expand/$select for child " + sChildPath, sClassName, oError);
 		});
-
+		if (!bCacheImmutable) {
+			this.oCachePromise = oPromise;
+		}
 		return oCanUseCachePromise;
 	};
 

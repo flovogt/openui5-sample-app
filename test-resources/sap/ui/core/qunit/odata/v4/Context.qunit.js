@@ -778,10 +778,10 @@ sap.ui.define([
 
 	//*********************************************************************************************
 	QUnit.test("getParent", function (assert) {
-		const oBinding = {getParent : mustBeMocked};
+		const oBinding = {fetchOrGetParent : mustBeMocked};
 		const oNode = Context.create({/*oModel*/}, oBinding, "/foo");
 
-		this.mock(oBinding).expects("getParent").withExactArgs(sinon.match.same(oNode))
+		this.mock(oBinding).expects("fetchOrGetParent").withExactArgs(sinon.match.same(oNode))
 			.returns("~oParentNode~");
 
 		// code under test
@@ -799,15 +799,18 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("requestParent", function (assert) {
-		const oBinding = {requestParent : mustBeMocked};
+	QUnit.test("requestParent", async function (assert) {
+		const oBinding = {fetchOrGetParent : mustBeMocked};
 		const oNode = Context.create({/*oModel*/}, oBinding, "/foo");
 
-		this.mock(oBinding).expects("requestParent").withExactArgs(sinon.match.same(oNode))
-			.returns("~oParentNodePromise~");
+		this.mock(oBinding).expects("fetchOrGetParent").withExactArgs(sinon.match.same(oNode), true)
+			.returns("~oParentNode~");
 
 		// code under test
-		assert.strictEqual(oNode.requestParent(), "~oParentNodePromise~");
+		const oPromise = oNode.requestParent();
+
+		assert.ok(oPromise instanceof Promise);
+		assert.strictEqual(await oPromise, "~oParentNode~");
 	});
 
 	//*********************************************************************************************
@@ -2080,13 +2083,17 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("move", function (assert) {
+[0, 1, 2, 3].forEach((i) => { // 0: w/ parent, 1: null parent, 2: no parent, 3: no args
+	QUnit.test(`move: #${i}`, function (assert) {
 		const oBinding = {
 			move : mustBeMocked
 		};
 		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
 		let bResolved = false;
-		this.mock(oBinding).expects("move").withExactArgs(sinon.match.same(oContext), "~oParent~")
+		this.mock(oContext).expects("isAncestorOf").withExactArgs(i ? null : "~oParent~")
+			.returns(false);
+		this.mock(oBinding).expects("move")
+			.withExactArgs(sinon.match.same(oContext), i ? null : "~oParent~")
 			.returns(new SyncPromise(function (resolve) {
 				setTimeout(function () {
 					bResolved = true;
@@ -2094,14 +2101,34 @@ sap.ui.define([
 				}, 0);
 			}));
 
-		// code under test
-		const oPromise = oContext.move({parent : "~oParent~"});
+		let oPromise;
+		switch (i) {
+			case 0:
+				// code under test
+				oPromise = oContext.move({parent : "~oParent~"});
+				break;
+
+			case 1:
+				// code under test
+				oPromise = oContext.move({parent : null});
+				break;
+
+			case 2:
+				// code under test
+				oPromise = oContext.move({});
+				break;
+
+			default:
+				// code under test
+				oPromise = oContext.move();
+		}
 
 		assert.ok(oPromise instanceof Promise);
 		return oPromise.then(function () {
 			assert.ok(bResolved, "not too soon");
 		});
 	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("move: fails", function (assert) {
@@ -2110,21 +2137,15 @@ sap.ui.define([
 		};
 		const oContext = Context.create({/*oModel*/}, oBinding, "/EMPLOYEES('42')");
 
-		assert.throws(function () {
-			// code under test
-			oContext.move({});
-		}, new Error("Unsupported parent context: undefined"));
+		const oContextMock = this.mock(oContext);
+		oContextMock.expects("isAncestorOf").withExactArgs("~oParent~").returns(true);
 
 		assert.throws(function () {
 			// code under test
-			oContext.move({parent : null});
-		}, new Error("Unsupported parent context: null"));
+			oContext.move({parent : "~oParent~"});
+		}, new Error("Unsupported parent context: ~oParent~"));
 
-		assert.throws(function () {
-			// code under test
-			oContext.move({parent : oContext});
-		}, new Error("Unsupported parent context: " + oContext));
-
+		oContextMock.expects("isAncestorOf").withExactArgs("~oParent~").returns(false);
 		this.mock(oBinding).expects("move").withExactArgs(sinon.match.same(oContext), "~oParent~")
 			.returns(SyncPromise.reject("~error~"));
 
@@ -4444,7 +4465,12 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("isEffectivelyKeptAlive: $$ownRequest", function (assert) {
+[
+	"/TEAMS('1')/TEAM_2_EMPLOYEES('2')",
+	"/TEAMS/0/TEAM_2_EMPLOYEES('2')"
+].forEach(function (sContextPath) {
+	const sTitle = "isEffectivelyKeptAlive: $$ownRequest, context path: " + sContextPath;
+	QUnit.test(sTitle, function (assert) {
 		var oBinding = {
 				checkKeepAlive : function () {},
 				getHeaderContext : function () {},
@@ -4452,7 +4478,7 @@ sap.ui.define([
 				isRelative : function () { return true; },
 				mParameters : {$$ownRequest : true}
 			},
-			oContext = Context.create({/*oModel*/}, oBinding, "/TEAMS('1')/TEAM_2_EMPLOYEES('2')");
+			oContext = Context.create({/*oModel*/}, oBinding, sContextPath);
 
 		oContext.setSelected(true);
 		this.mock(_Helper).expects("isDataAggregation")
@@ -4461,6 +4487,7 @@ sap.ui.define([
 		// code under test
 		assert.strictEqual(oContext.isEffectivelyKeptAlive(), true);
 	});
+});
 
 	//*********************************************************************************************
 	QUnit.test("isEffectivelyKeptAlive: data aggregation", function (assert) {
@@ -4475,6 +4502,24 @@ sap.ui.define([
 		oContext.setSelected(true);
 		this.mock(_Helper).expects("isDataAggregation")
 			.withExactArgs(sinon.match.same(oBinding.mParameters)).returns(true);
+
+		// code under test
+		assert.strictEqual(oContext.isEffectivelyKeptAlive(), false);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("isEffectivelyKeptAlive: no key predicate", function (assert) {
+		const oBinding = {
+			getHeaderContext : function () {},
+			onKeepAliveChanged : function () {},
+			isRelative : function () { return false; },
+			mParameters : {}
+		};
+		const oContext = Context.create({/*oModel*/}, oBinding, "/SalesOrderList('0')/Messages/0");
+
+		oContext.setSelected(true);
+		this.mock(_Helper).expects("isDataAggregation")
+			.withExactArgs(sinon.match.same(oBinding.mParameters)).returns(false);
 
 		// code under test
 		assert.strictEqual(oContext.isEffectivelyKeptAlive(), false);
