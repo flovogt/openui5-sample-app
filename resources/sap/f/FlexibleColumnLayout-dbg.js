@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -686,6 +686,17 @@ sap.ui.define([
 			end: 0
 		};
 
+		// Create bound listener functions for keyboard event handling
+		this._keyListeners = {
+			increase     : this._resizeColumnOnKeypress.bind(this, "inc", 1),
+			decrease     : this._resizeColumnOnKeypress.bind(this, "dec", 1),
+			increaseMore : this._resizeColumnOnKeypress.bind(this, "incMore", 2),
+			decreaseMore : this._resizeColumnOnKeypress.bind(this, "decMore", 2),
+			max          : this._resizeColumnOnKeypress.bind(this, "max", 1),
+			min          : this._resizeColumnOnKeypress.bind(this, "min", 1)
+		};
+		this._enableKeyboardListeners();
+
 		this._oInvisibleMessage = null;
 		this._boundColumnSeparatorMove = this._onColumnSeparatorMove.bind(this);
 		this._boundColumnSeparatorMoveEnd = this._onColumnSeparatorMoveEnd.bind(this);
@@ -713,6 +724,20 @@ sap.ui.define([
 		if (this._oInvisibleMessage) {
 			this._oInvisibleMessage.announce(sText, InvisibleMessageMode.Polite);
 		}
+	};
+
+	/**
+	 * Connects the keyboard event listeners so resizing via keyboard will be possible
+	 */
+	FlexibleColumnLayout.prototype._enableKeyboardListeners = function() {
+		this.onsaprightmodifiers     = this._keyListeners.increase;
+		this.onsapleftmodifiers      = this._keyListeners.decrease;
+		this.onsapright              = this._keyListeners.increaseMore;
+		this.onsapleft               = this._keyListeners.decreaseMore;
+		this.onsapend                = this._keyListeners.max;
+		this.onsaphome               = this._keyListeners.min;
+
+		this._keyboardEnabled = true;
 	};
 
 	/**
@@ -964,7 +989,11 @@ sap.ui.define([
 	 * @private
 	 */
 	FlexibleColumnLayout.prototype._restoreFocusToColumn = function (sCurrentColumn) {
-		var oElement = this._oColumnFocusInfo[sCurrentColumn];
+		var oElement = this._oColumnFocusInfo[sCurrentColumn],
+			oCurrentColumn = this._getColumnByStringName(sCurrentColumn);
+		if (this._isFocusInCurrentColumn(oCurrentColumn)) {
+			return;
+		}
 
 		if (!oElement || isEmptyObject(oElement)) {
 			// if no element was stored, get first focusable
@@ -1013,6 +1042,16 @@ sap.ui.define([
 		}
 
 		return false;
+	};
+
+	/**
+	 * Checks whether or not the focus is already in the current column
+	 * @param {Object} oCurrentColumn the current column
+	 * @returns {boolean} whether or not the focus is in the current column
+	 * @private
+	 */
+	FlexibleColumnLayout.prototype._isFocusInCurrentColumn = function (oCurrentColumn) {
+		return oCurrentColumn._isFocusInControl(oCurrentColumn);
 	};
 
 	FlexibleColumnLayout.prototype._getControlWidth = function () {
@@ -1480,12 +1519,62 @@ sap.ui.define([
 		}
 	};
 
+	FlexibleColumnLayout.prototype._resizeColumnOnKeypress = function (sType, iStepSize, oEvent) {
+
+		var oSeparator = this._getColumnSeparator(oEvent.target),
+			iStartX, iEndX;
+
+		if (!oSeparator) {
+			return;
+		}
+
+		var iBigStep  = this._getControlWidth();
+
+		var iStep = 0;
+		switch (sType) {
+			case "inc":
+				iStep = iStepSize;
+				break;
+
+			case "incMore":
+				iStep = iStepSize * 10;
+				break;
+
+			case "dec":
+				iStep = 0 - iStepSize;
+				break;
+
+			case "decMore":
+				iStep = 0 - iStepSize * 10;
+				break;
+
+			case "max":
+				iStep = iBigStep;
+				break;
+
+			case "min":
+				iStep = 0 - iBigStep;
+				break;
+
+			default:
+				Log.warn("[FlexibleColumnLayout] Invalid keyboard resize type");
+				break;
+		}
+
+		iStartX = oSeparator && oSeparator.getBoundingClientRect().x;
+		iEndX = iStartX + iStep;
+
+		this._onColumnSeparatorMoveStart({pageX: iStartX}, oSeparator);
+		this._onColumnSeparatorMove({pageX: iEndX});
+		this._onColumnSeparatorMoveEnd({pageX: iEndX});
+	};
+
 	FlexibleColumnLayout.prototype._onColumnSeparatorMoveStart = function (oEvent, oSeparator, bTouch) {
 		// needed to position the separator presizely
 		var bRtl = Configuration.getRTL(),
 			iStartOffset = this._getDraggedSeparatorStartOffset(oSeparator, bRtl);
 
-		this._oDragInfo = {
+		this._oMoveInfo = {
 			cursorStartX: oEvent.pageX,
 			cursorX: oEvent.pageX, // the mouse/finger position-x
 			columnWidths: {
@@ -1518,20 +1607,25 @@ sap.ui.define([
 		}
 
 		var iCursonX = getCursorPositionX(oEvent);
-		this._previewResizedColumnsOnDrag(iCursonX);
+		this._previewResizedColumnsOnMoveSeparator(iCursonX);
 	};
 
 	FlexibleColumnLayout.prototype._onColumnSeparatorMoveEnd = function (oEvent) {
 		var iCursonX = getCursorPositionX(oEvent);
-		this._previewResizedColumnsOnDrag(iCursonX, true /* resize end */);
+		this._previewResizedColumnsOnMoveSeparator(iCursonX, true /* resize end */);
 		this._saveResizedColumWidths();
 
-		if (this._oDragInfo.layout !== this.getLayout()) {
-			this.setLayout(this._oDragInfo.layout);
-			this._fireStateChange(true, false);
+		if (this._oMoveInfo.layout == this.getLayout()) {
+			this._exitInteractiveResizeMode();
+			return;
 		}
+		this.setLayout(this._oMoveInfo.layout);
 
-		this._exitInteractiveResizeMode();
+		try {
+			this._fireStateChange(true, false);
+		} finally {
+			this._exitInteractiveResizeMode();
+		}
 	};
 
 	/**
@@ -1561,11 +1655,11 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._enterInteractiveResizeMode = function (bTouch) {
-		var oSeparatorPosition = this._oDragInfo.separatorPosition;
+		var oSeparatorPosition = this._oMoveInfo.separatorPosition;
 
-		this._$overlay.css("display", "block");
+		this.toggleStyleClass("sapFFLActiveResize", true);
 		this._$overlaySeparator.css(oSeparatorPosition.direction, oSeparatorPosition.x);
-		this._oDragInfo.separator.style.visibility = "hidden";
+		this._oMoveInfo.separator.style.visibility = "hidden";
 
 		if (bTouch) {
 			document.addEventListener("touchend", this._boundColumnSeparatorMoveEnd);
@@ -1577,64 +1671,64 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._exitInteractiveResizeMode = function () {
-		this._$overlay.css("display", "");
-		this._oDragInfo.separator.style.visibility = "";
-		this._oDragInfo.separator.focus();
+		this.toggleStyleClass("sapFFLActiveResize", false);
+		this._oMoveInfo.separator.style.visibility = "";
+		this._oMoveInfo.separator.focus();
 		this._ignoreMouse = false;
 		this._ignoreTouch = false;
-		this._oDragInfo = null;
+		this._oMoveInfo = null;
 		document.removeEventListener("mouseup", this._boundColumnSeparatorMoveEnd);
 		document.removeEventListener("mousemove", this._boundColumnSeparatorMove);
 		document.removeEventListener("touchend", this._boundColumnSeparatorMoveEnd);
 		document.removeEventListener("touchmove", this._boundColumnSeparatorMove);
 	};
 
-	FlexibleColumnLayout.prototype._previewResizedColumnsOnDrag = function (cursorX, bIsResizeEnd) {
+	FlexibleColumnLayout.prototype._previewResizedColumnsOnMoveSeparator = function (cursorX, bIsResizeEnd) {
 		var getPositionOffset = function (iOldCursorX) {
 			var iOffset = cursorX - iOldCursorX;
-			return this._oDragInfo.rtl ?  -iOffset : iOffset;
+			return this._oMoveInfo.rtl ?  -iOffset : iOffset;
 		}.bind(this);
 
-		this._oDragInfo.offsetFromPreviousPosition = getPositionOffset(this._oDragInfo.cursorX);
-		this._oDragInfo.offsetFromStartPosition = getPositionOffset(this._oDragInfo.cursorStartX);
-		this._oDragInfo.cursorX = cursorX;
+		this._oMoveInfo.offsetFromPreviousPosition = getPositionOffset(this._oMoveInfo.cursorX);
+		this._oMoveInfo.offsetFromStartPosition = getPositionOffset(this._oMoveInfo.cursorStartX);
+		this._oMoveInfo.cursorX = cursorX;
 
-		if (!this._oDragInfo.offsetFromStartPosition) {
+		if (!this._oMoveInfo.offsetFromStartPosition) {
 			return;
 		}
 
-		if (!this._oDragInfo.offsetFromPreviousPosition && !bIsResizeEnd) {
+		if (!this._oMoveInfo.offsetFromPreviousPosition && !bIsResizeEnd) {
 			return;
 		}
 
-		var aResizedColumns = getInteractivelyResizedColumns(this._oDragInfo.separator, this._oDragInfo.layout, this.getMaxColumnsCount()),
-			sSeparator = getSeparatorName(this._oDragInfo.separator),
-			bForwardResizeDirection = this._oDragInfo.offsetFromStartPosition > 0,
+		var aResizedColumns = getInteractivelyResizedColumns(this._oMoveInfo.separator, this._oMoveInfo.layout, this.getMaxColumnsCount()),
+			sSeparator = getSeparatorName(this._oMoveInfo.separator),
+			bForwardResizeDirection = this._oMoveInfo.offsetFromStartPosition > 0,
 			sColumnEnlargedByDragging = aResizedColumns[bForwardResizeDirection ? 0 : 1],
 			iSeparatorsCount = this._getVisibleColumnSeparatorsCount(),
 			iSeparatorsCountDiff = 0,
 			iOffsetOnSeparatorsCountChange = 0,
 			iOffsetOnColumnWidthNormalization,
-			sPreviousLayout = this._oDragInfo.layout,
+			sPreviousLayout = this._oMoveInfo.layout,
 			sLayout,
 			bLayoutChange,
 			oNewColumnWidths,
 			bResizeWithPinning;
 
-		this._oDragInfo.columnWidths[aResizedColumns[0]] += this._oDragInfo.offsetFromPreviousPosition;
-		this._oDragInfo.columnWidths[aResizedColumns[1]] -= this._oDragInfo.offsetFromPreviousPosition;
-		this._oDragInfo.columnEnlargedByDragging = sColumnEnlargedByDragging;
+		this._oMoveInfo.columnWidths[aResizedColumns[0]] += this._oMoveInfo.offsetFromPreviousPosition;
+		this._oMoveInfo.columnWidths[aResizedColumns[1]] -= this._oMoveInfo.offsetFromPreviousPosition;
+		this._oMoveInfo.columnEnlargedByDragging = sColumnEnlargedByDragging;
 
-		oNewColumnWidths = merge({}, this._oDragInfo.columnWidths);
+		oNewColumnWidths = merge({}, this._oMoveInfo.columnWidths);
 
 		// if some column is below min allowed width => expand it
 		this._normalizeColumnWidths(oNewColumnWidths, aResizedColumns);
 
 		// if normalization led to width change of some column => the column separator will be offset
-		iOffsetOnColumnWidthNormalization = this._oDragInfo.columnWidths[aResizedColumns[1]] - oNewColumnWidths[aResizedColumns[1]];
+		iOffsetOnColumnWidthNormalization = this._oMoveInfo.columnWidths[aResizedColumns[1]] - oNewColumnWidths[aResizedColumns[1]];
 
 		// update the dragged separator to match the new mouse/touch position
-		this._offsetDraggedColumnSeparator(this._oDragInfo.offsetFromPreviousPosition + iOffsetOnColumnWidthNormalization);
+		this._offsetDraggedColumnSeparator(this._oMoveInfo.offsetFromPreviousPosition + iOffsetOnColumnWidthNormalization);
 
 		// if the user drags to expand a hidden column, show its content
 		this._toggleColumnVisibility(sColumnEnlargedByDragging, true);
@@ -1665,12 +1759,12 @@ sap.ui.define([
 				columnEnlargedByDragging: sColumnEnlargedByDragging
 			});
 
-			this._oDragInfo.layout = sLayout;
+			this._oMoveInfo.layout = sLayout;
 			// allow compute dragging direction relative to the last layout
-			this._oDragInfo.cursorStartX = cursorX;
+			this._oMoveInfo.cursorStartX = cursorX;
 		}
 
-		this._oDragInfo.columnWidths = oNewColumnWidths;
+		this._oMoveInfo.columnWidths = oNewColumnWidths;
 
 		if (bResizeWithPinning) {
 			// call the dedicated function in order to resize with reveal/conceal effect
@@ -1687,8 +1781,18 @@ sap.ui.define([
 			// only offset the rendered columns
 			// skip mid column as it has width: 100% by default (to allow the mid column
 			// take the space that remains after sizing its sibling columns)
-			this._$columns.begin.css("width", this._oDragInfo.columnWidths.begin + "px");
-			this._$columns.end.css("width", this._oDragInfo.columnWidths.end + "px");
+			this._$columns.begin.css("width", this._oMoveInfo.columnWidths.begin + "px");
+			this._$columns.end.css("width", this._oMoveInfo.columnWidths.end + "px");
+			aResizedColumns.forEach(function(sColumn) {
+				this._updateColumnContextualSettings(sColumn, this._oMoveInfo.columnWidths[sColumn]);
+			}, this);
+		}
+
+		if (bLayoutChange) {
+			this.fireEvent("_liveStateChange", {
+				layout: sLayout,
+				maxColumnsCount: this.getMaxColumnsCount()
+			});
 		}
 	};
 
@@ -1747,9 +1851,9 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._offsetDraggedColumnSeparator = function (iOffset) {
-		this._oDragInfo.separatorPosition.x += iOffset;
-		this._$overlaySeparator.css(this._oDragInfo.separatorPosition.direction,
-			this._oDragInfo.separatorPosition.x);
+		this._oMoveInfo.separatorPosition.x += iOffset;
+		this._$overlaySeparator.css(this._oMoveInfo.separatorPosition.direction,
+			this._oMoveInfo.separatorPosition.x);
 	};
 
 	FlexibleColumnLayout.prototype._toggleColumnVisibility = function (sColumn, bShow) {
@@ -1813,12 +1917,12 @@ sap.ui.define([
 	 * @returns {boolean} the flag
 	 */
 	FlexibleColumnLayout.prototype._isColumnAllowedToHaveBelowMinWidth = function (sColumn) {
-		if (!this._oDragInfo) {
+		if (!this._oMoveInfo) {
 			// outside interactive resize the min-width restriction should always be valid
 			return false;
 		}
 
-		if (sColumn === this._oDragInfo.columnEnlargedByDragging) {
+		if (sColumn === this._oMoveInfo.columnEnlargedByDragging) {
 			// the user us revealing a hidden column by dragging
 			// its ajacent separator => do not yet expand the column to min-width
 			// untill the user stops dragging, to prevent undesired visual jump
@@ -1898,8 +2002,8 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._saveResizedColumWidths = function() {
-		var sNewLayout = this._oDragInfo.layout,
-			oColumnPercentWidths = this._convertColumnPxWidthToPercent(this._oDragInfo.columnWidths, sNewLayout),
+		var sNewLayout = this._oMoveInfo.layout,
+			oColumnPercentWidths = this._convertColumnPxWidthToPercent(this._oMoveInfo.columnWidths, sNewLayout),
 			sNewWidthsDistribution = Object.values(oColumnPercentWidths).join("/");
 
 		if (this._isValidWidthDistributionForLayout(sNewWidthsDistribution, sNewLayout)) {
@@ -2144,14 +2248,14 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._isInteractivelyResizedColumn = function (sColumn) {
-		return this._oDragInfo && this._isColumnAdjacentToDraggedSeparator(sColumn);
+		return this._oMoveInfo && this._isColumnAdjacentToDraggedSeparator(sColumn);
 	};
 
 	FlexibleColumnLayout.prototype._isColumnAdjacentToDraggedSeparator = function (sColumn) {
-		return this._oDragInfo &&
-			this._oDragInfo.separator &&
-			(this._$columns[sColumn][0] === this._oDragInfo.separator.previousElementSibling ||
-			 this._$columns[sColumn][0] === this._oDragInfo.separator.nextElementSibling);
+		return this._oMoveInfo &&
+			this._oMoveInfo.separator &&
+			(this._$columns[sColumn][0] === this._oMoveInfo.separator.previousElementSibling ||
+			 this._$columns[sColumn][0] === this._oMoveInfo.separator.nextElementSibling);
 	};
 
 	/**
@@ -3081,7 +3185,7 @@ sap.ui.define([
 	LayoutHistory.prototype.getEntry = function (iIndex, bRecentFirst) {
 		var aHistory = this._aLayoutHistory;
 		if (bRecentFirst) {
-			aHistory = this._aLayoutHistory.toReversed();
+			aHistory = this._aLayoutHistory.slice().reverse();
 		}
 		return aHistory[iIndex];
 	};

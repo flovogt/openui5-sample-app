@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.120.7
+		 * @version 1.120.27
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
@@ -1772,6 +1772,9 @@ sap.ui.define([
 				break;
 			}
 			if (!oBinding.getBoundContext) {
+				if (oBinding.oCache === undefined) {
+					return undefined; // nothing to do - looks like a refresh in progress
+				}
 				throw new Error("Not a context binding: " + oBinding);
 			}
 			oCandidate = oParentContext;

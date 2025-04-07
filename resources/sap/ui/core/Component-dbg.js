@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -19,6 +19,7 @@ sap.ui.define([
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/thirdparty/URI',
 	'sap/ui/performance/trace/Interaction',
+	'sap/ui/util/_enforceNoReturnValue',
 	'sap/base/assert',
 	'sap/base/Log',
 	'sap/base/util/Deferred',
@@ -46,6 +47,7 @@ sap.ui.define([
 	ResizeHandler,
 	URI,
 	Interaction,
+	_enforceNoReturnValue,
 	assert,
 	Log,
 	Deferred,
@@ -236,7 +238,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.120.27
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -1387,6 +1389,13 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.core.Component.prototype.init
+	 * @returns {void|undefined} This hook method must not have a return value. Return value <code>void</code> is deprecated since 1.120, as it does not force functions to <b>not</b> return something.
+	 * 	This implies that, for instance, no async function returning a Promise should be used.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 * 	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 	//Component.prototype.init = function() {};
@@ -1402,6 +1411,13 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.core.Component.prototype.exit
+	 * @returns {void|undefined} This hook method must not have a return value. Return value <code>void</code> is deprecated since 1.120, as it does not force functions to <b>not</b> return something.
+	 * 	This implies that, for instance, no async function returning a Promise should be used.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 * 	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 	//Component.prototype.exit = function() {};
@@ -1951,7 +1967,7 @@ sap.ui.define([
 			// lazy load the ODataUtils if systemParameter is given
 			var bAddOrigin = false;
 			var ODataUtils;
-			if (sSystemParameter && (bIsV1Model || bIsV2Model)) {
+			if (sSystemParameter && (bIsV1Model || bIsV2Model || bIsV4Model)) {
 				bAddOrigin = true;
 				ODataUtils = sap.ui.require("sap/ui/model/odata/ODataUtils");
 			}
@@ -3866,7 +3882,7 @@ sap.ui.define([
 
 		// call lifecyclehook 'onDeactivate'
 		if (typeof this.onDeactivate === "function") {
-			this.onDeactivate();
+			_enforceNoReturnValue(this.onDeactivate(), /*mLogInfo=*/{name: "onDeactivate", component: this.getId()});
 		}
 	};
 
@@ -3929,7 +3945,7 @@ sap.ui.define([
 
 		// call lifecyclehook 'onActivate'
 		if (typeof this.onActivate === "function") {
-			this.onActivate();
+			_enforceNoReturnValue(this.onActivate(), /*mLogInfo=*/{ name: "onActivate", component: this.getId() });
 		}
 	};
 
@@ -3981,6 +3997,12 @@ sap.ui.define([
 	 * @name sap.ui.core.Component.prototype.onActivate
 	 * @abstract
 	 * @since 1.88
+	 * @returns {void|undefined} This lifecycle hook must not have a return value.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 * 	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 
@@ -3991,6 +4013,12 @@ sap.ui.define([
 	 * @name sap.ui.core.Component.prototype.onDeactivate
 	 * @abstract
 	 * @since 1.88
+	 * @returns {void|undefined} This lifecycle hook must not have a return value.
+	 *
+	 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
+	 * 	implementation of this hook must not return anything but undefined. Any other
+	 * 	return value will cause an error log in this version of UI5 and will fail in future
+	 * 	major versions of UI5.
 	 * @protected
 	 */
 

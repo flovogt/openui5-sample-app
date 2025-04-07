@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -75,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -530,7 +530,7 @@ function(
 			this._oDeleteControl, {
 				messageBundleKey: "LIST_ITEM_DELETE_SHORTCUT"
 			},
-		this);
+		this._oDeleteControl);
 
 		this._oDeleteControl.useEnabledPropagator(false);
 
@@ -571,7 +571,7 @@ function(
 			this._oDetailControl, {
 				messageBundleKey: Device.os.macintosh ? "LIST_ITEM_EDIT_SHORTCUT_MAC" : "LIST_ITEM_EDIT_SHORTCUT"
 			},
-		this);
+		this._oDetailControl);
 
 		this._oDetailControl.useEnabledPropagator(false);
 
@@ -1232,12 +1232,12 @@ function(
 
 	// handle propagated focus to make the item row focusable
 	ListItemBase.prototype.onfocusin = function(oEvent) {
-		var oList = this.getList();
+		const oList = this.getList();
 		if (!oList || oEvent.isMarked()) {
 			return;
 		}
 
-		this.informList("FocusIn", oEvent.srcControl);
+		this.informList("FocusIn", oEvent.srcControl, oEvent);
 		oEvent.setMarked();
 	};
 

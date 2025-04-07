@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -156,7 +156,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.7
+		 * @version 1.120.27
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
@@ -2859,7 +2859,7 @@ sap.ui.define([
 	 * with a dot, which is stripped before lookup; see the <code>&lt;template:alias></code>
 	 * instruction for XML Templating. In case of an absolute name, it is searched in
 	 * <code>mParameters.scope</code> first and then in the global namespace. (Using the global
-	 * namespace is @deprecated as of version 1.120.3). The names "requestCurrencyCodes" and
+	 * namespace is deprecated as of version 1.120.3). The names "requestCurrencyCodes" and
 	 * "requestUnitsOfMeasure" default to {@link #requestCurrencyCodes} and
 	 * {@link #requestUnitsOfMeasure} resp. if not present in <code>mParameters.scope</code>. This
 	 * function is called with the current object (or primitive value) and additional details and

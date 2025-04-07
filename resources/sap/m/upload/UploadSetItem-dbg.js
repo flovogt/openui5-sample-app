@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -38,7 +38,7 @@ sap.ui.define([
 	 * @class Item that represents one file to be uploaded using the {@link sap.m.upload.UploadSet} control.
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.120.7
+	 * @version 1.120.27
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -531,7 +531,8 @@ sap.ui.define([
 				content: [
 					this._getIcon(),
 					this._getDynamicContent()
-				]
+				],
+				selected: this.getSelected() // mapping UploadSetItem's property selected to customList item selected.
 			});
 			this._oListItem.addStyleClass("sapMUCItem");
 			this._oListItem.setTooltip(this.getTooltip_Text());
@@ -1067,7 +1068,7 @@ sap.ui.define([
 			this._bSizeRestricted = bRestricted;
 			this.invalidate();
 			if (bRestricted && this.getParent()) {
-				this.getParent().fireFileSizeExceeded({item: this});
+				this.getParent().fireFileSizeExceeded({item: this, fileSize: this._fFileSize});
 			}
 		}
 	};
