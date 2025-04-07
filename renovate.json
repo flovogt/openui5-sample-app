@@ -1,5 +1,8 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"github>ui5/renovate-config"
+	],
 	"separateMinorPatch": true,
 	"lockFileMaintenance": {
 		"enabled": true,
