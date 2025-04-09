@@ -12,10 +12,9 @@
 	},
 	"packageRules": [
 		{
-			"extends": ["github>ui5/renovate-config"],
-			"matchUpdateTypes": ["patch", "minor"],
+			"matchDepNames": ["openui5"],
 			"automerge": true,
-			"commitMessagePrefix": "deps",
+			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update"
 		},
 		{
