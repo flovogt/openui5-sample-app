@@ -3,7 +3,8 @@
 	"extends": [
 		"github>ui5/renovate-config",
 		":semanticCommitTypeAll(build)",
-		":semanticCommitScope(deps-dev)"
+		":semanticCommitScope(deps-dev)",
+		":commitMessageAction(Bump)"
 	],
 	"separateMinorPatch": true,
 	"lockFileMaintenance": {
