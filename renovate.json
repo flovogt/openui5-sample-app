@@ -12,14 +12,17 @@
 	},
 	"packageRules": [
 		{
+			"extends": ["github>ui5/renovate-config"],
+			"automerge": true,
+			"commitMessagePrefix": "deps"
+			"commitMessageAction": "Update"
+		},
+		{
 			"matchDepTypes": [
 				"devDependencies"
 			],
-			"matchUpdateTypes": [
-				"minor",
-				"patch"
-			],
-			"automerge": true
+			"automerge": true.
+			"commitMessageAction": "Bump"
 		}
 	]
 }
