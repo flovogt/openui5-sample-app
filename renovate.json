@@ -12,15 +12,15 @@
 	},
 	"packageRules": [
 		{
+			"matchDepNames": ["*"],
+			"automerge": true,
+			"commitMessageAction": "Bump"
+		},
+		{
 			"matchDepNames": ["openui5"],
 			"automerge": true,
 			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update"
 		},
-		{
-			"matchDepNames": ["*"],
-			"automerge": true,
-			"commitMessageAction": "Bump"
-		}
 	]
 }
