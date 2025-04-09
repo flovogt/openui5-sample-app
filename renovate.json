@@ -1,7 +1,9 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"github>ui5/renovate-config"
+		"github>ui5/renovate-config",
+		":semanticCommitTypeAll(build)",
+		":semanticCommitScope(deps-dev)"
 	],
 	"separateMinorPatch": true,
 	"lockFileMaintenance": {
