@@ -110,7 +110,7 @@ sap.ui.define([
 	 * bound content aggregation. An error will be thrown when the above combination is detected.
 	 *
 	 * @extends sap.ui.core.mvc.View
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.XMLView

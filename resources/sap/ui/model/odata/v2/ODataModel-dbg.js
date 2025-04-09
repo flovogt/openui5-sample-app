@@ -72,6 +72,7 @@ sap.ui.define([
 		MessageType = coreLibrary.MessageType,
 		mMessageType2Severity = {},
 		aRequestSideEffectsParametersAllowList = ["groupId", "urlParameters"];
+	const rCacheBusterSegment = /\/~[\w\-]+~[A-Z0-9]?/;
 
 	mMessageType2Severity[MessageType.Error] = 0;
 	mMessageType2Severity[MessageType.Warning] = 1;
@@ -218,7 +219,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -7432,7 +7433,8 @@ sap.ui.define([
 			vProperties = mParameters.properties;
 			sGroupId = mParameters.groupId || mParameters.batchGroupId;
 			sChangeSetId = mParameters.changeSetId;
-			oContext  = mParameters.context;
+			// ignore context if path is absolute
+			oContext  = sPath.startsWith("/") ? undefined : mParameters.context;
 			fnSuccess = mParameters.success;
 			fnError   = mParameters.error;
 			fnCreated = mParameters.created;
@@ -8218,25 +8220,14 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataModel.prototype._cacheSupported = function(sMetadataUrl) {
-		var cacheBusterToken = /\/~[\w\-]+~[A-Z0-9]?/;
-		var aUrls = [sMetadataUrl];
-		//check urls for sap-context-token and cachebuster token
-		if (this.sAnnotationURI) {
-			if (!Array.isArray(this.sAnnotationURI)) {
-				this.sAnnotationURI = [this.sAnnotationURI];
-			}
-			aUrls = aUrls.concat(this.sAnnotationURI);
+		const bCacheMetadata = sMetadataUrl.includes("sap-context-token");
+		if (this.sAnnotationURI && !Array.isArray(this.sAnnotationURI)) {
+			this.sAnnotationURI = [this.sAnnotationURI];
 		}
+		const aAnnotationURIs = this.sAnnotationURI ?? [];
 
-		// check for context-token
-		aUrls = aUrls.filter(function(sUrl) {
-			return sUrl.indexOf("sap-context-token") === -1;
-		});
-		// check for cache buster token
-		aUrls = aUrls.filter(function(sUrl) {
-			return !cacheBusterToken.test(sUrl);
-		});
-		return aUrls.length === 0 ? true : false;
+		return bCacheMetadata
+			&& aAnnotationURIs.every((sUrl) => sUrl.includes("sap-context-token") || rCacheBusterSegment.test(sUrl));
 	};
 
 	/**

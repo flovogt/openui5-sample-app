@@ -51,7 +51,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.message.MessageProcessor
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @public
 	 * @alias sap.ui.model.Model

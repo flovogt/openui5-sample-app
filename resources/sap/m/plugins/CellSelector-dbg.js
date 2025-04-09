@@ -45,7 +45,7 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 * @author SAP SE
 	 *
 	 * @public

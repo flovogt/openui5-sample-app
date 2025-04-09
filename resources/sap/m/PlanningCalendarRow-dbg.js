@@ -35,7 +35,7 @@ sap.ui.define([
 	 * The <code>sap.m.PlanningCalendarRow</code> allows you to modify appointments at row level.
 	 *
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @constructor
 	 * @public

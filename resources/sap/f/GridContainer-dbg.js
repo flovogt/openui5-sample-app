@@ -171,7 +171,7 @@ sap.ui.define([
 	 * @see {@link sap.f.dnd.GridDropInfo}
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @extends sap.ui.core.Control
 	 *

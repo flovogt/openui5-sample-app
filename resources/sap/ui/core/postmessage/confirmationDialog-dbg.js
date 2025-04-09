@@ -13,7 +13,7 @@ sap.ui.define(function () {
 	 *
 	 * @author SAP SE
 	 * @since 1.56.0
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @function
 	 * @param {string} sMessage - Dialog message

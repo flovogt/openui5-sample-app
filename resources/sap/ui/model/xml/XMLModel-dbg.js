@@ -47,7 +47,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @param {XMLDocument|string} oData
 	 *   Either the URL where to load the XML from or an XML document

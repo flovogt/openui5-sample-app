@@ -50,7 +50,7 @@ sap.ui.define([
 	 * @extends sap.ui.layout.form.FormLayout
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 *
 	 * @constructor
 	 * @public
@@ -184,7 +184,7 @@ sap.ui.define([
 					oRm.attr('title', sTooltip);
 				}
 
-				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer);
+				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer, "form"); // if Container-Panel used render always a role
 
 				oRm.openEnd();
 

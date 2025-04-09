@@ -52,7 +52,7 @@ sap.ui.define([
 	 * @alias sap.m.SuggestionsPopover
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.120.28
 	 */
 	var SuggestionsPopover = EventProvider.extend("sap.m.SuggestionsPopover", /** @lends sap.m.SuggestionsPopover.prototype */ {
 
@@ -419,17 +419,19 @@ sap.ui.define([
 		var oList = this.getItemsContainer(),
 			oPreviousFocusedItem = this.getFocusedListItem(),
 			oValueStateHeader = this._getValueStateHeader(),
+			bHasTabularSuggestions = oParent._hasTabularSuggestions?.() ?? false,
 			bHasValueStateHeader = oValueStateHeader && (oValueStateHeader.getValueState() !== ValueState.None);
 
 		// remove focus from everywhere
 		oList && oList.removeStyleClass("sapMListFocus");
-		oPreviousFocusedItem && oPreviousFocusedItem.removeStyleClass("sapMLIBFocused");
+		oPreviousFocusedItem && !bHasTabularSuggestions && oPreviousFocusedItem.removeStyleClass("sapMLIBFocused");
 		oParent.hasStyleClass("sapMFocus") && oParent.removeStyleClass("sapMFocus");
 		bHasValueStateHeader && oValueStateHeader.removeStyleClass("sapMPseudoFocus");
 
 		// add it only where necessary
 		if (oItem) {
-			oItem.addStyleClass("sapMLIBFocused");
+			!bHasTabularSuggestions && oItem.addStyleClass("sapMLIBFocused");
+			bHasTabularSuggestions && oList.setFakeFocus(oItem);
 			oList.addStyleClass("sapMListFocus");
 			this.updateListDataAttributes(oList);
 		} else if (this.getValueStateActiveState()) {

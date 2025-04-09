@@ -104,7 +104,7 @@ sap.ui.define([
 		 * To prevent this, apps using the <code>ColorPalette</code> should also load the <code>sap.ui.unified</code> library in advance.
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.120.27
+		 * @version 1.120.28
 		 *
 		 * @constructor
 		 * @public

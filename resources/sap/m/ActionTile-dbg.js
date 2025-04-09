@@ -31,7 +31,7 @@ sap.ui.define([
 	* @extends sap.m.GenericTile
 	*
 	* @author SAP SE
-	* @version 1.120.27
+	* @version 1.120.28
 	* @since 1.107.0
 	*
 	* @private

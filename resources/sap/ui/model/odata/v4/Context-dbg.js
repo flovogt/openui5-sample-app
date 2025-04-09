@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.39.0
-		 * @version 1.120.27
+		 * @version 1.120.28
 		 */
 		Context = BaseContext.extend("sap.ui.model.odata.v4.Context", {
 				constructor : constructor
