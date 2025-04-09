@@ -1,9 +1,7 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"github>ui5/renovate-config",
-		":semanticCommitTypeAll(build)",
-		":semanticCommitScope(deps-dev)"
+		"github>ui5/renovate-config"
 	],
 	"separateMinorPatch": true,
 	"lockFileMaintenance": {
@@ -14,6 +12,7 @@
 		{
 			"matchDepNames": ["*"],
 			"automerge": true,
+			"commitMessagePrefix": "build(deps-dev):",
 			"commitMessageAction": "Bump"
 		},
 		{
