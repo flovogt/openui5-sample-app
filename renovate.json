@@ -21,7 +21,7 @@
 			"matchDepTypes": [
 				"devDependencies"
 			],
-			"automerge": true.
+			"automerge": true,
 			"commitMessageAction": "Bump"
 		}
 	]
