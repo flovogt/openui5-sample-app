@@ -21,6 +21,6 @@
 			"automerge": true,
 			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update"
-		},
+		}
 	]
 }
