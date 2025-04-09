@@ -14,7 +14,7 @@
 		{
 			"extends": ["github>ui5/renovate-config"],
 			"automerge": true,
-			"commitMessagePrefix": "deps"
+			"commitMessagePrefix": "deps",
 			"commitMessageAction": "Update"
 		},
 		{
