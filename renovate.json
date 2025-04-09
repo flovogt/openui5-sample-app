@@ -16,6 +16,16 @@
 			"commitMessageAction": "Bump"
 		},
 		{
+			"matchPackageNames": ["node", "npm"],
+			"enabled": false
+	    },
+		{
+			"matchManagers": ["github-actions"],
+			"automerge": true,
+			"commitMessagePrefix": "build(github-actions):",
+			"commitMessageAction": "Bump"
+		},
+		{
 			"matchDepNames": ["openui5"],
 			"automerge": true,
 			"commitMessagePrefix": "deps:",
