@@ -13,6 +13,7 @@
 	"packageRules": [
 		{
 			"extends": ["github>ui5/renovate-config"],
+			"matchUpdateTypes": ["patch", "minor"],
 			"automerge": true,
 			"commitMessagePrefix": "deps",
 			"commitMessageAction": "Update"
