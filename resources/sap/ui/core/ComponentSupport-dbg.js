@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,19 +9,18 @@ sap.ui.define([
 	'sap/ui/base/DataType',
 	'sap/ui/core/ComponentContainer',
 	'sap/ui/core/library',
-	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/util/ObjectPath",
 	"sap/base/strings/camelize"
-], function(
-	DataType,
-	ComponentContainer,
-	library,
-	future,
-	Log,
-	ObjectPath,
-	camelize
-) {
+],
+	function(
+		DataType,
+		ComponentContainer,
+		library,
+		Log,
+		ObjectPath,
+		camelize
+	) {
 	"use strict";
 
 	var ComponentLifecycle = library.ComponentLifecycle;
@@ -72,19 +71,6 @@ sap.ui.define([
 	 * Each data attribute will be interpreted as a setting and parsed considering
 	 * the data type of the matching property in the <code>ComponentContainer</code>.
 	 *
-	 * <b>NOTE:</b>
-	 * The following <code>data</code> attributes for registering event handlers have been deprecated since
-	 * UI5 version 1.120 and won't work in the next major version because of the removal of accessing the
-	 * global namespace:
-	 * <ul>
-	 * <li><code>data-component-created</code></li>
-	 * <li><code>data-component-failed</code></li>
-	 * </ul>
-	 *
-	 * Alternatively, you can provide your own module in the bootstrap via <code>oninit</code>, in which you
-	 * create an instance of the {@link sap.ui.core.ComponentContainer ComponentContainer} in the JavaScript
-	 * code.
-	 *
 	 * As HTML is case-insensitive, in order to define a property with upper-case characters, you have to "escape" them
 	 * with a dash character, similar to CSS attributes.
 	 * The following code gives an example:
@@ -111,7 +97,7 @@ sap.ui.define([
 	 * @author SAP SE
 	 * @public
 	 * @since 1.58.0
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @namespace
 	 * @alias module:sap/ui/core/ComponentSupport
 	 */
@@ -180,7 +166,7 @@ sap.ui.define([
 					var oProperty = ComponentContainerMetadata.getProperty(sKey);
 					var oEvent = !oProperty && ComponentContainerMetadata.getEvent(sKey);
 					if (!oProperty && !oEvent) {
-						future.warningThrows("Property or event \"" + sKey + "\" does not exist in sap.ui.core.ComponentContainer.", { suffix: "It will be ignored."});
+						Log.warning("[FUTURE FATAL] Property or event \"" + sKey + "\" will be ignored as it does not exist in sap.ui.core.ComponentContainer");
 						continue;
 					}
 					if (oProperty) {
@@ -189,12 +175,7 @@ sap.ui.define([
 							throw new Error("Property \"" + oProperty.name + "\" has no known type");
 						}
 						oValue = oType.parseValue(oValue);
-					}
-
-					/**
-					 * @deprecated
-					 */
-					if (oEvent) {
+					} else if (oEvent) {
 						var fnCallback = ObjectPath.get(oValue);
 						if (typeof fnCallback !== "function") {
 							throw new Error("Callback handler for event \"" + oEvent.name + "\" not found");
@@ -229,8 +210,8 @@ sap.ui.define([
 		if (mSettings.manifest === undefined || mSettings.manifest === "true") {
 			mSettings.manifest = true;
 		} else if (mSettings.manifest === "false") {
-			future.errorThrows("Defining \"manifest=false\" for ComponentContainer of component \"" + mSettings.name + "\" is not supported by ComponentSupport.", {
-				suffix: "Forcing \"manifest=true\""}, "", "sap/ui/core/ComponentSupport");
+			Log.error("[FUTURE FATAL] Ignoring \"manifest=false\" for ComponentContainer of component \"" + mSettings.name + "\" as it is not supported by ComponentSupport. " +
+				"Forcing \"manifest=true\"", "", "sap/ui/core/ComponentSupport");
 			mSettings.manifest = true;
 		}
 

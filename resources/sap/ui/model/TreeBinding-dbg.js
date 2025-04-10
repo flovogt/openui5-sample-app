@@ -1,10 +1,10 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
-// Provides an abstraction for tree bindings
+// Provides an abstraction for list bindings
 sap.ui.define(['./Binding', './Filter', './Sorter'],
 	function(Binding, Filter, Sorter) {
 	"use strict";
@@ -25,18 +25,16 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *         oModel Model instance that this binding is created for and that it belongs to
 	 * @param {string}
 	 *         sPath Path pointing to the tree / array that should be bound
-	 * @param {sap.ui.model.Context}
-	 *         [oContext=null] Context object for this binding (optional)
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call {@link #filter} to
-	 *   replace them
 	 * @param {object}
+	 *         [oContext=null] Context object for this binding (optional)
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]}
+	 *         [aFilters=null] Predefined filter or an array of filters (optional)
+	 * @param {string}
 	 *         [mParameters=null] Additional model specific parameters (optional)
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link #sort} to replace them
+	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]}
+	 *         [aSorters=null] Predefined sorter or an array of sorters (optional)
 	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} filter instance is contained in
 	 *   <code>aFilters</code> together with other filters
-	 *
 	 * @public
 	 * @alias sap.ui.model.TreeBinding
 	 * @extends sap.ui.model.Binding
@@ -73,48 +71,46 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 
 	// the 'abstract methods' to be implemented by child classes
 	/**
-	 * Returns the current value of the bound target.
+	 * Returns the current value of the bound target
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.getRootContexts
-	 * @param {int} [iStartIndex=0] the index from which to start the retrieval of contexts
-	 * @param {int} [iLength] determines how many contexts to retrieve, beginning from the start index. Defaults to the
-	 *   model's size limit; see {@link sap.ui.model.Model#setSizeLimit}.
-	 * @returns {sap.ui.model.Context[]} the array of child contexts for the root node
+	 * @param {int} iStartIndex the startIndex where to start the retrieval of contexts
+	 * @param {int} iLength determines how many contexts to retrieve beginning from the start index.
+	 * @return {Array} the array of child contexts for the root node
 	 *
 	 * @public
 	 */
 
 	/**
-	 * Returns the current value of the bound target.
+	 * Returns the current value of the bound target
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.getNodeContexts
 	 * @param {sap.ui.model.Context} oContext the context element of the node
-	 * @param {int} [iStartIndex=0] the index from which to start the retrieval of contexts
-	 * @param {int} [iLength] determines how many contexts to retrieve, beginning from the start index. Defaults to the
-	 *   model's size limit; see {@link sap.ui.model.Model#setSizeLimit}.
-	 * @returns {sap.ui.model.Context[]} the array of child contexts for the given node
+	 * @param {int} iStartIndex the startIndex where to start the retrieval of contexts
+	 * @param {int} iLength determines how many contexts to retrieve beginning from the start index.
+	 * @return {sap.ui.model.Context[]} the array of child contexts for the given node
 	 *
 	 * @public
 	 */
 
 	/**
-	 * Returns <code>true</code> if the node has child nodes.
+	 * Returns if the node has child nodes
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.hasChildren
-	 * @param {sap.ui.model.Context} oContext the context element of the node
-	 * @returns {boolean} <code>true</code> if the node has children
+	 * @param {Object} oContext the context element of the node
+	 * @return {boolean} true if node has children
 	 *
 	 * @public
 	 */
 
 	/**
-	 * Returns the number of child nodes of a specific context.
+	 * Returns the number of child nodes of a specific context
 	 *
-	 * @param {sap.ui.model.Context} oContext the context element of the node
-	 * @returns {int} the number of children
+	 * @param {Object} oContext the context element of the node
+	 * @return {int} the number of children
 	 *
 	 * @public
 	 */
@@ -136,7 +132,6 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 * @returns {number|undefined} The count of entries in the tree, or <code>undefined</code> if it
 	 *   is unknown, for example because the binding is not resolved or because this feature is not
 	 *   supported.
-	 *
 	 * @public
 	 * @since 1.108.0
 	 */
@@ -149,12 +144,8 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.filter
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to use; in case of type {@link sap.ui.model.FilterType.Application} this replaces the filters given
-	 *   in {@link sap.ui.model.Model#bindTree}; a falsy value is treated as an empty array and thus removes all filters
-	 *   of the specified type
-	 * @param {sap.ui.model.FilterType} [sFilterType]
-	 *   The type of the filter to replace; if no type is given, the behavior depends on the model implementation
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} aFilters Single sap.ui.model.Filter object or an array of filter objects
+	 * @param {sap.ui.model.FilterType} sFilterType Type of the filter which should be adjusted, if it is not given, the standard behaviour applies
 	 *
 	 * @public
 	 */
@@ -164,9 +155,7 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.sort
-	 * @param {sap.ui.model.Sorter[]} [aSorters=[]]
-	 *   The sorters to use; they replace the sorters given in {@link sap.ui.model.Model#bindTree}; a falsy value is
-	 *   treated as an empty array and thus removes all sorters
+	 * @param {sap.ui.model.Sorter[]} aSorters Array of sap.ui.model.Sorter objects
 	 *
 	 * @public
 	 */

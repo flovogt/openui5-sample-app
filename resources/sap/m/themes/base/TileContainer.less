@@ -47,6 +47,8 @@ html.sap-phone .sapMTC .sapMTCScrl {
 }
 
 .sapMTC .sapMTCCnt.sapMTCAnim {
+	-webkit-transition-property: -webkit-transform3d;
+	-webkit-transition-duration: 0.4s;
 	transition-property: transform3d;
 	transition-duration: 0.4s;
 }
@@ -61,9 +63,9 @@ html.sap-phone .sapMTC .sapMTCScrl {
 	text-align: center;
 }
 
-.sapMTC .sapMTCPager span {
+.sapMTC .sapMTCPager SPAN {
 	display: inline-block;
-	background-color: var(--sapContent_ForegroundColor);
+	background-color : @sapUiContentForegroundColor;
 	border-radius: 0.25rem;
 	height: 0.5rem;
 	width: 0.5rem;
@@ -73,7 +75,7 @@ html.sap-phone .sapMTC .sapMTCScrl {
 }
 
 .sapMTC .sapMTCBlind {
-	background-color: var(--sapGroup_ContentBackground);
+	background-color: @sapUiGroupContentBackground;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -83,8 +85,8 @@ html.sap-phone .sapMTC .sapMTCScrl {
 	box-shadow: @sapUiShadowLevel1;
 }
 
-.sapMTC .sapMTCPager span.sapMTCActive {
-	background-color: var(--sapContent_NonInteractiveIconColor);
+.sapMTC .sapMTCPager SPAN.sapMTCActive {
+	background-color: @sapUiContentNonInteractiveIconColor;
 }
 
 .sapMTC .sapMTCScroller {
@@ -92,11 +94,13 @@ html.sap-phone .sapMTC .sapMTCScrl {
 	display: none;
 	top: 41%;
 	border-radius: 50%;
-	background-color: var(--sapButton_Background);
+	background-color: @sapUiButtonBackground;
 	height: 3rem;
 	width: 3rem;
 	opacity: 0;
 	cursor: default;
+	-webkit-transition-property: opacity, left, right;
+	-webkit-transition-duration: 0.4s;
 	transition-property: opacity, left, right;
 	transition-duration: 0.4s;
 	box-shadow: @sapUiShadowLevel1;
@@ -105,14 +109,14 @@ html.sap-phone .sapMTC .sapMTCScrl {
 }
 
 .sapMTC .sapMTCScroller .sapMTCInner {
-	background-color: var(--sapUiButtonBackground);
+	background-color: @sapUiButtonBackground;
 	height: 100%;
 	width: 100%;
 	border-radius: 50%;
-	font-family: var(--sapContent_IconFontFamily);
+	font-family: "SAP-icons";
 	font-size: 1.313rem;
 	vertical-align: middle;
-	color: var(--sapButton_IconColor);
+	color: @sapUiButtonIconColor;
 	padding-top: 0.5rem;
 	box-sizing: border-box;
 }
@@ -130,7 +134,7 @@ html.sap-phone .sapMTC .sapMTCScrl {
 }
 
 .sapMTC .sapMTCScroller.sapMTCLeft .sapMTCInner::before {
-	content: '\e067';
+	content: "\e067";
 	padding-left: 0.813rem;
 }
 
@@ -147,21 +151,20 @@ html.sap-phone .sapMTC .sapMTCScrl {
 }
 
 .sapMTC .sapMTCScroller.sapMTCRight .sapMTCInner::before {
-	content: '\e066';
+	content: "\e066";
 	padding-left: 1rem;
 }
 
-.sapMTC .sapMTile,
-.sapMTC .sapMCustomTile {
+.sapMTC .sapMTile, .sapMTC .sapMCustomTile {
 	position: absolute;
 	top: 0;
 	left: 0;
 }
 
 html[dir=rtl] .sapMTC .sapMTile,
-html[dir=rtl] .sapMTC .sapMCustomTile {
+html[dir=rtl] .sapMTC .sapMCustomTile{
 	left: auto;
-	right: 0;
+	right: 0px;
 }
 
 html.sap-tablet .sapMTC .sapMTCScroller,
@@ -184,44 +187,44 @@ html.sap-phone .sapMTC .sapMTCScroller {
 	height: 2rem;
 	width: 2rem;
 	border-radius: 50%;
-	font-family: var(--sapContent_IconFontFamily);
+	font-family: "SAP-icons";
 	font-size: 1rem;
 	line-height: 2rem;
 	text-align: center;
 	box-sizing: border-box;
-	margin-top: -0.5rem;
-	margin-left: -0.5rem;
+	margin-top : -0.5rem;
+	margin-left : -0.5rem;
 	z-index: 1;
 	cursor: default;
-	background-color: var(--sapUiButtonBackground);
-	border: 1px solid var(--sapButton_BorderColor);
-	color: var(--sapButton_IconColor);
+	background-color: @sapUiButtonBackground;
+	border: 1px solid @sapUiButtonBorderColor;
+	color: @sapUiButtonIconColor;
 }
 
-html[data-sap-ui-browser^='ff'] .sapMTC.sapMTCEditable .sapMTile .sapMTCRemove {
+html[data-sap-ui-browser^="ff"] .sapMTC.sapMTCEditable .sapMTile .sapMTCRemove {
 	width: 2rem;
 }
 
 .sapMTC.sapMTCEditable .sapMTile .sapMTCNoRemove {
 	height: 1.5rem;
 	width: 1.563rem;
-	margin-top: -0.5em;
-	margin-left: -0.5em;
+	margin-top : -0.5em;
+	margin-left : -0.5em;
 	z-index: 1;
 	visibility: hidden;
 }
 
 .sapMTC.sapMTCEditable .sapMTCRemove:hover {
-	background-color: var(--sapButton_Hover_Background);
+	background-color: @sapUiButtonHoverBackground;
 }
 
 .sapMTC.sapMTCEditable .sapMTCRemove:active {
-	background-color: var(--sapButton_Active_Background);
-	color: var(--sapButton_Active_TextColor);
+	background-color: @sapUiButtonActiveBackground;
+	color: @sapUiButtonActiveTextColor;
 }
 
 .sapMTC.sapMTCEditable .sapMTCRemove::before {
-	content: '\e03e';
+	content: "\e03e";
 }
 
 /* use dir-specific rules to prevent mirroring in dir=rtl mode */
@@ -234,7 +237,9 @@ html[dir=rtl] .sapMTC .sapMTCEdgeLeft {
 	height: 100%;
 	border-right: 0.125rem solid fade(lighten(@sapUiHighlight,20),60);
 	opacity: 0.01;
-	background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 76%, rgba(255,255,255,1) 100%);
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,0)), color-stop(76%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,1))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(left, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 76%,rgba(255,255,255,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(to right, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 76%,rgba(255,255,255,1) 100%); /* W3C */
 }
 
 /* use dir-specific rules to prevent mirroring in dir=rtl mode */
@@ -247,7 +252,9 @@ html[dir=rtl] .sapMTC .sapMTCEdgeRight {
 	height: 100%;
 	border-left: 0.125rem solid fade(lighten(@sapUiHighlight,20),60);
 	opacity: 0.01;
-	background: linear-gradient(to right, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 24%,rgba(255,255,255,0) 100%);
+	background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,1)), color-stop(24%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,0))); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(left, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 24%,rgba(255,255,255,0) 100%); /* Chrome10+,Safari5.1+ */
+	background: linear-gradient(to right, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 24%,rgba(255,255,255,0) 100%); /* W3C */
 }
 
 html.sap-phone .sapMTC .sapMTCEdgeLeft,

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,9 +9,8 @@
  */
 sap.ui.define([
 	'sap/ui/base/DataType',
-	'sap/ui/core/Lib',
 	'sap/ui/core/library'], // library dependency
-	function(DataType, Library, library) {
+	function(DataType, library) {
 
 	"use strict";
 
@@ -21,14 +20,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.layout
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @since 1.15
 	 * @public
 	 */
-	var thisLib = Library.init({
-		apiVersion: 2,
+	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.layout",
-		version: "1.134.0",
+		version: "1.120.20",
 		dependencies: ["sap.ui.core"],
 		designtime: "sap/ui/layout/designtime/library.designtime",
 		types: [
@@ -224,7 +222,7 @@ sap.ui.define([
 	 * @classdesc
 	 * A string type that represents the indent values of the <code>Grid</code> for large, medium and small screens.
 	 *
-	 * Allowed values are separated by space with case insensitive Letters XL, L, M or S followed by number of columns from 1 to 11
+	 * Allowed values are separated by space Letters L, M or S followed by number of columns from 1 to 11
 	 * that the container has to take, for example: <code>L2 M4 S6</code>, <code>M11</code>, <code>s10</code>
 	 * or <code>l4 m4</code>.
 	 *
@@ -277,7 +275,7 @@ sap.ui.define([
 	 * @classdesc
 	 * A string type that represents the span values of the <code>Grid</code> for large, medium and small screens.
 	 *
-	 * Allowed values are separated by space with case insensitive Letters XL, L, M or S followed by number of columns from 1 to 12
+	 * Allowed values are separated by space Letters L, M or S followed by number of columns from 1 to 12
 	 * that the container has to take, for example: <code>L2 M4 S6</code>, <code>M12</code>,
 	 * <code>s10</code> or <code>l4 m4</code>.
 	 *
@@ -680,8 +678,7 @@ sap.ui.define([
 	 * @classdesc An <code>int</code> type that defines how many columns a <code>Form</code> control using
 	 * the <code>ColumnLayout</code> as layout can have if it has large size
 	 *
-	 * Allowed values are numbers from 1 to 4.
-	 * <b>Note:</b> In versions lower than 1.122 only 3 columns are allowed.
+	 * Allowed values are numbers from 1 to 3.
 	 *
 	 * @final
 	 * @namespace
@@ -690,7 +687,7 @@ sap.ui.define([
 	 */
 	thisLib.form.ColumnsL = DataType.createType('sap.ui.layout.form.ColumnsL', {
 		isValid : function(vValue) {
-			if (vValue > 0 && vValue <= 4) {
+			if (vValue > 0 && vValue <= 3) {
 				return true;
 			} else {
 				return false;
@@ -705,8 +702,7 @@ sap.ui.define([
 	 * @classdesc An <code>int</code> type that defines how many columns a <code>Form</code> control using
 	 * the <code>ColumnLayout</code> as layout can have if it has medium size
 	 *
-	 * Allowed values are numbers from 1 to 3.
-	 * <b>Note:</b> In versions lower than 1.122 only 2 columns are allowed.
+	 * Allowed values are numbers from 1 to 2.
 	 *
 	 * @final
 	 * @namespace
@@ -715,7 +711,7 @@ sap.ui.define([
 	 */
 	thisLib.form.ColumnsM = DataType.createType('sap.ui.layout.form.ColumnsM', {
 		isValid : function(vValue) {
-			if (vValue > 0 && vValue <= 3) {
+			if (vValue > 0 && vValue <= 2) {
 				return true;
 			} else {
 				return false;
@@ -829,12 +825,29 @@ sap.ui.define([
 	 *
 	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/CSS/gap}
 	 * @since 1.60.0
-	 * @extends sap.ui.core.CSSSizeShortHand
 	 * @public
 	 * @namespace
 	 * @final
 	 */
-	thisLib.cssgrid.CSSGridGapShortHand = DataType.createType("sap.ui.layout.cssgrid.CSSGridGapShortHand", {}, DataType.getType("sap.ui.core.CSSGapShortHand"));
+	thisLib.cssgrid.CSSGridGapShortHand = DataType.createType("sap.ui.layout.cssgrid.CSSGridGapShortHand", {
+			isValid: function (vValue) {
+				var bResult = true,
+					aValues = vValue.split(/\s+/);
+
+				aValues.forEach(function (sValue) {
+					if (!library.CSSSize.isValid(sValue)) {
+						bResult = false;
+					}
+				});
+
+				return bResult;
+			},
+			parseValue: function (sValue) {
+				return sValue.trim().split(/\s+/).join(" ");
+			}
+		},
+		DataType.getType("string")
+	);
 
 	/**
 	 * @classdesc A string type that represents one or two grid lines. Used to define the position and size of a single grid item.
@@ -921,21 +934,6 @@ sap.ui.define([
 		},
 		DataType.getType("string")
 	);
-
-	/**
-	 * Register the above listed enum types.
-	 */
-	DataType.registerEnum("sap.ui.layout.BackgroundDesign", thisLib.BackgroundDesign);
-	DataType.registerEnum("sap.ui.layout.BlockBackgroundType", thisLib.BlockBackgroundType);
-	DataType.registerEnum("sap.ui.layout.BlockLayoutCellColorSet", thisLib.BlockLayoutCellColorSet);
-	DataType.registerEnum("sap.ui.layout.BlockLayoutCellColorShade", thisLib.BlockLayoutCellColorShade);
-	DataType.registerEnum("sap.ui.layout.BlockRowColorSets", thisLib.BlockRowColorSets);
-	DataType.registerEnum("sap.ui.layout.GridPosition", thisLib.GridPosition);
-	DataType.registerEnum("sap.ui.layout.SideContentFallDown", thisLib.SideContentFallDown);
-	DataType.registerEnum("sap.ui.layout.SideContentPosition", thisLib.SideContentPosition);
-	DataType.registerEnum("sap.ui.layout.SideContentVisibility", thisLib.SideContentVisibility);
-	DataType.registerEnum("sap.ui.layout.form.SimpleFormLayout", thisLib.form.SimpleFormLayout);
-	DataType.registerEnum("sap.ui.layout.cssgrid.CSSGridAutoFlow", thisLib.cssgrid.CSSGridAutoFlow);
 
 	return thisLib;
 

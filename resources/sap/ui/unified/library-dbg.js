@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,20 +8,16 @@
  * Initialization Code and shared classes of library sap.ui.unified.
  */
 sap.ui.define([
- 'sap/ui/base/Object',
- 'sap/ui/base/DataType',
- 'sap/ui/core/Lib',
- "./ColorPickerDisplayMode",
- "./FileUploaderHttpRequestMethod",
- "sap/ui/core/RenderManager",
- 'sap/ui/core/library'
+	'sap/ui/core/Core',
+	'sap/ui/base/Object',
+	"./ColorPickerDisplayMode",
+	"./FileUploaderHttpRequestMethod",
+	'sap/ui/core/library'
 ], function(
- BaseObject,
- DataType,
- Library,
- ColorPickerDisplayMode,
- FileUploaderHttpRequestMethod,
- RenderManager
+	Core,
+	BaseObject,
+	ColorPickerDisplayMode,
+	FileUploaderHttpRequestMethod
 ) {
 
 	"use strict";
@@ -32,14 +28,13 @@ sap.ui.define([
 	 * @namespace
 	 * @alias sap.ui.unified
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @since 1.28
 	 * @public
 	 */
-	var thisLib = Library.init({
+	var thisLib = sap.ui.getCore().initLibrary({
 		name : "sap.ui.unified",
-		apiVersion: 2,
-		version: "1.134.0",
+		version: "1.120.20",
 		dependencies : ["sap.ui.core"],
 		designtime: "sap/ui/unified/designtime/library.designtime",
 		types: [
@@ -56,7 +51,6 @@ sap.ui.define([
 			"sap.ui.unified.StandardCalendarLegendItem"
 		],
 		interfaces: [
-			"sap.ui.unified.IMenuItem",
 			"sap.ui.unified.IProcessableBlobs"
 		],
 		controls: [
@@ -95,13 +89,9 @@ sap.ui.define([
 			"sap.ui.unified.FileUploaderXHRSettings",
 			"sap.ui.unified.MenuItem",
 			"sap.ui.unified.MenuItemBase",
-			"sap.ui.unified.MenuItemGroup",
 			"sap.ui.unified.MenuTextFieldItem",
-			"sap.ui.unified.NonWorkingPeriod",
-			"sap.ui.unified.RecurringNonWorkingPeriod",
 			"sap.ui.unified.ShellHeadItem",
-			"sap.ui.unified.ShellHeadUserItem",
-			"sap.ui.unified.TimeRange"
+			"sap.ui.unified.ShellHeadUserItem"
 		],
 		extensions: {
 			//Configuration used for rule loading of Support Assistant
@@ -127,17 +117,10 @@ sap.ui.define([
 		None : "None",
 
 		/**
-		 * Non-working days.
+		 * Non-working dates.
 		 * @public
-		 * @since 1.121
 		 */
 		NonWorking : "NonWorking",
-
-		/**
-		 * Working days.
-		 * @public
-		 */
-		Working : "Working",
 
 		/**
 		 * The semantic meaning must be defined by the app. It can be displayed in a legend.
@@ -271,8 +254,6 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.CalendarDayType", thisLib.CalendarDayType);
-
 	/**
 	 * Standard day types visualized in a {@link sap.m.PlanningCalendarLegend}, which correspond to days in a {@link sap.ui.unified.Calendar}.
 	 * @enum {string}
@@ -304,8 +285,6 @@ sap.ui.define([
 		 */
 		Selected: "Selected"
 	};
-
-	DataType.registerEnum("sap.ui.unified.StandardCalendarLegendItem", thisLib.StandardCalendarLegendItem);
 
 	/**
 	 * Interval types in a <code>CalendarRow</code>.
@@ -354,44 +333,6 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.CalendarIntervalType", thisLib.CalendarIntervalType);
-
-	/**
-	 * Interval types in a <code>RecurrenceType</code>.
-	 *
-	 * @enum {string}
-	 * @public
-	 * @since 1.127.0
-	 */
-	thisLib.RecurrenceType = {
-		/**
-		 * Daily recurrence pattern
-		 *
-		 * @since 1.127.0
-		 */
-		Daily: "Daily",
-		/**
-		 * Weekly recurrence pattern.
-		 *
-		 * @since 1.127.0
-		 */
-		Weekly: "Weekly",
-		/**
-		 * Monthly recurrence pattern.
-		 *
-		 * @since 1.127.0
-		 */
-		Monthly: "Monthly",
-		/**
-		 * Yearly recurrence pattern.
-		 *
-		 * @since 1.127.0
-		 */
-		Yearly: "Yearly"
-	};
-
-	DataType.registerEnum("sap.ui.unified.RecurrenceType", thisLib.RecurrenceType);
-
 	/**
 	 * Types of a calendar appointment display mode
 	 *
@@ -428,8 +369,6 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.CalendarAppointmentHeight", thisLib.CalendarAppointmentHeight);
-
 	/**
 	 * Types of a calendar appointment display mode
 	 *
@@ -455,8 +394,6 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.CalendarAppointmentRoundWidth", thisLib.CalendarAppointmentRoundWidth);
-
 	/**
 	 * Types of display mode for overlapping appointments.
 	 *
@@ -479,8 +416,6 @@ sap.ui.define([
 		Expanded : "Expanded"
 
 	};
-
-	DataType.registerEnum("sap.ui.unified.GroupAppointmentsMode", thisLib.GroupAppointmentsMode);
 
 	// expose imported enum as property of library namespace, for documentation see FileUploaderHttpRequestMethod.js
 	thisLib.FileUploaderHttpRequestMethod = FileUploaderHttpRequestMethod;
@@ -507,8 +442,6 @@ sap.ui.define([
 		Filled : "Filled"
 
 	};
-
-	DataType.registerEnum("sap.ui.unified.CalendarAppointmentVisualization", thisLib.CalendarAppointmentVisualization);
 
 	/**
 	 * Predefined animations for the ContentSwitcher
@@ -565,8 +498,6 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.ContentSwitcherAnimation", thisLib.ContentSwitcherAnimation);
-
 	/**
 	 * different styles for a ColorPicker.
 	 *
@@ -589,21 +520,8 @@ sap.ui.define([
 
 	};
 
-	DataType.registerEnum("sap.ui.unified.ColorPickerMode", thisLib.ColorPickerMode);
-
 	// expose imported enum as property of library namespace, for documentation see ColorPickerDisplayMode.js
 	thisLib.ColorPickerDisplayMode = ColorPickerDisplayMode;
-
-	/**
-	 *
-	 * Interface for controls which are suitable to add as items of sap.m.Menu.
-	 *
-	 *
-	 * @since 1.127.0
-	 * @name sap.ui.unified.IMenuItem
-	 * @interface
-	 * @public
-	 */
 
 	/**
 	 * Marker interface for controls that process instances of <code>window.Blob</code>, such as <code>window.File</code>.
@@ -636,7 +554,7 @@ sap.ui.define([
 			this._id = sContentContainerId;
 			this._cntnt = oContent;
 			this._ctrl = oControl;
-			this._rm = new RenderManager().getInterface();
+			this._rm = sap.ui.getCore().createRenderManager();
 			this._cb = fAfterRenderCallback || function(){};
 		},
 

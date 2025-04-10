@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -13,7 +13,7 @@
  * might break in future releases.
  */
 
-/*global Blob, console, document, Promise, URL, XMLHttpRequest */
+/*global sap:true, Blob, console, document, Promise, URL, XMLHttpRequest */
 
 (function(__global) {
 	"use strict";
@@ -122,7 +122,6 @@
 	 *
 	 * To be used by code coverage, only supported in sync mode.
 	 * @private
-	 * @ui5-transform-hint replace-local undefined
 	 */
 	let translate;
 
@@ -147,7 +146,6 @@
 	 * When activated, require will load asynchronously, else synchronously.
 	 * @type {boolean}
 	 * @private
-	 * @ui5-transform-hint replace-local true
 	 */
 	let bGlobalAsyncMode = false;
 
@@ -272,28 +270,6 @@
 	 */
 	let fnIgnorePreload;
 
-	/**
-	 * Whether the loader should try to load the debug variant
-	 * of a module.
-	 * This takes the standard and partial debug mode into account.
-	 *
-	 * @param {string} sModuleName Name of the module to be loaded
-	 * @returns {boolean} Whether the debug variant should be loaded
-	 */
-	function shouldLoadDebugVariant(sModuleName) {
-		if (fnIgnorePreload) {
-			// if preload is ignored (= partial debug mode), load the debug module first
-			if (fnIgnorePreload(sModuleName)) {
-				return true;
-			} else {
-				// partial debug mode is active, but not for this module
-				return false;
-			}
-		} else {
-			// no debug mode or standard debug mode
-			return bDebugSources;
-		}
-	}
 
 	// ---- internal state ------------------------------------------------------------------------
 
@@ -1034,8 +1010,7 @@
 		 */
 		dependsOn(oDependantModule) {
 			const dependant = oDependantModule.name,
-				visited = Object.create(null),
-				stack = log.isLoggable() ? [this.name, dependant] : undefined;
+				visited = Object.create(null);
 
 			// log.debug("checking for a cycle between", this.name, "and", dependant);
 			function visit(mod) {
@@ -1043,22 +1018,13 @@
 					// log.debug("  ", mod);
 					visited[mod] = true;
 					const pending = mModules[mod]?.pending;
-					if (Array.isArray(pending) &&
-						(pending.includes(dependant) || pending.some(visit)) ) {
-						stack?.push(mod);
-						return true;
-					}
+					return Array.isArray(pending) &&
+						(pending.indexOf(dependant) >= 0 || pending.some(visit));
 				}
 				return false;
 			}
 
-			const result = this.name === dependant || visit(this.name);
-			if ( result && stack ) {
-				log.error("Dependency cycle detected: ",
-					stack.reverse().map((entry, idx) => `${"".padEnd(idx)} -> ${entry}`).join("\n").slice(4)
-				);
-			}
-			return result;
+			return this.name === dependant || visit(this.name);
 		}
 
 		/**
@@ -1199,7 +1165,7 @@
 		return error;
 	}
 
-	function declareModule(sModuleName, fnDeprecationMessage) {
+	function declareModule(sModuleName, sDeprecationMessage) {
 		// sModuleName must be a unified resource name of type .js
 		assert(/\.js$/.test(sModuleName), "must be a Javascript module");
 
@@ -1215,7 +1181,7 @@
 
 		// avoid cycles
 		oModule.state = READY;
-		oModule.deprecation = fnDeprecationMessage || undefined;
+		oModule.deprecation = sDeprecationMessage || undefined;
 
 		return oModule;
 	}
@@ -1498,36 +1464,16 @@
 
 	}
 
-	/**
-	 * If we have knowledge about the dependencies of the given module,
-	 * we require them upfront, in parallel to the request for the module or
-	 * its containing bundle.
-	 *
-	 * Note: a dependency is required even when it is in state PRELOADED already.
-	 * Reason is that its transitive dependencies might not have been required yet.
-	 */
-	function requireDependenciesUpfront(sModuleName) {
+	function preloadDependencies(sModuleName) {
 		const knownDependencies = mDepCache[sModuleName];
 		if ( Array.isArray(knownDependencies) ) {
-			mDepCache[sModuleName] = undefined;
-			const missingDeps = [];
+			log.debug(`preload dependencies for ${sModuleName}: ${knownDependencies}`);
 			knownDependencies.forEach((dep) => {
 				dep = getMappedName(dep, sModuleName);
-				// even if a module is PRELOADED, its transitive dependencies might not
-				if ( Module.get(dep).state <= INITIAL ) {
-					missingDeps.push(dep);
-				}
+				if ( /\.js$/.test(dep) ) {
+					requireModule(null, dep, /* always async */ true);
+				} // else: TODO handle non-JS resources, e.g. link rel=prefetch
 			});
-			if ( missingDeps.length > 0 ) {
-				log.info(`preload missing dependencies for ${sModuleName}: ${missingDeps}`);
-				missingDeps.forEach((dep) => {
-					if (/\.js$/.test(dep)) {
-						// The resulting promise is ignored here intentionally.
-						// Error handling will happen while module `sModuleName`` is processed
-						requireModule(null, dep, /* always async */ true);
-					} // else: TODO handle non-JS resources, e.g. link rel=prefetch
-				});
-			}
 		}
 	}
 
@@ -1548,7 +1494,6 @@
 	 * @throws {Error} When loading failed in sync mode
 	 *
 	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function requireModule(oRequestingModule, sModuleName, bAsync, bSkipShimDeps, bSkipBundle) {
 
@@ -1569,8 +1514,7 @@
 		const oShim = mShims[sModuleName];
 
 		if (oModule.deprecation) {
-			const msg = typeof oModule.deprecation === "function" ? oModule.deprecation() : oModule.deprecation;
-			log.error((oRequestingModule ? "(dependency of '" + oRequestingModule.name + "') " : "") + msg);
+			log.error((oRequestingModule ? "(dependency of '" + oRequestingModule.name + "') " : "") + oModule.deprecation);
 		}
 
 		// when there's a shim with dependencies for the module
@@ -1591,17 +1535,14 @@
 		// when there's bundle information for the module
 		// require the bundle first before requiring the module again with bSkipBundle = true
 		if ( oModule.state === INITIAL && oModule.group && oModule.group !== sModuleName && !bSkipBundle ) {
-			if ( log.isLoggable(/* INFO */ 3) && Module.get(oModule.group).state === INITIAL ) {
-				log.info(`${sLogPrefix}require bundle '${oModule.group}' containing '${sModuleName}'`);
+			if ( bLoggable ) {
+				log.debug(`${sLogPrefix}require bundle '${oModule.group}' containing '${sModuleName}'`);
 			}
 			if ( bAsync ) {
-				const pResult = requireModule(null, oModule.group, bAsync).catch(noop).then(function() {
+				return requireModule(null, oModule.group, bAsync).catch(noop).then(function() {
 					// set bSkipBundle to true to prevent endless recursion
 					return requireModule(oRequestingModule, sModuleName, bAsync, bSkipShimDeps, /* bSkipBundle = */ true);
 				});
-				// start loading of dependencies in parallel
-				requireDependenciesUpfront(sModuleName);
-				return pResult;
 			} else {
 				try {
 					requireModule(null, oModule.group, bAsync);
@@ -1684,8 +1625,7 @@
 		oModule.async = bAsync;
 
 		// if debug is enabled, try to load debug module first
-		const aExtensions = shouldLoadDebugVariant(sModuleName) ? ["-dbg", ""] : [""];
-
+		const aExtensions = bDebugSources ? ["-dbg", ""] : [""];
 		if ( !bAsync ) {
 
 			for (let i = 0; i < aExtensions.length && oModule.state !== LOADED; i++) {
@@ -1730,7 +1670,7 @@
 
 			oModule.url = getResourcePath(oSplitName.baseID, aExtensions[0] + oSplitName.subType);
 			// in debug mode, fall back to the non-dbg source, otherwise try the same source again (for SSO re-connect)
-			const sAltUrl = aExtensions.length === 2 ? getResourcePath(oSplitName.baseID, aExtensions[1] + oSplitName.subType) : oModule.url;
+			const sAltUrl = bDebugSources ? getResourcePath(oSplitName.baseID, aExtensions[1] + oSplitName.subType) : oModule.url;
 
 			if ( log.isLoggable() ) {
 				log.debug(sLogPrefix + "loading '" + sModuleName + "' from '" + oModule.url + "' (using <script>)");
@@ -1740,20 +1680,14 @@
 			ui5Require.load({ completeLoad:noop, async: true }, sAltUrl, oSplitName.baseID);
 			loadScript(oModule, /* sAlternativeURL= */ sAltUrl);
 
-			// process dep cache info, if this was not done already together with the bundle
-			if ( !bSkipBundle ) {
-				requireDependenciesUpfront(sModuleName);
-			}
+			// process dep cache info
+			preloadDependencies(sModuleName);
 
 			return oModule.deferred().promise;
 		}
 	}
 
-	/**
-	 * Note: `sModuleName` must be a normalized resource name of type .js
-	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
-	 */
+	// sModuleName must be a normalized resource name of type .js
 	function execModule(sModuleName, bAsync) {
 
 		const oModule = mModules[sModuleName];
@@ -1859,10 +1793,6 @@
 		}
 	}
 
-	/**
-	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
-	 */
 	function requireAll(oRequestingModule, aDependencies, fnCallback, fnErrCallback, bAsync) {
 
 		const aModules = [];
@@ -1930,11 +1860,6 @@
 		}
 	}
 
-	/**
-	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
-	 * @ui5-transform-hint replace-param bExport false
-	 */
 	function executeModuleDefinition(sResourceName, aDependencies, vFactory, bExport, bAsync) {
 		const bLoggable = log.isLoggable();
 		sResourceName = normalize(sResourceName);
@@ -2054,10 +1979,6 @@
 
 	}
 
-	/**
-	 * @private
-	 * @ui5-transform-hint replace-param bExport false
-	 */
 	function ui5Define(sModuleName, aDependencies, vFactory, bExport) {
 		let sResourceName;
 
@@ -2088,7 +2009,6 @@
 			queue.push(sResourceName, aDependencies, vFactory, bExport);
 			if ( sResourceName != null ) {
 				const oModule = Module.get(sResourceName);
-				// change state of PRELOADED or INITIAL modules to prevent further requests/executions
 				if ( oModule.state <= INITIAL ) {
 					oModule.state = EXECUTING;
 					oModule.async = true;
@@ -2161,11 +2081,6 @@
 			if ( typeof vDependencies === 'string' ) {
 				const sModuleName = getMappedName(vDependencies + '.js', sContextName);
 				const oModule = Module.get(sModuleName);
-
-				if (oModule.deprecation) {
-					const msg = typeof oModule.deprecation === "function" ? oModule.deprecation() : oModule.deprecation;
-					log.error(msg);
-				}
 
 				// check the modules internal state
 				// everything from PRELOADED to LOADED (incl. FAILED) is considered erroneous
@@ -2253,10 +2168,6 @@
 		return unwrapExport(requireModule(null, sModuleName, /* bAsync = */ false));
 	}
 
-	/**
-	 * @private
-	 * @ui5-transform-hint replace-param bExport false
-	 */
 	function predefine(sModuleName, aDependencies, vFactory, bExport) {
 		if ( typeof sModuleName !== 'string' ) {
 			throw new Error("predefine requires a module name");
@@ -2277,7 +2188,7 @@
 	/**
 	 * Dumps information about the current set of modules and their state.
 	 *
-	 * @param {int} [iThreshold=-1] Earliest module state for which modules should be reported
+	 * @param {int} [iThreshold=-1] Earliest module state for which odules should be reported
 	 * @private
 	 */
 	function dumpInternals(iThreshold) {
@@ -2357,6 +2268,7 @@
 	 * @param {boolean} [bPreloadGroup=true] whether the name specifies a preload group, defaults to true
 	 * @param {boolean} [bUnloadAll] Whether all matching resources should be unloaded, even if they have been executed already.
 	 * @param {boolean} [bDeleteExports] Whether exports (global variables) should be destroyed as well. Will be done for UI5 module names only.
+	 * @experimental Since 1.16.3 API might change completely, apps must not develop against it.
 	 * @private
 	 */
 	function unloadResources(sName, bPreloadGroup, bUnloadAll, bDeleteExports) {
@@ -2619,17 +2531,9 @@
 		set measure(v) {
 			measure = v;
 		},
-		/**
-		 * @deprecated As of version 1.120, sync loading is deprecated without replacement due to the deprecation
-		 *   of sync XMLHttpRequests in the web standard.
-		 */
 		get translate() {
 			return translate;
 		},
-		/**
-		 * @deprecated As of version 1.120, sync loading is deprecated without replacement due to the deprecation
-		 *   of sync XMLHttpRequests in the web standard.
-		 */
 		set translate(v) {
 			translate = v;
 		},
@@ -2650,11 +2554,8 @@
 		amdDefine,
 		amdRequire,
 		config: ui5Config,
-		/**
-		 * @deprecated As of version 1.120, all usages of this private API have been deprecated
-		 */
-		declareModule(sResourceName, fnDeprecationMessage) {
-			/* void */ declareModule(normalize(sResourceName), fnDeprecationMessage);
+		declareModule(sResourceName, sDeprecationMessage) {
+			/* void */ declareModule(normalize(sResourceName), sDeprecationMessage);
 		},
 		defineModuleSync,
 		dump: dumpInternals,
@@ -2676,16 +2577,7 @@
 
 	// establish APIs in the sap.ui namespace
 
-	/**
-	 * Root namespace for JavaScript functionality provided by SAP SE.
-	 *
-	 * @version 1.134.0
-	 * @namespace
-	 * @public
-	 * @name sap
-	 */
-	// ui5lint-disable-next-line no-globals
-	const sap = __global.sap = __global.sap || {};
+	__global.sap = __global.sap || {};
 	sap.ui = sap.ui || {};
 
 	/**
@@ -2696,7 +2588,6 @@
 	 * @public
 	 * @namespace
 	 * @ui5-global-only
-	 * @name sap.ui.loader
 	 */
 	sap.ui.loader = {
 
@@ -2890,7 +2781,6 @@
 		 * @public
 		 * @since 1.56.0
 		 * @function
-		 * @name sap.ui.loader.config
 		 * @ui5-global-only
 		 */
 		config: ui5Config,
@@ -2899,10 +2789,8 @@
 		 * Internal API of the UI5 loader.
 		 *
 		 * Must not be used by code outside sap.ui.core.
-		 * @name sap.ui.loader._
 		 * @private
 		 * @ui5-restricted sap.ui.core
-		 * @ui5-global-only
 		 */
 		_: privateAPI
 	};
@@ -3145,7 +3033,7 @@
 	 *   // module 'Something' wants to use third party library 'URI.js'
 	 *   // It is packaged by UI5 as non-UI5-module 'sap/ui/thirdparty/URI'
 	 *   // the following shim helps UI5 to correctly load URI.js and to retrieve the module's export value
-	 *   // Apps don't have to define that shim, it is already applied by ui5loader-autoconfig.js
+	 *   // Apps don't have to define that shim, it is already applied by ui5loader-autconfig.js
 	 *   sap.ui.loader.config({
 	 *     shim: {
 	 *       'sap/ui/thirdparty/URI': {
@@ -3226,7 +3114,6 @@
 	 * @see https://github.com/amdjs/amdjs-api
 	 * @function
 	 * @ui5-global-only
-	 * @name sap.ui.define
 	 */
 	sap.ui.define = ui5Define;
 
@@ -3235,7 +3122,6 @@
 	 * @ui5-restricted bundles created with UI5 tooling
 	 * @function
 	 * @ui5-global-only
-	 * @name sap.ui.predefine
 	 */
 	sap.ui.predefine = predefine;
 
@@ -3295,7 +3181,6 @@
 	 * @public
 	 * @function
 	 * @ui5-global-only
-	 * @name sap.ui.require
 	 */
 	sap.ui.require = ui5Require;
 
@@ -3363,9 +3248,6 @@
 	 * @ui5-restricted sap.ui.core
 	 * @function
 	 * @ui5-global-only
-	 * @name sap.ui.requireSync
-	 * @deprecated As of version 1.120, sync loading is deprecated without replacement due to the deprecation
-	 *   of sync XMLHttpRequests in the web standard.
 	 */
 	sap.ui.requireSync = requireSync;
 

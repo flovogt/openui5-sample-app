@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -29,13 +29,12 @@ sap.ui.define([
 	/**
 	 * Constructor for a new JSONModel.
 	 *
-	 * When observation is activated, the application can directly change the JS objects without the need to call
-	 * {@link sap.ui.model.json.JSONModel#setData}, {@link sap.ui.model.json.JSONModel#setProperty} or
-	 * {@link sap.ui.model.Model#refresh}. <b>Note:</b> Observation only works for existing properties in the JSON
-	 * model. Newly added or removed properties and newly added or removed array entries, for example, are not detected.
+	 * The observation feature is experimental! When observation is activated, the application can directly change the
+	 * JS objects without the need to call setData, setProperty or refresh. Observation does only work for existing
+	 * properties in the JSON, it cannot detect new properties or new array entries.
 	 *
 	 * @param {object|string} [oData] Either the URL where to load the JSON from or a JS object
-	 * @param {boolean} [bObserve=false] Whether to observe the JSON data for property changes
+	 * @param {boolean} [bObserve] Whether to observe the JSON data for property changes (experimental)
 	 *
 	 * @class
 	 * Model implementation for the JSON format.
@@ -49,7 +48,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @public
 	 * @alias sap.ui.model.json.JSONModel
 	 */
@@ -70,17 +69,6 @@ sap.ui.define([
 		}
 
 	});
-
-	/**
-	 * Returns a copy of all active bindings of the model.
-	 *
-	 * @return {sap.ui.model.Binding[]} The active bindings of the model
-	 *
-	 * @function
-	 * @name sap.ui.model.json.JSONModel.prototype.getBindings
-	 * @private
-	 * @ui5-restricted sap.ushell
-	 */
 
 	/**
 	 * Sets the data, passed as a JS object tree, to the model.
@@ -438,11 +426,7 @@ sap.ui.define([
 	 * @private
 	 */
 	JSONModel.prototype._getObject = function (sPath, oContext) {
-		let oNode = null;
-		/** @deprecated As of version 1.88.0 */
-		if (this.isLegacySyntax()) {
-			oNode = this.oData;
-		}
+		var oNode = this.isLegacySyntax() ? this.oData : null;
 		if (oContext instanceof Context) {
 			oNode = this._getObject(oContext.getPath());
 		} else if (oContext != null) {

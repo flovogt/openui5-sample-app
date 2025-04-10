@@ -1,13 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.layout.form.ResponsiveGridLayout.
 sap.ui.define([
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/layout/library',
 	'sap/ui/layout/Grid',
@@ -20,7 +19,6 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery"
 ], function(
 	Control,
-	Element,
 	ResizeHandler,
 	library,
 	Grid,
@@ -46,16 +44,16 @@ sap.ui.define([
 	 * Depending on the available space, the {@link sap.ui.layout.form.FormContainer FormContainers} are rendered in one or different columns and the labels are rendered in the same row as the fields or above the fields.
 	 * This behavior can be influenced by the properties of this layout control.
 	 *
-	 * On the {@link sap.ui.layout.form.FormContainer FormContainers}, labels and content fields, {@link sap.ui.layout.GridData GridData} can be used to change the default rendering.
-	 * {@link sap.ui.layout.GridData GridData} is not supported for {@link sap.ui.layout.form.FormElement FormElements}.
+	 * On the {@link sap.ui.layout.form.FormContainer FormContainers}, labels and content fields, {@link sap.ui.layout.GridGata GridData} can be used to change the default rendering.
+	 * {@link sap.ui.layout.GridGata GridData} is not supported for {@link sap.ui.layout.form.FormElement FormElements}.
 	 *
-	 * <b>Note:</b> If {@link sap.ui.layout.GridData GridData} is used, this may result in a much more complex layout than the default one.
+	 * <b>Note:</b> If {@link sap.ui.layout.GridGata GridData} is used, this may result in a much more complex layout than the default one.
 	 * This means that in some cases, the calculation for the other content may not bring the expected result.
-	 * In such cases, {@link sap.ui.layout.GridData GridData} should be used for all content controls to disable the default behavior.
+	 * In such cases, {@link sap.ui.layout.GridGata GridData} should be used for all content controls to disable the default behavior.
 	 *
 	 * This control cannot be used stand-alone, it just renders a {@link sap.ui.layout.form.Form Form}, so it must be assigned to a {@link sap.ui.layout.form.Form Form} using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -226,8 +224,8 @@ sap.ui.define([
 		getLayoutData :  function(){
 
 			// only GridData are interesting
-			var oContainer = Element.getElementById(this.getContainer());
-			var oLayout    = Element.getElementById(this.getLayout());
+			var oContainer = sap.ui.getCore().byId(this.getContainer());
+			var oLayout    = sap.ui.getCore().byId(this.getLayout());
 			var oLD;
 			if (oLayout && oContainer) {
 				oLD = oLayout.getLayoutDataForElement(oContainer, "sap.ui.layout.GridData");
@@ -242,7 +240,7 @@ sap.ui.define([
 
 		getCustomData :  function(){
 
-			var oContainer = Element.getElementById(this.getContainer());
+			var oContainer = sap.ui.getCore().byId(this.getContainer());
 			if (oContainer) {
 				return oContainer.getCustomData();
 			}
@@ -251,7 +249,7 @@ sap.ui.define([
 
 		refreshExpanded :  function(){
 
-			var oContainer = Element.getElementById(this.getContainer());
+			var oContainer = sap.ui.getCore().byId(this.getContainer());
 			if (oContainer) {
 				if (oContainer.getExpanded()) {
 					this.$().removeClass("sapUiRGLContainerColl");
@@ -265,8 +263,8 @@ sap.ui.define([
 			apiVersion: 2,
 			render: function(oRm, oPanel) {
 
-				var oContainer = Element.getElementById(oPanel.getContainer());
-				var oLayout    = Element.getElementById(oPanel.getLayout());
+				var oContainer = sap.ui.getCore().byId(oPanel.getContainer());
+				var oLayout    = sap.ui.getCore().byId(oPanel.getLayout());
 				var oContent   = oPanel.getContent();
 
 				var bExpandable = oContainer.getExpandable();
@@ -289,7 +287,7 @@ sap.ui.define([
 					oRm.attr('title', sTooltip);
 				}
 
-				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer, false); // if Container-Panel used render always a role
+				oLayout.getRenderer().writeAccessibilityStateContainer(oRm, oContainer);
 
 				oRm.openEnd();
 
@@ -567,7 +565,7 @@ sap.ui.define([
 		oGrid.addStyleClass("sapUiFormResGridCont").addStyleClass("sapUiRespGridOverflowHidden");
 
 		oGrid.getContent = function(){
-			var oContainer = Element.getElementById(this.__myParentContainerId);
+			var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
 			if (oContainer) {
 				var aContent = [];
 				var aElements = oContainer.getVisibleFormElements();
@@ -591,7 +589,7 @@ sap.ui.define([
 		};
 
 		oGrid.getAriaLabelledBy = function(){
-			var oContainer = Element.getElementById(this.__myParentContainerId);
+			var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
 			if (oContainer && !oContainer.getToolbar() && !oContainer.getTitle() && !oContainer.getExpandable()) {
 				return oContainer.getAriaLabelledBy();
 			}
@@ -710,7 +708,7 @@ sap.ui.define([
 				return oLD;
 			} else {
 				// calculate Layout Data for control
-				var oContainer = Element.getElementById(this.__myParentContainerId);
+				var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
 				var oContainerLD = oLayout.getLayoutDataForElement(oContainer, "sap.ui.layout.GridData");
 				var oForm = oContainer.getParent();
 				var oSize;
@@ -976,7 +974,7 @@ sap.ui.define([
 
 		oGrid._getAccessibleRole = function() {
 
-			var oContainer = Element.getElementById(this.__myParentContainerId);
+			var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
 			var oLayout = this.__myParentLayout;
 			if (oLayout._mainGrid && oLayout._mainGrid.__bIsUsed && !oContainer.getToolbar() &&
 					!oContainer.getTitle() && !oContainer.getExpandable() && oContainer.getAriaLabelledBy().length > 0) {
@@ -1032,7 +1030,7 @@ sap.ui.define([
 			oGrid.__originalGetLayoutData = oGrid.getLayoutData;
 			oGrid.getLayoutData = function(){
 				var oLayout = this.__myParentLayout;
-				var oContainer = Element.getElementById(this.__myParentContainerId);
+				var oContainer = sap.ui.getCore().byId(this.__myParentContainerId);
 
 				var oLD;
 				if (oContainer) {
@@ -1055,7 +1053,7 @@ sap.ui.define([
 
 		var oLayout;
 		if (oControl instanceof Panel) {
-			oLayout = Element.getElementById(oControl.getLayout());
+			oLayout = sap.ui.getCore().byId(oControl.getLayout());
 		} else {
 			oLayout = oControl.__myParentLayout;
 		}
@@ -1253,10 +1251,10 @@ sap.ui.define([
 					oContainer = undefined;
 					if (oContentElement.getContainer) {
 						// it's a panel
-						oContainer = Element.getElementById(oContentElement.getContainer());
+						oContainer = sap.ui.getCore().byId(oContentElement.getContainer());
 					} else {
 						// it's a Grid
-						oContainer = Element.getElementById(oContentElement.__myParentContainerId);
+						oContainer = sap.ui.getCore().byId(oContentElement.__myParentContainerId);
 					}
 					if (oContainer && oContainer.isVisible()) {
 						var oVisibleContainer = aVisibleContainers[j];

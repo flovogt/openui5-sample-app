@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ActionSelect.
-sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', 'sap/ui/Device', "sap/ui/core/Lib", './ActionSelectRenderer'],
-	function(Select, Element, InvisibleText, Device, Library, ActionSelectRenderer) {
+sap.ui.define(['./Select', 'sap/ui/core/InvisibleText', 'sap/ui/Device', 'sap/ui/core/Core', './ActionSelectRenderer'],
+	function(Select, InvisibleText, Device, Core, ActionSelectRenderer) {
 		"use strict";
 
 		/**
@@ -20,12 +20,12 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 		 * @extends sap.m.Select
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @constructor
 		 * @public
 		 * @since 1.16
-		 * @deprecated As of version 1.111 with no replacement. The control is no longer considered part of the Fiori concept.
+		 * @deprecated as of version 1.111.
 		 * @alias sap.m.ActionSelect
 		 */
 		var ActionSelect = Select.extend("sap.m.ActionSelect", /** @lends sap.m.ActionSelect.prototype */ {
@@ -79,7 +79,7 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 			var oSimpleFixFlex = this.getSimpleFixFlex();
 
 			this.getButtons().forEach(function(sButtonId) {
-				oSimpleFixFlex.addFlexContent(Element.getElementById(sButtonId));
+				oSimpleFixFlex.addFlexContent(Core.byId(sButtonId));
 			});
 		};
 
@@ -118,7 +118,7 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 		/**
 		 * Removes the given button from the <code>ActionSelect</code> content.
 		 *
-		 * @param {int | sap.ui.core.ID | sap.m.Button} vButton The button to remove or its index or ID.
+		 * @param {int | string | sap.m.Button} vButton The button to remove or its index or ID.
 		 * @returns {string|null} The ID of the removed button or <code>null</code>.
 		 * @public
 		 */
@@ -148,7 +148,7 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 
 			if (oSimpleFixFlex) {
 				this.getButtons().forEach(function(sButtonId) {
-					oSimpleFixFlex.removeFlexContent(Element.getElementById(sButtonId));
+					oSimpleFixFlex.removeFlexContent(Core.byId(sButtonId));
 				});
 			}
 
@@ -181,8 +181,8 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 
 			if (oPicker && oPicker.isOpen() && aButtons.length > 0) {
 				for (i = aButtons.length - 1; i >= 0; i--) {
-					if (Element.getElementById(aButtons[i]).getEnabled()) {
-						Element.getElementById(aButtons[i]).focus();
+					if (Core.byId(aButtons[i]).getEnabled()) {
+						Core.byId(aButtons[i]).focus();
 						oEvent.preventDefault();
 						break;
 					}
@@ -213,8 +213,8 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 
 			if (oPicker && oPicker.isOpen() && aButtons.length > 0) {
 				for (i = 0; i < aButtons.length; i++) {
-					if (Element.getElementById(aButtons[i]).getEnabled()) {
-						Element.getElementById(aButtons[i]).focus();
+					if (Core.byId(aButtons[i]).getEnabled()) {
+						Core.byId(aButtons[i]).focus();
 						oEvent.preventDefault();
 						break;
 					}
@@ -288,7 +288,7 @@ sap.ui.define(['./Select', "sap/ui/core/Element", 'sap/ui/core/InvisibleText', '
 			if (!this._sTutorMessageId) {
 				this._sTutorMessageId = this._getTutorMessageId();
 				this._oTutorMessageText = new InvisibleText(this._sTutorMessageId, {
-					text: Library.getResourceBundleFor("sap.m").getText("ACTION_SELECT_TUTOR_MESSAGE")
+					text: Core.getLibraryResourceBundle("sap.m").getText("ACTION_SELECT_TUTOR_MESSAGE")
 				}).toStatic();
 			}
 

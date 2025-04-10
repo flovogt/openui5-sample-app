@@ -1,7 +1,7 @@
 /* eslint-disable max-nested-callbacks */
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -13,9 +13,8 @@ sap.ui.define(["sap/base/Log"], function(Log) {
 	 *
 	 * @alias sap.m.changeHandler.MoveTableColumns
 	 * @author SAP SE
-	 * @version 1.134.0
-	 * @private
-	 * @since 1.48.0
+	 * @version 1.120.20
+	 * @experimental Since 1.48
 	 */
 	var MoveTableColumns = {};
 
@@ -48,14 +47,14 @@ sap.ui.define(["sap/base/Log"], function(Log) {
 			});
 	}
 
-	function fnMoveColumns(oModifier, oView, oTable, iSourceIndex, iTargetIndex, oTemplate) {
+	function fnMoveColumns(oModifier, oView, oTable, iSourceIndex, iTargetIndex) {
 		return Promise.resolve()
 			.then(oModifier.getAggregation.bind(oModifier, oTable, ITEMS_AGGREGATION_NAME))
 			.then(function(aItems) {
 				return aItems.reduce(function(oPreviousPromise, oItem) {
 					return oPreviousPromise
 						.then(function() {
-							if (oTemplate !== oItem && oModifier.getControlType(oItem) !== "sap.m.GroupHeaderListItem") {
+							if (oModifier.getControlType(oItem) !== "sap.m.GroupHeaderListItem") {
 								return fnSwitchCells(oModifier, oView, oItem, iSourceIndex, iTargetIndex);
 							}
 							return undefined;
@@ -138,9 +137,7 @@ sap.ui.define(["sap/base/Log"], function(Log) {
 						.then(function(oTemplate) {
 							if (oTemplate) {
 								return fnSwitchCells(oModifier, oView, oTemplate, iSourceIndex, iTargetIndex)
-									.then(function() {
-										return fnMoveColumns(oModifier, oView, oTable, iSourceIndex, iTargetIndex, oTemplate);
-									});
+									.then(oModifier.updateAggregation.bind(oModifier, oTable, ITEMS_AGGREGATION_NAME));
 							} else {
 								return fnMoveColumns(oModifier, oView, oTable, iSourceIndex, iTargetIndex);
 							}

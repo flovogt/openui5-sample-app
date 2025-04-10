@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -127,9 +127,9 @@ sap.ui.define([
 				if (oDimensionDetails === undefined) {
 					logUnsupportedPropertyInSelect(oBinding.sPath, sPropertyName, oDimension);
 					bError = true;
-				// eslint-disable-next-line no-use-before-define
-				} else if (AnalyticalBinding._updateDimensionDetailsTextProperty(oDimension, sPropertyName,
-						oDimensionDetails)) {
+				} else {
+					// eslint-disable-next-line no-use-before-define
+					AnalyticalBinding._updateDimensionDetailsTextProperty(oDimension, sPropertyName, oDimensionDetails);
 					continue;
 				}
 			}
@@ -232,11 +232,10 @@ sap.ui.define([
 	 *   The path pointing to the tree / array that should be bound
 	 * @param {object} [oContext=null]
 	 *   The context object for this data binding
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link #sort} to replace them
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call {@link #filter} to
-	 *   replace them
+	 * @param {array} [aSorter=null]
+	 *   An array of predefined sorters
+	 * @param {array} [aFilters=null]
+	 *   An array of predefined filters
 	 * @param {object} [mParameters=null]
 	 *   A map containing additional binding parameters; for the <code>AnalyticalBinding</code> this
 	 *   parameter is mandatory
@@ -270,10 +269,11 @@ sap.ui.define([
 	 *   <code>select</code> parameter is ignored.
 	 *
 	 * @throws {Error}
-	 *   If no analytic query result object could be determined from the bound OData entity set, either from an
-	 *   explicitly given EntitySet (via optional mParameters.entitySet argument), or by default implicitly from the
-	 *   binding path (see mandatory sPath argument), or if the {@link sap.ui.model.Filter.NONE} filter instance is
-	 *   contained in <code>aFilters</code> together with other filters, or if the given model is not supported.
+	 *   If no analytic query result object could be determined from the bound OData entity set,
+	 *   either from an explicitly given EntitySet (via optional mParameters.entitySet argument), or
+	 *   by default implicitly from the binding path (see mandatory sPath argument), or if the
+	 *   {@link sap.ui.model.Filter.NONE} filter instance is contained in <code>aFilters</code> together with other
+	 *   filters
 	 *
 	 * @alias sap.ui.model.analytics.AnalyticalBinding
 	 * @extends sap.ui.model.TreeBinding
@@ -285,10 +285,6 @@ sap.ui.define([
 		constructor : function(oModel, sPath, oContext, aSorter, aFilters, mParameters) {
 			TreeBinding.call(this, oModel, sPath, oContext, aFilters, mParameters);
 
-			this.iModelVersion = AnalyticalBinding._getModelVersion(this.oModel);
-			if (this.iModelVersion === null) {
-				throw new Error("The AnalyticalBinding does not support the given model");
-			}
 			this.aAdditionalSelects = [];
 			// attribute members for addressing the requested entity set
 			this.sEntitySetName = mParameters.entitySet ? mParameters.entitySet : undefined;
@@ -361,6 +357,13 @@ sap.ui.define([
 			} else if (this.oModel.sDefaultCountMode == CountMode.Request) {
 				oLogger.warning("default count mode is ignored; OData requests will include"
 					+ " $inlinecount options");
+			}
+
+			// detect ODataModel version
+			this.iModelVersion = AnalyticalBinding._getModelVersion(this.oModel);
+			if (this.iModelVersion === null) {
+				oLogger.error("The AnalyticalBinding does not support the given model");
+				return;
 			}
 
 			// list of sorted dimension names as basis for later calculations, initialized via "initialize" function
@@ -491,7 +494,7 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.getRootContexts
-	 * @param {object|int} [mParameters=0]
+	 * @param {object|int} mParameters
 	 *   Parameter map specifying how the topmost aggregation level shall be fetched. If this
 	 *   parameter map is set, the optional function parameters are ignored. Optionally, instead
 	 *   of a parameter map an integer value can be set to define the parameter
@@ -598,9 +601,9 @@ sap.ui.define([
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.getNodeContexts
 	 * @param {sap.ui.model.Context} oContext
 	 *            Parent context identifying the requested group of child contexts
-	 * @param {object|int} [mParameters=0]
+	 * @param {object|int} mParameters
 	 *            Parameters, specifying the aggregation level for which contexts shall be fetched
-	 *            or the index of the first child entry to return from the parent contexts
+	 *            or (legacy signature variant) index of first child entry to return from the parent context (zero-based)
 	 * @param {int} mParameters.level
 	 *            Level number for oContext, because it might occur at multiple levels; context with group ID <code>"/"</code> has level 0
 	 * @param {int} [mParameters.numberOfExpandedLevels=0]
@@ -642,7 +645,7 @@ sap.ui.define([
 			iLevel = mParameters.level;
 			iNumberOfExpandedLevels = mParameters.numberOfExpandedLevels;
 			bSupressRequest = mParameters.supressRequest;
-		} else {
+		} else { // due to compatibility; can be removed if table is adapted
 			iStartIndex = arguments[1];
 			iLength = arguments[2];
 			iThreshold = arguments[3];
@@ -987,10 +990,8 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.filter
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to use; in case of type {@link sap.ui.model.FilterType.Application} this replaces the filters
-	 *   given in {@link sap.ui.model.odata.v2.ODataModel#bindList}; a falsy value is treated as an empty array and thus
-	 *   removes all filters of the specified type
+	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter}
+	 *            aFilter an Array of sap.ui.model.Filter objects or a single Filter instance.
 	 * @param {sap.ui.model.FilterType}
 	 *            [sFilterType=sap.ui.model.FilterType.Control] Type of the filter which should be adjusted.
 	 * @return {this}
@@ -1062,9 +1063,8 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.sort
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorter=[]]
-	 *   The sorters to use; they replace the sorters given in {@link sap.ui.model.odata.v2.ODataModel#bindList}; a
-	 *   falsy value is treated as an empty array and thus removes all sorters
+	 * @param {sap.ui.model.Sorter|array}
+	 *            aSorter a sorter object or an array of sorter objects which define the sort order.
 	 * @return {this}
 	 *            returns <code>this</code> to facilitate method chaining.
 	 *
@@ -2635,15 +2635,6 @@ sap.ui.define([
 		if (bAddAdditionalSelects && this.aAdditionalSelects.length > 0) {
 			sSelect = (sSelect ? sSelect.split(",") : [])
 				.concat(this.aAdditionalSelects).join(",");
-			const oAdditionalProperties = {};
-			this.aAdditionalSelects.forEach((sAdditionalSelect) => {
-				oAdditionalProperties[sAdditionalSelect] = true;
-			});
-			const sAdditionalOrderBy = oAnalyticalQueryRequest.getSortExpression()
-				.getURIOrderByOptionValue(oAdditionalProperties);
-			if (sAdditionalOrderBy) {
-				sOrderBy = sOrderBy ? sOrderBy + "," + sAdditionalOrderBy : sAdditionalOrderBy;
-			}
 		}
 
 		if (this.mParameters && this.mParameters["filter"]) {
@@ -3460,7 +3451,7 @@ sap.ui.define([
 				}
 			}
 			processSingleGroupFromLevelSubset(bProcessFirstLoadedGroup,
-				oData.results.length === oRequestDetails.iLength && sPreviousParentGroupId === sParentGroupId);
+											oData.results.length == oRequestDetails.iLength && i == oData.results.length - 1);
 			// setup for processing next parent group
 			bProcessFirstLoadedGroup = false;
 			if (sPreviousParentGroupId != sParentGroupId) {
@@ -3763,8 +3754,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * @deprecated As of version 1.120, because sap.ui.model.odata.Filter is deprecated since 1.22.
-	 * @ui5-transform-hint replace-call (aFilter) => aFilter
 	 * @private
 	 */
 	AnalyticalBinding.prototype._convertDeprecatedFilterObjects = function(aFilter) {
@@ -5013,8 +5002,6 @@ sap.ui.define([
 	 * @param {object} oDimension The dimension
 	 * @param {string} sPropertyName The property name
 	 * @param {object} oDimensionDetails The dimension details
-	 * @returns {boolean} Whether the given property name is the given dimension's text property and therefore has been
-	 *   added to the given dimension details.
 	 *
 	 * @private
 	 */
@@ -5022,11 +5009,7 @@ sap.ui.define([
 		const oTextProperty = oDimension.getTextProperty();
 		if (oTextProperty && oTextProperty.name === sPropertyName) {
 			oDimensionDetails.textPropertyName = sPropertyName;
-
-			return true;
 		}
-
-		return false;
 	};
 
 	/**

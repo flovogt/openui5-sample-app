@@ -1,18 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/ui/base/Object"
-], (BaseObject) => {
+], function(BaseObject) {
 	"use strict";
 
 	/**
 	 * Personalization <code>MetadataObject</code> type.
 	 *
 	 * @public
+	 * @experimental Since 1.104.
 	 * @typedef {object} sap.m.p13n.MetadataObject
 	 * @property {string} key The unique key for the p13n metadata object
 	 * @property {string} label Defines the text that will be displayed in the personalization popup
@@ -41,7 +42,7 @@ sap.ui.define([
 	 *      {key: city, label: City, path: modelPath/to/city}
 	 * ]
 	 */
-	const MetadataHelper = BaseObject.extend("sap.m.p13n.MetadataHelper", {
+	var MetadataHelper = BaseObject.extend("sap.m.p13n.MetadataHelper", {
 		constructor: function(aProperties) {
 			BaseObject.apply(this, arguments);
 			this._aProperties = aProperties;
@@ -52,7 +53,7 @@ sap.ui.define([
 	 * Gets the array of properties.
 	 *
 	 * @public
-	 * @returns {object[]} Array of properties
+	 * @returns {sap.m.p13n.MetadataObject[]} Array of properties
 	 */
 	MetadataHelper.prototype.getProperties = function() {
 		return this._aProperties;
@@ -63,10 +64,10 @@ sap.ui.define([
 	 *
 	 * @public
 	 * @param {string} sKey The property key identifying a property entry
-	 * @returns {sap.m.p13n.MetadataObject | undefined} A single property
+	 * @returns {sap.m.p13n.MetadataObject} A single property
 	 */
 	MetadataHelper.prototype.getProperty = function(sKey) {
-		return this._aProperties.find((oProp) => {
+		return this._aProperties.find(function(oProp){
 			return oProp.key === sKey;
 		});
 	};

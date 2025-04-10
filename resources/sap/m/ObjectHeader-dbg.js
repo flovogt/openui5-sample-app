@@ -1,18 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.ObjectHeader.
 sap.ui.define([
 	'./library',
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/IconPool',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
-	"sap/ui/core/RenderManager",
 	'sap/ui/core/util/ResponsivePaddingsEnablement',
 	'sap/ui/Device',
 	'sap/m/Text',
@@ -21,24 +18,23 @@ sap.ui.define([
 	'./ObjectMarker',
 	'./ObjectNumber',
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration",
 	"sap/m/ImageHelper"
 ],
 	function(
 		library,
-		Localization,
 		Control,
 		IconPool,
-		Library,
 		coreLibrary,
-		RenderManager,
 		ResponsivePaddingsEnablement,
 		Device,
 		Text,
 		KeyCodes,
 		ObjectHeaderRenderer,
-		ObjectMarker,
-		ObjectNumber,
+    ObjectMarker,
+    ObjectNumber,
 		jQuery,
+		Configuration,
 		ImageHelper
 	) {
 	"use strict";
@@ -86,7 +82,7 @@ sap.ui.define([
 	 * <code>sapUiResponsivePadding--header</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -203,7 +199,7 @@ sap.ui.define([
 				 * If set to <code>true</code>, the <code>ObjectHeader</code> can be marked with icons such as favorite and flag.
 				 *
 				 * @since 1.16.0
-				 * @deprecated as of version 1.42.0, replaced by <code>markers</code> aggregation.
+				 * @deprecated as of version 1.42.0, replaced by <code>markers</code> aggregationv.
 				 * This property is valid only if you are using the already deprecated properties - <code>markFlagged</code> and <code>markFavorite</code>.
 				 * If you are using <code>markers</code>, the visibility of the markers depends on what is set in the aggregation itself.
 				 */
@@ -488,7 +484,7 @@ sap.ui.define([
 	 * @returns {Object} the resource bundle object
 	 */
 	ObjectHeader._getResourceBundle = function () {
-		return Library.getResourceBundleFor("sap.m");
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
 	};
 
 	ResponsivePaddingsEnablement.call(ObjectHeader.prototype, {
@@ -729,7 +725,7 @@ sap.ui.define([
 	 * Sets the alternative text of the <code>ObjectHeader</code> icon.
 	 * @override
 	 * @public
-	 * @param {string} sIconAlt the alternative icon text
+	 * @param {boolean} sIconAlt the alternative icon text
 	 * @returns {this} this pointer for chaining
 	 */
 	ObjectHeader.prototype.setIconAlt = function(sIconAlt) {
@@ -831,26 +827,38 @@ sap.ui.define([
 	};
 
 	ObjectHeader.prototype.ontap = function(oEvent) {
-		var oSource = oEvent.target,
-			sSourceId = oSource.id,
-			sTitleId = `${this.getId()}-title`,
-			sIntroId = `${this.getId()}-intro`,
-			sTextId = `${this.getId()}-txt`,
-			bInnerText = oSource.classList.contains("sapMLnkText"),
-			bTitle = bInnerText || sSourceId === sTitleId || sSourceId === `${this.getId()}-titleText-inner`,
-			bIntro = bInnerText || sSourceId === sIntroId,
-			bText = bInnerText || sSourceId === sTextId || oSource.parentElement.id === sTextId;
+		var sSourceId = oEvent.target.id;
+		if (this.getIntroActive() && sSourceId === this.getId() + "-intro") {
+			if (!this.getIntroHref()) {
+				this.fireIntroPress({
+					domRef : window.document.getElementById(sSourceId)
+				});
+			}
+		} else if (!this.getResponsive() && this.getTitleActive() && ( sSourceId === this.getId() + "-title" ||
+				jQuery(oEvent.target).parent().attr('id') === this.getId() + "-title" || // check if the parent of the "h" tag is the "title"
+				sSourceId === this.getId() + "-titleText-inner" )) {
+			if (!this.getTitleHref()) {
+				oEvent.preventDefault();
+				sSourceId = this.getId() + "-title";
 
-		if (this.getIntroActive() && !this.getIntroHref() && bIntro) {
-			this.fireIntroPress({ domRef: window.document.getElementById(sIntroId) });
-		} else if (!this.getResponsive() && this.getTitleActive() && !this.getTitleHref() && bTitle) {
-			oEvent.preventDefault();
-			this.fireTitlePress({ domRef: window.document.getElementById(sTitleId) });
-		} else if (this.getResponsive() && this.getTitleActive() && !this.getTitleHref() && bText) {
-			oEvent.preventDefault();
-			this.fireTitlePress({ domRef: window.document.getElementById(sTextId) });
-		} else if (oSource.classList.contains("sapUiIconTitle")) {
-			this.fireTitleSelectorPress({ domRef: oSource.parentElement });
+				this.fireTitlePress({
+					domRef : window.document.getElementById(sSourceId)
+				});
+			}
+		} else if (this.getResponsive() && this.getTitleActive() && ( sSourceId === this.getId() + "-txt" || jQuery(oEvent.target).parent().attr('id') === this.getId() + "-txt" )) {
+			if (!this.getTitleHref()) {
+				oEvent.preventDefault();
+				// The sourceId should be always the id of the "a", even if we click on the inside span element
+				sSourceId = this.getId() + "-txt";
+
+				this.fireTitlePress({
+					domRef : window.document.getElementById(sSourceId)
+				});
+			}
+		} else if (oEvent.target.classList.contains("sapUiIconTitle")) {
+			this.fireTitleSelectorPress({
+				domRef : oEvent.target.parentElement
+			});
 		} else if (sSourceId.indexOf(this.getId()) !== -1) {
 			// we didn't click on any of the active parts of the ObjectHeader
 			// event should not trigger any further actions
@@ -997,7 +1005,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ObjectHeader.prototype._rerenderTitle = function(nCutLen) {
-		var oRm = new RenderManager().getInterface();
+		var oRm = sap.ui.getCore().createRenderManager();
 		this.getRenderer()._rerenderTitle(oRm, this, nCutLen);
 		oRm.destroy();
 	};
@@ -1008,7 +1016,7 @@ sap.ui.define([
 	 * @private
 	 */
 	ObjectHeader.prototype._rerenderStates = function() {
-		var oRm = new RenderManager().getInterface();
+		var oRm = sap.ui.getCore().createRenderManager();
 		this.getRenderer()._rerenderResponsiveStates(oRm, this);
 		oRm.destroy();
 	};
@@ -1099,7 +1107,7 @@ sap.ui.define([
 
 	ObjectHeader.prototype.onAfterRendering = function() {
 		var oObjectNumber = this.getAggregation("_objectNumber");
-		var bPageRTL = Localization.getRTL();
+		var bPageRTL = Configuration.getRTL();
 		var $titleArrow = this.$("titleArrow");
 
 		$titleArrow.attr("role", "button");
@@ -1154,7 +1162,7 @@ sap.ui.define([
 	ObjectHeader.prototype._adjustNumberDiv = function() {
 		var sId = this.getId();
 		var oObjectNumber = this.getAggregation("_objectNumber");
-		var bPageRTL = Localization.getRTL();
+		var bPageRTL = Configuration.getRTL();
 
 		if (oObjectNumber && oObjectNumber.getNumber()) {
 			var $numberDiv = jQuery(document.getElementById(sId + "-number"));

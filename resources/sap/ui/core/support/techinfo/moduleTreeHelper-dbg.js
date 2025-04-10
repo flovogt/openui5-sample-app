@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -43,7 +43,7 @@ sap.ui.define(["sap/ui/thirdparty/jquery"], function (jQuery) {
 			}
 		},
 
-		/**
+		/***
 		 * Gets the selection state for a package/module.
 		 * Package names must end with a slash, modules must not.
 		 * If an ancestor package of the package/module does not exists, undefined is returned.

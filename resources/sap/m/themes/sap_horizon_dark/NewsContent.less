@@ -12,55 +12,48 @@
 }
 
 .sapMTileCnt.News {
-
 	.sapMNwC {
-
 		.sapMNwCSbh {
-			color: var(--sapTile_OverlayForegroundColor);
+			color: @sapTile_OverlayForegroundColor;
 			line-height: normal;
-			font-size: var(--sapFontSize);
+			font-size: @sapFontSize;
 		}
-
-		.sapMNwCCTxt .sapMText,
-		.sapMNwCCTxt .sapMFT {
-			font-size: var(--sapFontSize);
+		.sapMNwCCTxt .sapMText, .sapMNwCCTxt .sapMFT {
+			font-size: @sapFontSize;
 			line-height: normal;
 			font-weight: bold;
-			color: var(--sapTile_OverlayForegroundColor);
+			color: @sapTile_OverlayForegroundColor;
 		}
 	}
 }
 
-.Stretch {
-
-	.sapMTileCnt.News .sapMNwC {
-
+.Stretch{
+	.sapMTileCnt.News .sapMNwC{
 		.sapMNwCCTxt .sapMText {
-			font-size: var(--sapFontLargeSize);
+			font-size: @sapMFontLargeSize;
 			color: @sapUiText;
 		}
-
 		.sapMNwCCTxt .sapMFT {
 			font-size: 0.938rem;
 			color: @sapUiText;
 		}
-
 		.sapMNwCSbh{
 			color: @sapUiText;
 		}
 	}
 }
 
-.sapMTileSmallPhone {
-
-	.sapMTileCnt.News {
-
-		.sapMTileCntContent {
+.sapMTileSmallPhone{
+	.sapMTileCnt.News{
+		.sapMTileCntContent{
 			height: 3.25rem;
-
-			.sapMFT {
-				font-size: var(--sapFontSmallSize)
+			.sapMFT{
+				font-size: 0.75rem;
 			}
 		}
 	}
+}
+
+.sapMNwC:focus {
+	outline: 1px dotted @sapUiContentFocusColor;
 }

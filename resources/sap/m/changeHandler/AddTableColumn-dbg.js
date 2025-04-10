@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -38,11 +38,15 @@ sap.ui.define([
 	 * Change handler for adding a AddTableColumn to sap.m.Table
 	 *
 	 * @constructor
+	 *
 	 * @alias sap.m.changeHandler.AddTableColumn
+	 *
 	 * @author SAP SE
-	 * @version 1.134.0
-	 * @private
-	 * @since 1.51.0
+	 *
+	 * @version 1.120.20
+	 *
+	 * @experimental Since 1.51.0 This class is experimental and provides only limited functionality.
+	 * Also the API might be changed in future.
 	 */
 
 	var AddTableColumn = BaseAddViaDelegate.createAddViaDelegateChangeHandler({
@@ -55,6 +59,7 @@ sap.ui.define([
 			return !!(oChangeODataInformation && oChangeODataInformation.entityType);
 		},
 		skipCreateLayout: true,
+		supportsDefault: true,
 
 		/**
 		 * Add a new column

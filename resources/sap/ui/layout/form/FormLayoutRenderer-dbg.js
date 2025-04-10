@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,8 +9,8 @@ sap.ui.define([
 	'sap/ui/layout/library',
 	'sap/ui/layout/form/Form',
 	'./FormHelper',
-	'sap/ui/core/IconPool' // side effect: as RenderManager.icon needs it
-	], function(coreLibrary, library, Form, FormHelper, _IconPool) {
+	'sap/ui/core/IconPool' // as RenderManager.icon needs it
+	], function(coreLibrary, library, Form, FormHelper, IconPool) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TitleLevel
@@ -97,7 +97,7 @@ sap.ui.define([
 		var oToolbar = oContainer.getToolbar();
 		var oTitle = oContainer.getTitle();
 
-		rm.openStart("div", oContainer);
+		rm.openStart("section", oContainer);
 		rm.class("sapUiFormContainer");
 
 		if (oToolbar) {
@@ -110,7 +110,7 @@ sap.ui.define([
 			rm.attr('title', oContainer.getTooltip_AsString());
 		}
 
-		this.writeAccessibilityStateContainer(rm, oContainer, !oLayout.isContainerLabelled(oContainer));
+		this.writeAccessibilityStateContainer(rm, oContainer);
 
 		rm.openEnd();
 
@@ -197,18 +197,7 @@ sap.ui.define([
 				sLevel = "H5";
 			}
 
-			const bRenderExpander = bExpander && oExpandButton;
-
-			if (bRenderExpander) {
-				// if expander is renders put a DIV around expander an d title. (If expander inside title the screenreader announcement is somehow strange.)
-				rm.openStart("div", sContentId + "--head");
-				rm.class("sapUiFormTitle");
-				// rm.class("sapUiFormTitle" + sLevel);
-				rm.class("sapUiFormTitleExpandable");
-				rm.openEnd();
-				rm.renderControl(oExpandButton);
-			}
-
+			// just reuse TextView class because there font size & co. is already defined
 			if ( typeof oTitle !== "string" ) {
 				rm.openStart(sLevel.toLowerCase(), oTitle);
 				if (oTitle.getTooltip_AsString()) {
@@ -220,12 +209,16 @@ sap.ui.define([
 			} else {
 				rm.openStart(sLevel.toLowerCase(), sContentId + "--title");
 			}
-			if (!bRenderExpander) {
-				rm.class("sapUiFormTitle");
-			}
+			rm.class("sapUiFormTitle");
 			rm.class("sapUiFormTitle" + sLevel);
+			if (bExpander && oExpandButton) {
+				rm.class("sapUiFormTitleExpandable");
+			}
 			rm.openEnd();
 
+			if (bExpander && oExpandButton) {
+				rm.renderControl(oExpandButton);
+			}
 			if (typeof oTitle === "string") {
 				// Title is just a string
 				oTitle.split(/\n/).forEach(function(sLine, iIndex) {
@@ -256,9 +249,6 @@ sap.ui.define([
 			}
 
 			rm.close(sLevel.toLowerCase());
-			if (bRenderExpander) {
-				rm.close("div");
-			}
 		}
 
 	};
@@ -290,9 +280,8 @@ sap.ui.define([
 	 * Writes the accessibility attributes for FormContainers.
 	 * @param {sap.ui.core.RenderManager} rm
 	 * @param {sap.ui.layout.form.FormContainer} oContainer
-	 * @param {boolean} bNoRole if set the DOM node needs no role (e.g. Container has no title)
 	 */
-	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer, bNoRole){
+	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer){
 
 		var mAriaProps = {};
 		var oTitle = oContainer.getTitle();
@@ -313,7 +302,8 @@ sap.ui.define([
 			mAriaProps["labelledby"] = {value: sId, append: true};
 		}
 
-		if (!bNoRole) {
+		if (mAriaProps["labelledby"] || oContainer.getAriaLabelledBy().length > 0) {
+			// if no title or label do not set role because of JAWS 18 issues
 			mAriaProps["role"] = "form";
 		}
 

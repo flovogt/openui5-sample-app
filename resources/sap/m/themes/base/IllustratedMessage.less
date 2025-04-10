@@ -1,7 +1,7 @@
-/* ======================================== */
+/* ================================== */
 /* CSS for control sap.f/IllustratedMessage */
-/* Base theme                               */
-/* ======================================== */
+/* Base theme                         */
+/* ================================== */
 
 .sapMIllustratedMessage {
 	width: 100%;
@@ -23,15 +23,12 @@
 	}
 
 	.sapMTitle {
-		font-family: var(--sapFontHeaderFamily);
-		color: var(--sapGroup_TitleTextColor);
 		display: block;
 	}
 
 	.sapMIllustratedMessageDescription {
-		font-size: @sapFontSize;
-		font-family: var(--sapFontFamily);
-		color: var(--sapTextColor);
+		color: @sapNeutralTextColor;
+		font-size: @sapMFontMediumSize;
 	}
 
 	&.sapMIllustratedMessageScalable {
@@ -42,7 +39,6 @@
 	}
 
 	&.sapMIllustratedMessage-Base {
-
 		figcaption {
 			max-width: 10rem;
 		}
@@ -54,7 +50,7 @@
 	}
 
 	&.sapMIllustratedMessage-Dot {
-		padding: 0.25rem;
+		padding: 0.5rem;
 
 		.sapMIllustratedMessageMainContent {
 			display: inline-flex;
@@ -72,27 +68,25 @@
 			width: 2.813rem;
 			height: 2.813rem;
 			margin-right: 0.25rem;
-			align-self: baseline;
 		}
 
 		.sapMTitle {
-			font-size: var(--sapFontHeader5Size);
+			margin-top: 0.5rem;
 			margin-bottom: 0.25rem;
 		}
 
 		.sapMIllustratedMessageDescription {
-			margin-bottom: 0.25rem;
+			margin-bottom: 0.5rem;
 		}
 
 		.sapMIllustratedMessageAdditionalContent {
-			margin: 0.25rem 0;
-			padding-left: 3.063rem; /* width of dot svg + its margin right */
+			margin-top: 0.25rem;
+			margin-bottom: 0.5rem;
 		}
 	}
 
-	&.sapMIllustratedMessage-Spot {
-		padding: 0.5rem;
 
+	&.sapMIllustratedMessage-Spot {
 		figcaption {
 			max-width: 16.25rem;
 		}
@@ -100,42 +94,15 @@
 		.sapMIllustration {
 			width: 8rem;
 			height: 8rem;
-			margin-bottom: 0.5rem;
-		}
-
-		.sapMTitle {
-			font-size: var(--sapFontHeader4Size);
-			margin-bottom: 0.5rem;
-		}
-
-		.sapMIllustratedMessageDescription {
-			margin-bottom: 0.5rem;
-		}
-
-		.sapMIllustratedMessageAdditionalContent {
 			margin: 0.5rem 0;
 		}
-	}
-
-	&.sapMIllustratedMessage-Dialog {
-
-		figcaption {
-			max-width: 20rem;
-		}
-
-		.sapMIllustration {
-			width: 10rem;
-			height: 10rem;
-			margin: 1rem 0;
-		}
 
 		.sapMTitle {
-			margin-bottom: 0.5rem;
-			font-size: var(--sapFontHeader3Size);
+			margin-bottom: 0.25rem;
 		}
 
 		.sapMIllustratedMessageDescription {
-			margin-bottom: 0.5rem;
+			margin-bottom: 1rem;
 		}
 
 		.sapMIllustratedMessageAdditionalContent {
@@ -144,8 +111,29 @@
 		}
 	}
 
-	&.sapMIllustratedMessage-Scene {
+	&.sapMIllustratedMessage-Dialog {
+		figcaption {
+			max-width: 20rem;
+		}
 
+		.sapMIllustration {
+			width: 10rem;
+			height: 10rem;
+			margin-top: 1rem;
+			margin-bottom: 2rem;
+		}
+
+		.sapMTitle {
+			margin-bottom: 0.25rem;
+			font-size: @sapMFontHeader4Size;
+		}
+
+		.sapMIllustratedMessageDescription {
+			margin-bottom: 2rem;
+		}
+	}
+
+	&.sapMIllustratedMessage-Scene {
 		figcaption {
 			max-width: 30rem;
 		}
@@ -153,21 +141,21 @@
 		.sapMIllustration {
 			width: 20rem;
 			height: 15rem;
-			margin: 2rem 0;
 		}
 
 		.sapMTitle {
-			margin-bottom: 1rem;
-			font-size: var(--sapMFontHeader2Size);
+			margin-top: 2rem;
+			margin-bottom: 0.5rem;
+			font-size: @sapMFontHeader2Size;
 		}
 
 		.sapMIllustratedMessageDescription {
-			margin-bottom: 0.5rem;
-			font-size: var(--sapMFontLargeSize);
+			margin-bottom: 2rem;
+			font-size: @sapMFontLargeSize;
 		}
 
 		.sapMIllustratedMessageAdditionalContent {
-			margin: 1rem 0;
+			margin-bottom: 2rem;
 		}
 	}
 }

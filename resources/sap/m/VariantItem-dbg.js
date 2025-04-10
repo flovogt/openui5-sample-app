@@ -1,16 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	'sap/m/library', 'sap/ui/core/Item'
-], function(mLibrary, Item) {
+], function(library, Item) {
 	"use strict";
-
-	// shortcut for sap.m.SharingMode
-	var SharingMode = mLibrary.SharingMode;
 
 	/**
 	 * Constructor for a new sap.m.VariantItem.
@@ -33,9 +30,9 @@ sap.ui.define([
 				 * Contains the information is the item is public or private.
 				 */
 				sharing: {
-					type: "sap.m.SharingMode",
+					type: "string",
 					group: "Misc",
-					defaultValue: SharingMode.Private
+					defaultValue: "private"
 				},
 
 				/**
@@ -87,7 +84,7 @@ sap.ui.define([
 				/**
 				 * Indicates if the item is visible.
 				 *
-				 * <br><b>Note:</b> This property should not be used by applications, if the variant management control is either
+				 * <b>Note:</b> This property should not be used by applications, if the variant management control is either
 				 * {@link sap.ui.comp.smartvariants.SmartVariantManagement <code>SmartVariantManagement</code>} or {@link sap.ui.fl.variants.VariantManagement <code>VariantManagement</code>}.<br>
 				 */
 				visible: {
@@ -115,10 +112,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Contains the contexts information of the item.<br>
-				 * <b>Note</b>: This property must not be bound.<br>
-				 * <b>Note</b>: This property is used exclusively for SAPUI5 flexibility. Do not use it otherwise.
-				 * @restricted sap.ui.fl, sap.ui.comp
+				 * Contains the contexts information of the item.
 				 */
 				contexts: {
 					type: "object",
@@ -182,7 +176,6 @@ sap.ui.define([
 
 	VariantItem.prototype.setTitle = function(sValue) {
 		this.setProperty("title", sValue);
-		this.setProperty("text", sValue);
 		if (!this._bOriginalTitleSet) {
 			this._bOriginalTitleSet = true;
 			this._setOriginalTitle(sValue);

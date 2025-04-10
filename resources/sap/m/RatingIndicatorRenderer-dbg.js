@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(
-	["sap/ui/core/IconPool", "sap/ui/Device", "sap/ui/core/Theming", "sap/ui/core/Lib"],
-	function(IconPool, Device, Theming, Library) {
+	["sap/ui/core/IconPool", "sap/ui/Device", "sap/ui/core/Core", "sap/ui/core/Configuration"],
+	function(IconPool, Device, Core, Configuration) {
 		"use strict";
 
 		/* =========================================================== */
@@ -23,7 +23,7 @@ sap.ui.define(
 			sIconSizeMeasure = "px";
 
 		// shortcut for library resource bundle
-		var oResourceBundle = Library.getResourceBundleFor("sap.m");
+		var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -52,7 +52,8 @@ sap.ui.define(
 
 			oRm.style("width", this._iWidth + "px");
 			oRm.style("font-size", this._iHeight + "px");
-			oRm.style("line-height", ++this._iHeight + "px");
+			oRm.style("height", ++this._iHeight + "px"); 		// We add 1 additional pixel to avoid the icon issue in the Horizon theme
+			oRm.style("line-height", ++this._iHeight + "px");	// which is rendered bigger than its font size ang gets cut off
 
 
 			if (bEnabled && !bDisplayOnly) {
@@ -73,10 +74,7 @@ sap.ui.define(
 			}
 
 			oRm.class("sapMRI");
-
-			if (oControl.getIconSize()) {
-				oRm.class("sapUiRatingIndicator" + oControl._getIconSizeLabel(this._fIconSize));
-			}
+			oRm.class("sapUiRatingIndicator" + oControl._getIconSizeLabel(this._fIconSize));
 
 			if (oControl._isRequired()) {
 				oRm.attr("aria-description", oResourceBundle.getText("ELEMENT_REQUIRED"));
@@ -254,7 +252,7 @@ sap.ui.define(
 
 		RatingIndicatorRenderer.getIconURI = function(sState, oControl) {
 			if (
-				Theming
+				Configuration
 					.getTheme() === "sap_hcb"
 			) {
 				if (sState === "UNSELECTED" && (oControl.getEnabled() && !oControl.getDisplayOnly())) {

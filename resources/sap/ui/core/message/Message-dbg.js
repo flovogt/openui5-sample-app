@@ -1,17 +1,17 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides the implementation for a Message
 sap.ui.define([
 	'./MessageType',
-	'sap/base/future',
+	'sap/base/Log',
 	'sap/base/util/uid',
 	'sap/ui/base/Object'
 ],
-	function(MessageType, future, uid, BaseObject) {
+	function(MessageType, Log, uid, BaseObject) {
 	"use strict";
 
 	const mMessageType2Severity = {
@@ -35,7 +35,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @param {object} [mParameters] a map which contains the following parameter properties:
 	 * @param {string} [mParameters.id] The message id: will be generated if no id is set
@@ -277,7 +277,7 @@ sap.ui.define([
 		if (sType in MessageType) {
 			this.type = sType;
 		} else {
-			future.errorThrows("MessageType must be of type sap/ui/core/message/MessageType");
+			Log.error("[FUTURE FATAL] MessageType must be of type sap/ui/core/message/MessageType");
 		}
 	};
 
@@ -355,7 +355,7 @@ sap.ui.define([
 		if (BaseObject.isObjectA(oMessageProcessor, "sap.ui.core.message.MessageProcessor")) {
 			this.processor = oMessageProcessor;
 		} else {
-			future.errorThrows("oMessageProcessor must be an instance of 'sap.ui.core.message.MessageProcessor'");
+			Log.error("[FUTURE FATAL] oMessageProcessor must be an instance of 'sap.ui.core.message.MessageProcessor'");
 		}
 	};
 

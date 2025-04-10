@@ -1,20 +1,20 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	'./library',
 	'./SinglePlanningCalendarView',
-	"sap/base/i18n/Formatting",
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarDate',
 	'sap/ui/unified/calendar/CalendarUtils',
+	'sap/ui/core/Configuration',
 	"sap/ui/core/date/CalendarUtils",
 	'sap/ui/core/Locale'
 ],
-function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarDate, CalendarUtils, CalendarDateUtils, Locale) {
+function (library, SinglePlanningCalendarView, LocaleData, CalendarDate, CalendarUtils, Configuration, CalendarDateUtils, Locale) {
 	"use strict";
 
 	/**
@@ -31,7 +31,7 @@ function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarD
 	 * @extends sap.m.SinglePlanningCalendarView
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -50,7 +50,7 @@ function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarD
 	 * Returns after how much entities is the next/previous startDate of the <code>sap.m.SinglePlanningCalendar</code> after
 	 * navigating forward or backwards.
 	 *
-	 * @returns {int} the number of entities to be skipped by scrolling
+	 * @return {int} the number of entities to be skipped by scrolling
 	 * @override
 	 * @public
 	 */
@@ -62,7 +62,7 @@ function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarD
 	 * Should return a number of entities until the next/previous startDate of the
 	 * <code>sap.m.SinglePlanningCalendar</code> after navigating forward or backwards.
 	 *
-	 * @returns {int} the number of entities to be skipped by scrolling
+	 * @return {int} the number of entities to be skipped by scrolling
 	 */
 	SinglePlanningCalendarWeekView.prototype.getScrollEntityCount = function () {
 		return 7;
@@ -72,16 +72,16 @@ function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarD
 	 * Calculates the startDate which will be displayed in the <code>sap.m.SinglePlanningCalendar</code> based
 	 * on a given date.
 	 *
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate The given date
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate of the view
+	 * @param {object} oStartDate the given date
+	 * @return {object} the startDate of the view
 	 * @override
 	 * @public
 	 */
-	SinglePlanningCalendarWeekView.prototype.calculateStartDate = function (oDate) {
+	SinglePlanningCalendarWeekView.prototype.calculateStartDate = function (oStartDate) {
 
-		var sLocale = new Locale(Formatting.getLanguageTag()).toString();
+		var sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
 
-		var oLocaleData = LocaleData.getInstance(new Locale(Formatting.getLanguageTag())),
+		var oLocaleData = LocaleData.getInstance(Configuration.getFormatSettings().getFormatLocale()),
 			iFirstDayOfWeek = this.getFirstDayOfWeek();
 
 			if (iFirstDayOfWeek < 0 || iFirstDayOfWeek > 6) {
@@ -94,9 +94,9 @@ function (library, SinglePlanningCalendarView, Formatting, LocaleData, CalendarD
 				}
 			}
 
-			oDate.setDate(oDate.getDate() - oDate.getDay() + iFirstDayOfWeek);
+		oStartDate.setDate(oStartDate.getDate() - oStartDate.getDay() + iFirstDayOfWeek);
 		return CalendarUtils
-			._getFirstDateOfWeek(CalendarDate.fromLocalJSDate(oDate), {
+			._getFirstDateOfWeek(CalendarDate.fromLocalJSDate(oStartDate), {
 				firstDayOfWeek: iFirstDayOfWeek,
 				minimalDaysInFirstWeek: oLocaleData.getMinimalDaysInFirstWeek()
 			})

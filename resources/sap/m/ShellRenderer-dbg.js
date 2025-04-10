@@ -1,15 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/m/library'
 ],
-function(Library, coreLibrary, library) {
+function(coreLibrary, library) {
 	"use strict";
 
 
@@ -111,7 +110,7 @@ function(Library, coreLibrary, library) {
 
 		// logout button
 		if (oControl.getShowLogout()) {
-			var rb = Library.getResourceBundleFor("sap.m");
+			var rb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 			rm.openStart("a", oControl.getId() + "-logout");
 			rm.attr("tabindex", "0");
 			rm.attr("role", "button");

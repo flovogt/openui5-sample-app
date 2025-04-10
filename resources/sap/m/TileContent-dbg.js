@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Lib'],
-	function(library, Localization, Core, Control, TileContentRenderer, CoreLib) {
+sap.ui.define(['./library', 'sap/ui/core/library', 'sap/ui/core/Control', './TileContentRenderer', 'sap/ui/core/Configuration', 'sap/ui/core/Lib'],
+	function(library, Core, Control, TileContentRenderer, Configuration, CoreLib) {
 	"use strict";
 
 	var Priority = library.Priority;
@@ -24,7 +24,7 @@ sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library',
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @since 1.34.0
 	 *
 	 * @public
@@ -62,12 +62,12 @@ sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library',
 				"frameType" : {type : "sap.m.FrameType", group : "Appearance", defaultValue : "Auto"},
 				/**
 				 * Adds a priority badge before the content. Works only in Generic Tile ActionMode.
-				 * @since 1.96
+				 * @experimental Since 1.96
 				 */
 				"priority" : {type: "sap.m.Priority", group: "Misc", defaultValue: Priority.None},
 				/**
 				 * Sets the Text inside the Priority badge in Generic Tile ActionMode.
-				 * @since 1.103
+				 * @experimental Since 1.103
 				 */
 				 "priorityText" : {type: "string", group: "Misc", defaultValue: null},
 				/**
@@ -136,10 +136,6 @@ sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library',
 	TileContent.prototype.onAfterRendering = function() {
 		var oContent = this.getContent();
 		if (oContent) {
-			const oParent = this.getParent();
-            if (oParent && oParent.isA("sap.m.GenericTile") ) {
-			oParent._applyCssStyle(this);
-		}
 			var thisRef = this.$();
 			var aTooltipEments = thisRef.find("*");
 			// tooltip of the entire tile
@@ -210,7 +206,7 @@ sap.ui.define(['./library', "sap/base/i18n/Localization", 'sap/ui/core/library',
 		var sUnit = this.getUnit();
 		if (sUnit) {
 			if (sFooter) {
-				if (Localization.getRTL()) {
+				if (Configuration.getRTL()) {
 					return resourceBundle.getText('TILECONTENT_FOOTER_TEXT', [sFooter, sUnit]);
 				} else {
 					return resourceBundle.getText('TILECONTENT_FOOTER_TEXT', [sUnit, sFooter]);

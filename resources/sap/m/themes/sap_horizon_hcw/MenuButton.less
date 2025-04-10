@@ -5,15 +5,12 @@
 
 /* Compact size */
 .sapUiSizeCompact {
-
 	.sapMMenuBtn {
-
 		.sapMBtnInner.sapMBtnText .sapMBtnIcon {
 			margin-left: 0;
 			margin-right: 0;
 		}
 	}
-
 	.sapMMenuBtn .sapMBtnIcon {
 		margin-left: 0.4375rem;
 		margin-right: 0.4375rem;
@@ -21,15 +18,14 @@
 }
 
 .sapMMenuBtn {
-
 	.sapMBtn:hover > .sapMBtnHoverable.sapMBtnEmphasized,
 	span.sapMBtnInner.sapMBtnEmphasized {
-		border-left-color: var(--sapButton_Emphasized_TextColor);
+		border-left-color: @sapUiButtonEmphasizedTextColor;
 	}
 }
 
 .sapMMenuBtn.sapMMenuBtnSplit .sapMSBActive:not(.sapMBtnDisabled) > span.sapMBtnInner.sapMBtnEmphasized {
-	border-left-color: var(--sapButton_Emphasized_TextColor);
+	border-left-color: @sapUiButtonEmphasizedTextColor;
 }
 
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner::after {
@@ -37,13 +33,13 @@
 }
 
 .sapMMenuBtn.sapMMenuBtnRegular .sapMBtnInner:not(.sapMBtnText) {
-	padding-left: 0;
+	padding-left: 0rem;
 }
 
 .sapMMenuBtn .sapMBtn:not(.sapMSBArrow) .sapMBtnInner.sapMBtnIconFirst:not(.sapMBtnText) .sapMBtnIcon {
-	padding-right: 0;
+	padding-right: 0rem;
 }
 
 .sapMMenuBtn.sapMMenuBtnSplit .sapMSBActive:not(.sapMBtnDisabled) > .sapMBtnInner {
-	background-color: var(--sapButton_Selected_Background);
+	background-color: @sapUiButtonSelectedBackground;
 }

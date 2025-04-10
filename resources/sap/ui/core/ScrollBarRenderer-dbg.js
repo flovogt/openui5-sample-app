@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // A renderer for the ScrollBar control
-sap.ui.define(["sap/base/i18n/Localization", 'sap/ui/Device', "sap/ui/dom/getScrollbarSize"],
-	function(Localization, Device, getScrollbarSize) {
+sap.ui.define(['sap/ui/Device', "sap/ui/dom/getScrollbarSize", "sap/ui/core/Configuration"],
+	function(Device, getScrollbarSize, Configuration) {
 	"use strict";
 
 
@@ -27,7 +27,7 @@ sap.ui.define(["sap/base/i18n/Localization", 'sap/ui/Device', "sap/ui/dom/getScr
 	 * @param {sap.ui.core.ScrollBar} oControl Object representation of the control that should be rendered
 	 */
 	ScrollBarRenderer.render = function(oRM, oScrollBar){
-		var bRTL = Localization.getRTL();
+		var bRTL = Configuration.getRTL();
 
 		oRM.openStart("div", oScrollBar);
 		oRM.class("sapUiScrollBar");
@@ -44,8 +44,8 @@ sap.ui.define(["sap/base/i18n/Localization", 'sap/ui/Device', "sap/ui/dom/getScr
 		var sContentSize = oScrollBar.getContentSize();
 
 		var oBSS = getScrollbarSize(sScrollBarTouchClass);
-		var sWidth = oBSS.width || 1;
-		var sHeight = oBSS.height || 1;
+		var sWidth = oBSS.width;
+		var sHeight = oBSS.height;
 
 		if (bVertical) {
 			// First div. <div style="overflow:hidden;width:16px;height:200px">

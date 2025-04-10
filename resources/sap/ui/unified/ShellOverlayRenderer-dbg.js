@@ -1,19 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for control sap.ui.unified.ShellOverlay
-sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/ControlBehavior"],
-	function(Library, ControlBehavior) {
+sap.ui.define(["sap/ui/core/Configuration"],
+	function(Configuration) {
 	"use strict";
 
 
 	/**
 	 * ShellOverlay renderer.
 	 * @namespace
-	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @deprecated Since version 1.44.0.
 	 */
 	var ShellOverlayRenderer = {};
 
@@ -35,7 +35,7 @@ sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/ControlBehavior"],
 			rm.addClass("sapUiUfdShellOvrlyAnim");
 		}
 		rm.writeClasses();
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			rm.writeAccessibilityState(oControl, {
 				role: "dialog"
 			});
@@ -45,17 +45,17 @@ sap.ui.define(["sap/ui/core/Lib", "sap/ui/core/ControlBehavior"],
 		rm.write("<header class='sapUiUfdShellOvrlyHead'>");
 		rm.write("<hr class='sapUiUfdShellOvrlyBrand'>");
 		rm.write("<div class='sapUiUfdShellOvrlyHeadCntnt'");
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			rm.writeAttribute("role", "toolbar");
 		}
 		rm.write("><div id='" + oControl.getId() + "-hdr-center' class='sapUiUfdShellOvrlyHeadCenter'>");
 		ShellOverlayRenderer.renderSearch(rm, oControl);
 		rm.write("</div>");
-		var rb = Library.getResourceBundleFor("sap.ui.unified"),
+		var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified"),
 			sCloseTxt = rb.getText("SHELL_OVERLAY_CLOSE");
 		rm.write("<a tabindex='0' href='#' id='" + oControl.getId() + "-close' class='sapUiUfdShellOvrlyHeadClose'");
 		rm.writeAttributeEscaped("title", sCloseTxt);
-		if (ControlBehavior.isAccessibilityEnabled()) {
+		if (Configuration.getAccessibility()) {
 			rm.writeAttribute("role", "button");
 		}
 		rm.write(">");

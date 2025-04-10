@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -34,7 +34,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @constructor
 		 * @public
@@ -89,7 +89,7 @@ sap.ui.define([
 					 */
 					selectedItemId: {
 						type: "string",
-						group: "Data",
+						group: "Misc",
 						defaultValue: ""
 					},
 
@@ -144,7 +144,6 @@ sap.ui.define([
 					 * Determines whether the disabled items are hidden from the DOM structure.
 					 *
 					 * @private
-					 * @ui5-restricted sap.m.SelectList
 					 * @since 1.91
 					 */
 					hideDisabledItems: {
@@ -579,7 +578,7 @@ sap.ui.define([
 			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem);
 
 			if (typeof vItem === "string") {
-				vItem = Element.getElementById(vItem);
+				vItem = Element.registry.get(vItem);
 			}
 
 			this.setProperty("selectedKey", vItem ? vItem.getKey() : "", true);
@@ -917,7 +916,7 @@ sap.ui.define([
 		/**
 		 * Sets the <code>selectedItem</code> association.
 		 *
-		 * @param {sap.ui.core.ID | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
+		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code> to clear the selection.
 		 *
@@ -928,7 +927,7 @@ sap.ui.define([
 
 			if (typeof vItem === "string") {
 				this.setAssociation("selectedItem", vItem, true);
-				vItem = Element.getElementById(vItem);
+				vItem = Element.registry.get(vItem);
 			}
 
 			if (!(vItem instanceof Item) && vItem !== null) {
@@ -993,7 +992,7 @@ sap.ui.define([
 		 */
 		SelectList.prototype.getSelectedItem = function() {
 			var vSelectedItem = this.getAssociation("selectedItem");
-			return (vSelectedItem === null) ? null : Element.getElementById(vSelectedItem) || null;
+			return (vSelectedItem === null) ? null : Element.registry.get(vSelectedItem) || null;
 		};
 
 		/**
@@ -1058,7 +1057,7 @@ sap.ui.define([
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | sap.ui.core.ID | sap.ui.core.Item} vItem The item to remove or its index or id.
+		 * @param {int | string | sap.ui.core.Item} vItem The item to remove or its index or id.
 		 * @returns {sap.ui.core.Item|null} The removed item or <code>null</code>.
 		 * @public
 		 */

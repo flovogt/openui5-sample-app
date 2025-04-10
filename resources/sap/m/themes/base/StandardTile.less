@@ -30,7 +30,7 @@
 	line-height: 1em;
 	font-family: @sapUiFontCondensedFamily;
 	font-stretch: condensed; /* for Firefox */
-	color: var(--sapContent_LabelColor);
+	color: @sapUiContentLabelColor;
 }
 
 .sapMStdTileNum {
@@ -68,7 +68,7 @@
 	word-break: break-word;
 }
 
-html[dir=rtl] .sapMStdTileTitle {
+html[dir=rtl] .sapMStdTileTitle{
 	text-align: right;
 }
 
@@ -85,7 +85,7 @@ html[dir=rtl] .sapMStdTileNum,
 html[dir=rtl] .sapMStdTileNumM,
 html[dir=rtl] .sapMStdTileNumS,
 html[dir=rtl] .sapMStdTileNumUnit,
-html[dir=rtl] .sapMStdTileInfo {
+html[dir=rtl] .sapMStdTileInfo{
 	text-align: left;
 }
 
@@ -97,7 +97,7 @@ html[dir=rtl] .sapMStdTileInfo {
 .sapMStdTileMonitorType {
 	margin-top: -2rem;
 	padding-top: 2rem;
-	background-color: var(--sapTile_Background);
+	background-color: @sapUiTileBackground;
 }
 
 .sapMStdTileBottomRow .sapMStdTileMonitorType {
@@ -150,41 +150,41 @@ html.sap-phone .sapMStdTileNumM {
 }
 
 html.sap-phone .sapMStdTileNumS {
-	font-size: 1rem;
+	font-size:  1rem;
 }
 
 .sapMStdTileIconDiv,
 .sapMStdTileTitle {
-	color: var(--sapTile_TitleTextColor);
+	color: @sapUiTileTitleTextColor;
 }
 
 .sapMStdIconMonitor {
-	color: var(--sapContent_NonInteractiveIconColor);
+	color: @sapUiContentNonInteractiveIconColor;
 }
 
 .sapMStdIconCreate {
-	color: var(--sapContent_NonInteractiveIconColor);
+	color: @sapUiContentNonInteractiveIconColor;
 }
 
 .sapMStdTileNumUnit {
-	color: var(--sapContent_LabelColor);
+	color: @sapUiContentLabelColor;
 	text-transform: uppercase;
 }
 
 .sapMStdTileInfo {
-	color: var(--sapContent_LabelColor);
+	color: @sapUiContentLabelColor;
 }
 
 .sapMStdTileInfoError {
-	color: var(--sapNegativeTextColor);
+	color: @sapUiNegativeText;
 }
 
 .sapMStdTileInfoWarning {
-	color: var(--sapCriticalTextColor);
+	color: @sapUiCriticalText;
 }
 
 .sapMStdTileInfoSuccess {
-	color: var(--sapPositiveTextColor);
+	color: @sapUiPositiveText;
 }
 
 .sapMTileActive-CTX .sapMStdIconCreate {
@@ -201,11 +201,11 @@ html.sap-phone .sapMStdTileNumS {
 .sapMTileActive-CTX .sapMStdTileNumS,
 .sapMTileActive-CTX .sapMStdTileInfo,
 .sapMTileActive-CTX .sapMStdTileMonitorType {
-	color: var(--sapContent_ContrastTextColor);
+	color: @sapUiContentContrastTextColor;
 }
 
 .sapMTileActive-CTX .sapMStdTileIconDiv,
 .sapMTileActive-CTX .sapMStdIconMonitor,
 .sapMTileActive-CTX .sapMStdIconCreate {
-	color: var(--sapContent_ContrastIconColor);
+	color: @sapUiContentContrastIconColor;
 }

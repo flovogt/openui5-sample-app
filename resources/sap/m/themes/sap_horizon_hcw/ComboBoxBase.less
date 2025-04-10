@@ -4,25 +4,25 @@
 /* =================================== */
 
 .sapMInputBaseIconPressed .sapMComboBoxBaseClearIcon {
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 	background: transparent;
 	border-left-color: transparent;
 
 	&:hover {
-		background: var(--sapButton_Lite_Hover_Background);
-		border-left-color: var(--sapButton_Selected_BorderColor);
+		background: @sapUiButtonLiteHoverBackground;
+		border-left-color: @sapUiButtonSelectedBorderColor;
 	}
 
 	&:active {
-		background-color: var(--sapButton_Lite_Active_Background);
-		color: var(--sapButton_Active_TextColor);
+		background-color: @sapUiButtonLiteActiveBackground;
+		color: @sapUiButtonActiveTextColor;
 
 		&::before {
-			color: var(--sapButton_Active_TextColor);
+			color: @sapUiButtonActiveTextColor;
 		}
 	}
 }
 
 .sapMInputBaseIconPressed .sapMComboBoxBaseClearIcon::before {
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 }

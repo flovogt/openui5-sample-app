@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/ui/core/LabelEnablement"],
-	function(Localization, Renderer, InputRenderer, Device, LabelEnablement) {
+sap.ui.define(["sap/ui/core/Renderer", "./InputRenderer", "sap/ui/Device", "sap/ui/core/LabelEnablement", "sap/ui/core/Configuration"],
+	function(Renderer, InputRenderer, Device, LabelEnablement, Configuration) {
 	"use strict";
 
 	/**
@@ -29,7 +29,7 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "./InputRen
 		// so we have to overwrite it by leaving only the text direction
 		// and the textAlign will be controlled by textAlign property of the StepInput
 
-		if (Localization.getRTL()) {
+		if (Configuration.getRTL()) {
 			oRm.attr("dir", "ltr");
 		}
 		// prevent rendering of aria-disabled attribute to avoid having
@@ -49,7 +49,7 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "./InputRen
 	 * @param {sap.m.Input} oControl An object representation of the control
 	 * @returns {string}
 	 */
-	NumericInputRenderer.getAriaRole = function (oControl) {
+	 NumericInputRenderer.getAriaRole = function (oControl) {
 		return "spinbutton";
 	};
 
@@ -57,8 +57,8 @@ sap.ui.define(["sap/base/i18n/Localization", "sap/ui/core/Renderer", "./InputRen
 	/**
 	* Overwrites the accessibility state using the <code>getAccessibilityState</code> method of the <code>InputBaseRenderer</code>.
 	*
-	* @param {sap.m.NumericInput} oNumericInput The numeric input instance
-	* @returns {object} mAccessibilityState
+	* @param {NumericInput} oNumericInput The numeric input instance
+	* @returns {Array} mAccessibilityState
 	*/
 	NumericInputRenderer.getAccessibilityState = function(oNumericInput) {
 		var mAccessibilityState = InputRenderer.getAccessibilityState.apply(this, arguments),

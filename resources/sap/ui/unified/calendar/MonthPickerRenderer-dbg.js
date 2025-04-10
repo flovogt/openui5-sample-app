@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Lib", "sap/ui/unified/calendar/CalendarDate", 'sap/ui/core/format/DateFormat', 'sap/ui/core/InvisibleText', 'sap/ui/core/date/UI5Date'],
-	function(Library, CalendarDate, DateFormat, InvisibleText, UI5Date) {
+sap.ui.define(["sap/ui/unified/calendar/CalendarDate", 'sap/ui/core/format/DateFormat', 'sap/ui/core/InvisibleText', 'sap/ui/core/date/UI5Date'],
+	function(CalendarDate, DateFormat, InvisibleText, UI5Date) {
 	"use strict";
 
 
@@ -66,7 +66,7 @@ sap.ui.define(["sap/ui/core/Lib", "sap/ui/unified/calendar/CalendarDate", 'sap/u
 			role: "grid",
 			readonly: "true",
 			multiselectable: oMP.getIntervalSelection(),
-			roledescription: Library.getResourceBundleFor("sap.ui.unified").getText("MONTH_PICKER"),
+			roledescription: sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified").getText("MONTH_PICKER"),
 			describedby: oMP._bCalendar ? InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_YEAR_PICKER_OPEN_HINT") : ""
 		});
 
@@ -110,15 +110,15 @@ sap.ui.define(["sap/ui/core/Lib", "sap/ui/unified/calendar/CalendarDate", 'sap/u
 			oRm.openStart("div", sId + "-m" + (iCurrentMonth));
 			oRm.class("sapUiCalItem");
 
-			bApplySelection = oMP._isMonthSelected(oCurrentDate);
-			bApplySelectionBetween = oMP._isMonthInsideSelectionRange(oCurrentDate);
+			bApplySelection = oMP._fnShouldApplySelection(oCurrentDate);
+			bApplySelectionBetween = oMP._fnShouldApplySelectionBetween(oCurrentDate);
 
 			if (bApplySelection) {
 				oRm.class("sapUiCalItemSel");
 				mAccProps["selected"] = true;
 			}
 
-			if (bApplySelectionBetween && !bApplySelection) {
+			if (bApplySelectionBetween) {
 				oRm.class("sapUiCalItemSelBetween");
 				mAccProps["selected"] = true;
 			}

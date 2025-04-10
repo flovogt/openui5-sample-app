@@ -1,18 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define([
-	"sap/ui/Device",
-	"sap/m/library",
-	"sap/ui/core/Lib",
-	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
-], function (Device, mobileLibrary, Library) {
+sap.ui.define(["sap/ui/Device", "sap/ui/core/Core", "sap/m/library"],
+	function (Device, Core, mobileLibrary) {
 		"use strict";
 
-		var oResourceBundle = Library.getResourceBundleFor("sap.f");
+		var oResourceBundle = Core.getLibraryResourceBundle("sap.f");
 
 		var FCLRenderer = {
 			apiVersion: 2

@@ -1,14 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	"sap/m/library",
 	"sap/ui/Device",
 	"sap/ui/core/library",
-	"sap/ui/core/Lib",
-	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
+	"sap/ui/core/Lib"
 ], function (library, Device, coreLibrary, Library) {
 	"use strict";
 
@@ -52,6 +51,7 @@ sap.ui.define([
 			oEndButton = oDialog.getEndButton(),
 			sState = oDialog.getState(),
 			bStretch = oDialog.getStretch(),
+			bStretchOnPhone = oDialog.getStretchOnPhone() && Device.system.phone,
 			oValueStateText = oDialog.getAggregation("_valueState"),
 			oFooter = oDialog.getFooter();
 
@@ -78,14 +78,7 @@ sap.ui.define([
 			oRM.class("sapMDialogTouched");
 		}
 
-		if (bStretch) {
-			oRM.class("sapMDialogStretched");
-		}
-
-		/**
-		 * @deprecated As of version 1.11.2
-		 */
-		if (!bStretch && oDialog.getStretchOnPhone() && Device.system.phone) {
+		if (bStretch || bStretchOnPhone) {
 			oRM.class("sapMDialogStretched");
 		}
 
@@ -159,8 +152,9 @@ sap.ui.define([
 		oRM.openEnd();
 
 		if (Device.system.desktop) {
+
 			if (oDialog.getResizable() && !bStretch) {
-				DialogRenderer.renderResizeHandle(oRM);
+				oRM.icon("sap-icon://resize-corner", ["sapMDialogResizeHandler"], {"title": "", "aria-label": ""});
 			}
 
 			// Invisible element which is used to determine when desktop keyboard navigation
@@ -265,15 +259,6 @@ sap.ui.define([
 		oRM.close("div");
 	};
 
-	DialogRenderer.renderResizeHandle = function(oRM) {
-		oRM.openStart("div")
-			.class("sapMDialogResizeHandle")
-			.openEnd();
-
-		oRM.icon("sap-icon://resize-corner", ["sapMDialogResizeHandleIcon"], { "title": null, "aria-label": null });
-
-		oRM.close("div");
-	};
-
 	return DialogRenderer;
+
 }, /* bExport= */ true);

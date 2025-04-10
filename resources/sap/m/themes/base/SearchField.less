@@ -8,14 +8,14 @@
 @_sap_m_SearchField_ButtonFontSize: 1.125rem;
 @_sap_m_SearchField_CompactButtonLineHeight: 1.5rem;
 @_sap_m_SearchField_Compact_FormPaddingLeft: 0.375rem;
-@_sap_m_SearchField_ResetIcon: '\e1c7';
-@_sap_m_SearchField_SearchIcon: '\e00d';
-@_sap_m_SearchField_PlaceholderColor: var(--sapField_PlaceholderTextColor);
-@_sap_m_SearchField_Border: var(--sapField_BorderWidth) var(--sapField_BorderStyle) var(--sapField_BorderColor);
+@_sap_m_SearchField_ResetIcon: "\e1c7";
+@_sap_m_SearchField_SearchIcon: "\e00d";
+@_sap_m_SearchField_PlaceholderColor: @sapUiFieldPlaceholderTextColor;
+@_sap_m_SearchField_Border: @sapUiFieldBorderWidth @sapUiFieldBorderStyle @sapUiFieldBorderColor;
 @_sap_m_SearchField_FocusOffset: 1px;
 @_sap_m_SearchField_FocusBorderRadius: unset;
 @_sap_m_SearchField_PlaceholderFontStyle: italic;
-@_sap_m_SearchField_ActiveBackgroundStyle: var(--sapField_Focus_Background);
+@_sap_m_SearchField_ActiveBackgroundStyle: @sapUiFieldFocusBackground;
 
 .sapMSF {
 	position: relative;
@@ -40,9 +40,9 @@
 }
 
 html.sap-desktop .sapMFocus > .sapMSFF::before {
-	border: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapField_Active_BorderColor);
+	border: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiFieldActiveBorderColor;
 	position: absolute;
-	content: ' ';
+	content: " ";
 	top: @_sap_m_SearchField_FocusOffset;
 	right: @_sap_m_SearchField_FocusOffset;
 	left: @_sap_m_SearchField_FocusOffset;
@@ -52,24 +52,24 @@ html.sap-desktop .sapMFocus > .sapMSFF::before {
 	pointer-events: none;
 }
 
-.sapMSFI[type='search'] {
+.sapMSFI[type="search"] {
 	font-size: 0.88em;
-	-webkit-appearance: none;
+	-webkit-appearance:none;
 	box-sizing: border-box;
 	width: 100%;
 }
 
-.sapMSFI[type='search']::-webkit-search-decoration,
-.sapMSFI[type='search']::-webkit-search-results-decoration,
-.sapMSFI[type='search']::-webkit-search-results-button {
+.sapMSFI[type="search"]::-webkit-search-decoration,
+.sapMSFI[type="search"]::-webkit-search-results-decoration,
+.sapMSFI[type="search"]::-webkit-search-results-button {
 	-webkit-appearance: none;
 }
 
-.sapMSFI[type='search']:focus {
+.sapMSFI[type="search"]:focus {
 	-webkit-appearance: none;
 }
 
-input.sapMSFI[type='search']:focus {
+input.sapMSFI[type="search"]:focus {
 	outline: none;
 	outline-width: 0;
 }
@@ -86,11 +86,11 @@ input.sapMSFI[type='search']:focus {
 .sapMSFF {
 	display: flex;
 	box-sizing: border-box;
-	height: var(--sapElement_Height);
-	box-shadow: var(--sapField_Shadow);
+	height: @sapUiElementHeight;
+	box-shadow: @sapUiFieldShadow;
 	border: @_sap_m_SearchField_Border;
-	background: var(--sapField_BackgroundStyle);
-	background-color: var(--sapField_Background);
+	background: @sapUiFieldBackgroundStyle;
+	background-color: @sapUiFieldBackground;
 	vertical-align: top;
 	width: 100%;
 	position: relative;
@@ -100,16 +100,16 @@ input.sapMSFI[type='search']:focus {
 
 /* Block elements do not work with bar layout */
 .sapMBar .sapMSF {
-	display: inline-block;
+	display : inline-block;
 }
 
 .sapMFocus>.sapMSFF {
-	border-color: var(--sapField_Focus_BorderColor);
+	border-color: @sapUiFieldFocusBorderColor;
 }
 
 :not(.sapMSFDisabled) > .sapMSFF:hover {
-	border-color: var(--sapField_Hover_BorderColor);
-	box-shadow: var(--sapField_Hover_Shadow);
+	border-color: @sapUiFieldHoverBorderColor;
+	box-shadow: @sapUiFieldHoverShadow;
 }
 
 :not(.sapMSFDisabled) > .sapMSFF:active {
@@ -117,8 +117,8 @@ input.sapMSFI[type='search']:focus {
 }
 
 .sapMSFI {
-	color: var(--sapField_TextColor);
-	font-family: var(--sapFontFamily);
+	color: @sapUiFieldTextColor;
+	font-family: @sapUiFontFamily;
 	font-size: @sapMFontMediumSize;
 	background: transparent;
 	height: 100%;
@@ -132,12 +132,12 @@ input.sapMSFI[type='search']:focus {
 	flex: 1;
 }
 
-.sapMSFI[type='search'] {
+.sapMSFI[type='search']{
 	font-size: 0.875rem;
 }
 
 /* remove clear x button in webkit */
-.sapMSFI[type='search']::-webkit-search-cancel-button {
+.sapMSFI[type="search"]::-webkit-search-cancel-button{
 	-webkit-appearance: none;
 	display: none;
 }
@@ -147,7 +147,7 @@ input.sapMSFI[type='search']:focus {
 	height: 100%;
 	line-height: @_sap_m_SearchField_ButtonSize;
 	font-size: @_sap_m_SearchField_ButtonFontSize;
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 	text-align: center;
 	cursor: pointer;
 	padding:0;
@@ -157,7 +157,7 @@ input.sapMSFI[type='search']:focus {
 .sapMSFB::after {
 	speak: none;
 	font-weight: normal;
-	font-family: var(--sapContent_IconFontFamily);
+	font-family: 'SAP-icons';
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -182,10 +182,10 @@ input.sapMSFI[type='search']:focus {
 
 /* refresh icon in some cases */
 :not(.sapMFocus) > .sapMSFReload .sapMSFS::after {
-	content: '\e010';
+	content: "\e010";
 }
 
-/* grouping is not allowed here */
+/*grouping is not allowed here*/
 .sapMSFI::-webkit-input-placeholder {
 	color: @_sap_m_SearchField_PlaceholderColor;
 	font-size: @sapMFontMediumSize;
@@ -196,12 +196,17 @@ input.sapMSFI[type='search']:focus {
 	color: @_sap_m_SearchField_PlaceholderColor;
 	font-size: @sapMFontMediumSize;
 	font-style: @_sap_m_SearchField_PlaceholderFontStyle;
-	opacity: 1; /* in FF by default the opacity is 60% */
+	opacity: 1; // in FF by default the opacity is 60%
 }
 
 .sapMSF.sapMSFDisabled form,
 .sapMSF:not(.sapMSFVal) form.sapMSFNS:not(.sapMSFReload) {
 	padding-right: 0.625rem;
+}
+
+/*Static search icon, needed for the Search Field in the Tool Header*/
+.sapMSFSSI {
+	display: none;
 }
 
 /* Suggestion Item Description */
@@ -219,7 +224,7 @@ input.sapMSFI[type='search']:focus {
 	}
 
 	.sapMSFF {
-		height: var(--sapElement_Compact_Height);
+		height: @sapUiElementCompactHeight;
 		padding-left: @_sap_m_SearchField_Compact_FormPaddingLeft;
 	}
 

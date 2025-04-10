@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -192,27 +192,6 @@ sap.ui.define([
 			WrappedPromise[sFunction] = OriginalPromise[sFunction];
 		}
 	});
-
-	const fnOriginalWithResolvers = OriginalPromise.withResolvers;
-	WrappedPromise.withResolvers = function () {
-		const { promise, resolve, reject, ...rest } = fnOriginalWithResolvers.apply(this, arguments);
-		const mPendingPromise = _trackPromise(""); // withResolvers API does not take any arguments
-		const fnWrappedResolve = function wrappedResolve () {
-			_untrackPromise(mPendingPromise);
-			resolve.apply(this, arguments);
-		};
-		const fnWrappedReject = function wrappedReject() {
-			_untrackPromise(mPendingPromise);
-			reject.apply(this, arguments);
-		};
-
-		return {
-			promise,
-			resolve: fnWrappedResolve,
-			reject: fnWrappedReject,
-			...rest
-		};
-	};
 
 	// overwrite the global Promise object
 	window.Promise = WrappedPromise;

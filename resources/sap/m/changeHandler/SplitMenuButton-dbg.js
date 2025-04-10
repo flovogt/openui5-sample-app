@@ -1,7 +1,7 @@
 /* eslint-disable max-nested-callbacks */
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -20,7 +20,7 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.SplitMenuButton
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @experimental Since 1.48
 	 */
 	var SplitMenuButton = {};
@@ -146,8 +146,10 @@ sap.ui.define([
 							});
 						})
 						.then(function(){
-							oButton.attachEvent(
+							return oModifier.attachEvent(
+								oButton,
 								"press",
+								"sap.m.changeHandler.SplitMenuButton.pressHandler",
 								{
 									selector: oModifier.getSelector(oMenuItem, oAppComponent),
 									appComponentId: oAppComponent.getId(),
@@ -155,6 +157,8 @@ sap.ui.define([
 								},
 								SplitMenuButton.pressHandler
 							);
+						})
+						.then(function(){
 							return oModifier.insertAggregation(oParent, sParentAggregation, oButton, iAggregationIndex + iIndex, oView);
 						});
 				}, Promise.resolve());

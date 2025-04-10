@@ -1,13 +1,8 @@
-/* ============================================= */
-/* CSS for control sap.m/PlanningCalendarHeader  */
-/* Base theme                                    */
-/* ============================================= */
-
-@_sap_m_PlanningCalendarHeader_Background: var(--sapList_Background);
+@_sap_m_PlanningCalendarHeader_Background: @sapUiListBackground;
 
 .sapMPCHead .sapMPCHeadActionsToolbar,
 .sapMPCHead .sapMPCHeadNavToolbar,
-.sapMPCHead .sapMTB.sapMTB-Transparent-CTX {
+.sapMPCHead .sapMTB.sapMTB-Transparent-CTX{
 	padding-left: 1rem;
 	background-color: @_sap_m_PlanningCalendarHeader_Background;
 }
@@ -24,11 +19,9 @@
 }
 
 .sapUiSizeCompact .sapMPCHead {
-
 	.sapMPCHeadActionsToolbar {
 		min-height: 3rem;
 	}
-
 	.sapMPCHeadNavToolbar {
 		min-height: 2rem;
 	}
@@ -40,7 +33,6 @@
 
 html.sap-phone:not(.sapUiMedia-Std-Tablet),
 html.sapUiMedia-Std-Phone:not(.sapUiMedia-Std-Tablet) {
-
 	.sapMPCHeadNavToolbar {
 		padding: 0 0 0 0.125rem;
 

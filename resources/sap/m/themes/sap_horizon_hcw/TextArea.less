@@ -15,9 +15,7 @@
 @_sapMTextAreaValueStateErrorWarningPadding_Compact: 0.0625rem 0.375rem 0;
 
 .sapMFocus.sapMTextArea {
-
 	& .sapMInputBaseContentWrapper {
-
 		.sapMInputBaseInner {
 			outline-offset: -3px;
 		}
@@ -33,24 +31,23 @@
 }
 
 html.sap-desktop:not(.sapUiNativeScrollbars) .sapMTextArea {
-
 	.sapMInputBaseContentWrapperWarning ::-webkit-scrollbar {
-		background: var(--sapField_WarningBackgroundStyle);
-		background-color: var(--sapScrollBar_TrackColor);
+		background: @sapUiFieldWarningBackgroundStyle;
+		background-color: @sapUiScrollBarTrackColor;
 	}
 
 	.sapMInputBaseContentWrapperError ::-webkit-scrollbar {
-		background: var(--sapField_InvalidBackgroundStyle);
-		background-color: var(--sapScrollBar_TrackColor);
+		background: @sapUiFieldInvalidBackgroundStyle;
+		background-color: @sapUiScrollBarTrackColor;
 	}
 
 	.sapMInputBaseContentWrapperInformation ::-webkit-scrollbar {
-		background: var(--sapField_InformationBackgroundStyle);
-		background-color: var(--sapScrollBar_TrackColor);
+		background: @sapUiFieldInformationBackgroundStyle;
+		background-color: @sapUiScrollBarTrackColor;
 	}
 
 	.sapMInputBaseContentWrapperSuccess ::-webkit-scrollbar {
-		background: var(--sapField_SuccessBackgroundStyle);
-		background-color: var(--sapScrollBar_TrackColor);
+		background: @sapUiFieldSuccessBackgroundStyle;
+		background-color: @sapUiScrollBarTrackColor;
 	}
 }

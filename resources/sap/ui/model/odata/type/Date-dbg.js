@@ -1,22 +1,21 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/base/Log",
-	"sap/base/i18n/date/CalendarType",
 	"sap/base/util/extend",
-	"sap/ui/core/Lib",
+	"sap/ui/core/CalendarType",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function(Log, CalendarType, extend, Library, UI5Date, DateFormat, FormatException, ParseException,
-	ValidateException, ODataType) {
+], function (Log, extend, CalendarType, UI5Date, DateFormat, FormatException, ParseException,
+		ValidateException, ODataType) {
 	"use strict";
 
 	var rDate = /\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])/,
@@ -76,7 +75,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @alias sap.ui.model.odata.type.Date
 	 * @param {object} [oFormatOptions]
@@ -161,7 +160,7 @@ sap.ui.define([
 	EdmDate.prototype._getErrorMessage = function () {
 		var sDemoDate = UI5Date.getInstance().getFullYear() + "-12-31";
 
-		return Library.getResourceBundleFor("sap.ui.core").getText("EnterDate",
+		return sap.ui.getCore().getLibraryResourceBundle().getText("EnterDate",
 			[this.formatValue(sDemoDate, "string")]);
 	};
 

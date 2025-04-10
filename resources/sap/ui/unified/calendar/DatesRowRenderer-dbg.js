@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/base/i18n/date/CalendarType", "sap/ui/core/Lib", 'sap/ui/core/Renderer', 'sap/ui/unified/calendar/CalendarDate', './MonthRenderer'],
-	function(CalendarType, Library, Renderer, CalendarDate, MonthRenderer) {
+sap.ui.define(['sap/ui/core/Renderer', 'sap/ui/unified/calendar/CalendarDate', './MonthRenderer', "sap/ui/core/CalendarType"],
+	function(Renderer, CalendarDate, MonthRenderer, CalendarType) {
 	"use strict";
 
 	/*
@@ -103,8 +103,8 @@ sap.ui.define(["sap/base/i18n/date/CalendarType", "sap/ui/core/Lib", 'sap/ui/cor
 			iDaysWidth,
 			aWeekNumbers;
 
-		if (oDatesRow.getShowWeekNumbers() && oDatesRow._getPrimaryCalendarType() === CalendarType.Gregorian) {
-			oResourceBundle = Library.getResourceBundleFor("sap.ui.unified");
+		if (oDatesRow.getShowWeekNumbers() && oDatesRow.getPrimaryCalendarType() === CalendarType.Gregorian) {
+			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 
 			oRm.openStart("div", oDatesRow.getId() + "-weeks");
 			oRm.class("sapUiCalRowWeekNumbers");

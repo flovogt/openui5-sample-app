@@ -14,7 +14,7 @@
 }
 
 .sapMFF .sapMFFLRemoveIcon {
-	color: var(--sapButton_IconColor);
+	color: @sapUiButtonIconColor;
 	font-size: 0.875rem;
 	line-height: 2rem;
 	padding-bottom: 0.25rem;
@@ -26,7 +26,7 @@
 }
 
 .sapMFF .sapMFFLRemoveIcon:hover {
-	background-color: var(--sapButton_Lite_Hover_Background);
+	background-color: @sapUiButtonLiteHoverBackground;
 	border-radius: 0.2rem;
 }
 
@@ -38,8 +38,11 @@
 	padding-right: 0.25rem;
 }
 
-/* We need to toggle separate classes to show/hide the remove icon, otherwise
- clicking the icon does not remove the facet button in ie9 */
+
+/*
+We need to toggle separate classes to show/hide the remove icon, otherwise
+clicking the icon does not remove the facet button in ie9
+*/
 .sapMFF .sapMFFLVisibleRemoveIcon {
 	visibility: visible;
 }
@@ -49,10 +52,10 @@
 }
 
 .sapMFF .sapMFFLRemoveIcon:hover {
-	background-color: var(--sapButton_Lite_Hover_Background);
+	background-color: @sapUiButtonLiteHoverBackground;
 }
 
 .sapMFF .sapMFFLRemoveIcon:active {
-	background-color: var(--sapButton_Lite_Active_Background);
-	color: var(--sapContent_ContrastIconColor);
+	background-color: @sapUiButtonLiteActiveBackground;
+	color: @sapUiContentContrastIconColor;
 }

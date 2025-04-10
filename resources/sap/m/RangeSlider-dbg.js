@@ -1,29 +1,27 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-    "sap/base/i18n/Localization",
     "sap/ui/core/InvisibleText",
     "sap/base/Log",
     "./Slider",
     "./SliderUtilities",
     "./RangeSliderRenderer",
-    "sap/ui/core/Lib",
     "sap/ui/thirdparty/jquery",
-    "sap/ui/events/KeyCodes"
+    "sap/ui/events/KeyCodes",
+    "sap/ui/core/Configuration"
 ],
     function(
-        Localization,
         InvisibleText,
         log,
         Slider,
         SliderUtilities,
         RangeSliderRenderer,
-        Library,
         jQuery,
-        KeyCodes
+        KeyCodes,
+        Configuration
     ) {
         "use strict";
 
@@ -53,7 +51,7 @@ sap.ui.define([
          * @extends sap.m.Slider
          *
          * @author SAP SE
-         * @version 1.134.0
+         * @version 1.120.20
          *
          * @constructor
          * @public
@@ -119,7 +117,7 @@ sap.ui.define([
             // the initial focus range which should be used
             this._aInitialFocusRange = this.getRange();
 
-            this._oResourceBundle = Library.getResourceBundleFor('sap.m');
+            this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
 
             this._ariaUpdateDelay = [];
 
@@ -170,7 +168,7 @@ sap.ui.define([
         };
 
         RangeSlider.prototype.onBeforeRendering = function () {
-            this._bRTL = Localization.getRTL();
+            this._bRTL = Configuration.getRTL();
 
             var aRange = this.getRange();
 

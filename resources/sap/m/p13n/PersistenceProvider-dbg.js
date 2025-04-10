@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/Control", "sap/m/p13n/enums/PersistenceMode"
-], (CoreControl, mode) => {
+	"sap/ui/core/Control", 	"sap/m/p13n/enum/PersistenceMode"
+], function(CoreControl, mode) {
 	"use strict";
 
 	/**
@@ -19,18 +19,18 @@ sap.ui.define([
 	 * @ui5-restricted sap.ui.mdc, sap.fe
 	 *
 	 * @since 1.104
-	 */
-	const PersistenceProvider = CoreControl.extend("sap.m.p13n.PersistenceProvider", /** @lends sap.ui.mdc.p13n.PersistenceProvider.prototype */ {
+	*/
+	var PersistenceProvider = CoreControl.extend("sap.m.p13n.PersistenceProvider", /** @lends sap.ui.mdc.p13n.PersistenceProvider.prototype */ {
 		metadata: {
 			library: "sap.m",
 			designtime: "sap/m/designtime/PersistenceProvider.designtime",
-			properties: {
+			properties:  {
 				/**
 				 * Provides the mode setting for the <code>PersistenceProvider</code>.
 				 * Allowed options are {@link sap.ui.mdc.enum.PersistenceMode}
 				 */
 				mode: {
-					type: "sap.m.p13n.enums.PersistenceMode",
+					type: "sap.m.p13n.enum.PersistenceMode",
 					group: "Data",
 					defaultValue: mode.Auto
 				}
@@ -55,7 +55,7 @@ sap.ui.define([
 		}
 	});
 
-	PersistenceProvider.prototype.applySettings = function() {
+	PersistenceProvider.prototype.applySettings = function () {
 		CoreControl.prototype.applySettings.apply(this, arguments);
 		this._bmodeLocked = true;
 		return this;
@@ -64,14 +64,12 @@ sap.ui.define([
 	/**
 	 * Set the mode for the <code>PersistenceProvider</code>.
 	 *
-	 * @param {sap.m.p13n.enums.PersistenceMode} sValue
-	 * @returns {this}
 	 * @override
 	 * @private
 	 * @ui5-restricted sap.fe
 	 * @MDC_PUBLIC_CANDIDATE
 	 */
-	PersistenceProvider.prototype.setMode = function(sValue) {
+	PersistenceProvider.prototype.setMode = function (sValue) {
 
 		if (this._bmodeLocked && sValue !== this.getMode()) {
 			throw new Error("mode is a final property.");
@@ -82,7 +80,7 @@ sap.ui.define([
 		return this;
 	};
 
-	PersistenceProvider.prototype.exit = function() {
+	PersistenceProvider.prototype.exit = function () {
 		this._bmodeLocked = null;
 
 		CoreControl.prototype.exit.apply(this, arguments);

@@ -1,27 +1,29 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/ui/core/Element",
 	'sap/ui/unified/calendar/CalendarUtils',
+	'sap/ui/core/format/TimezoneUtil',
+	'sap/ui/core/Core',
 	'sap/ui/core/date/UniversalDate',
 	'sap/ui/unified/CalendarLegendRenderer',
 	"sap/ui/core/date/UI5Date",
 	'sap/ui/unified/library',
-	"sap/base/Log"
-],
+	 "sap/base/Log"
+	],
 	function(
-		Element,
 		CalendarUtils,
+		TimezoneUtil,
+		Core,
 		UniversalDate,
 		CalendarLegendRenderer,
 		UI5Date,
 		library,
 		Log
-	) {
+		) {
 		"use strict";
 
 
@@ -48,6 +50,7 @@ sap.ui.define([
 		var oDate = oTimesRow._getStartDate();
 		var sTooltip = oTimesRow.getTooltip_AsString();
 		var sId = oTimesRow.getId();
+		var oAriaLabel = {value: sId + "-Descr", append: true};
 
 		oRm.openStart("div", oTimesRow);
 		oRm.class("sapUiCalTimesRow");
@@ -57,14 +60,23 @@ sap.ui.define([
 			oRm.attr("title", sTooltip);
 		}
 
+		if (oTimesRow._getShowHeader()) {
+			oAriaLabel.value = oAriaLabel.value + " " + sId + "-Head";
+		}
+
 		oRm.accessibilityState(oTimesRow, {
 			role: "grid",
 			readonly: "true",
 			multiselectable: !oTimesRow.getSingleSelection() || oTimesRow.getIntervalSelection(),
-			labelledby: oTimesRow._getShowHeader() ? {value: sId + "-Head", append: true} : undefined
+			labelledby: oAriaLabel
 		});
 
+		oRm.openEnd(); // div element
+		oRm.openStart("span", sId + "-Descr");
+		oRm.style("display", "none");
 		oRm.openEnd();
+		oRm.text(oTimesRow._rb.getText("CALENDAR_DIALOG"));
+		oRm.close("span");
 
 		if (oTimesRow.getIntervalSelection()) {
 			oRm.openStart("span", sId + "-Start");
@@ -190,7 +202,7 @@ sap.ui.define([
 
 		var sLegendId = oTimesRow.getLegend();
 		if (sLegendId) {
-			var oLegend = Element.getElementById(sLegendId);
+			var oLegend = sap.ui.getCore().byId(sLegendId);
 			if (oLegend) {
 				if (!(oLegend instanceof sap.ui.unified.CalendarLegend)) {
 					throw new Error(oLegend + " is not an sap.ui.unified.CalendarLegend. " + oTimesRow);
@@ -212,7 +224,7 @@ sap.ui.define([
 				// aria-selected isn't valid for role="button"
 				selected: sRole !== "gridcell" ? null : false,
 				label: "",
-				describedby: oTimesRow._getTimeDescription()
+				describedby: ""
 			};
 
 		var sYyyyMMddHHmm = oTimesRow._oFormatYyyyMMddHHmm.format(oDate.getJSDate(), true);

@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./library', "sap/ui/core/Lib"],
-	function(library, Library) {
+sap.ui.define(['./library', 'sap/ui/core/Core'],
+	function(library, Core) {
 	"use strict";
 
 
@@ -21,7 +21,7 @@ sap.ui.define(['./library', "sap/ui/core/Lib"],
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
 
 	// shortcut for library resource bundle
-	var oRb = Library.getResourceBundleFor("sap.m");
+	var oRb = Core.getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.

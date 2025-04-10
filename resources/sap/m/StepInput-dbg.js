@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,7 +8,6 @@
 sap.ui.define([
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
-	"sap/ui/core/Lib",
 	"sap/ui/core/message/MessageMixin",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/ValidateException",
@@ -23,7 +22,6 @@ sap.ui.define([
 function(
 	Control,
 	IconPool,
-	Library,
 	MessageMixin,
 	NumberFormat,
 	ValidateException,
@@ -121,7 +119,7 @@ function(
 		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @constructor
 		 * @public
@@ -301,7 +299,7 @@ function(
 		});
 
 		// get resource translation bundle;
-		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
+		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		StepInput.STEP_INPUT_INCREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_INCREASE_BTN");
 		StepInput.STEP_INPUT_DECREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_DECREASE_BTN");
 
@@ -729,7 +727,7 @@ function(
 			var min = this._getMin(),
 				max = this._getMax(),
 				value = this._parseNumber(this._getInput().getValue()),
-				oCoreMessageBundle = Library.getResourceBundleFor("sap.ui.core"),
+				oCoreMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core"),
 				oBinding = this.getBinding("value"),
 				oBindingType = oBinding && oBinding.getType && oBinding.getType(),
 				sBindingConstraintMax = oBindingType && oBindingType.oConstraints && oBindingType.oConstraints.maximum,
@@ -753,16 +751,16 @@ function(
 				if (bHasValidationErrorListeners && sBindingConstraintMax) {
 					return;
 				}
-				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMax", [max]);
+				sMessage = oCoreMessageBundle.getText("EnterNumberMax", [max]);
 				aViolatedConstraints.push("maximum");
 			} else if (this._isLessThanMin(value)) {
 				if (bHasValidationErrorListeners && sBindingConstraintMin) {
 					return;
 				}
-				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMin", [min]);
+				sMessage = oCoreMessageBundle.getText("EnterNumberMin", [min]);
 				aViolatedConstraints.push("minimum");
 			} else if (this._areFoldChangeRequirementsFulfilled() && (value % this.getStep() !== 0)) {
-				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("Float.Invalid");
+				sMessage = oCoreMessageBundle.getText("Float.Invalid");
 			}
 
 			if (sMessage) {
@@ -1625,7 +1623,7 @@ function(
 
 		StepInput.prototype.getAccessibilityInfo = function() {
 			return {
-				type: Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
+				type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
 				description: this.getValue() || "",
 				focusable: this.getEnabled(),
 				enabled: this.getEnabled(),

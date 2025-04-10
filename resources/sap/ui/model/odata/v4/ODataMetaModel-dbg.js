@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -57,17 +57,16 @@ sap.ui.define([
 				}
 			}
 		}),
-		oBooleanType,
-		mCodeListUrl2Promise = {},
+		oCountType,
+		mCodeListUrl2Promise = new Map(),
 		DEBUG = Log.Level.DEBUG,
-		aInt64Names = ["$count", "@$ui5.node.groupLevelCount", "@$ui5.node.level"],
-		oInt64Type,
 		rLeftBraces = /\$\(/g,
 		rNumber = /^-?\d+$/,
 		sODataMetaModel = "sap.ui.model.odata.v4.ODataMetaModel",
 		rPredicate = /\(.*\)$/,
 		oRawType = new Raw(),
 		rRightBraces = /\$\)/g,
+		mSharedModelByUrl = new Map(),
 		mSupportedEvents = {
 			messageChange : true
 		},
@@ -157,13 +156,127 @@ sap.ui.define([
 		 * @hideconstructor
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 */
 		ODataMetaModel = MetaModel.extend("sap.ui.model.odata.v4.ODataMetaModel", {
 				constructor : constructor
 			}),
 		ODataMetaListBinding,
 		ODataMetaPropertyBinding;
+
+	/**
+	 * Adds the given reference URI to the map of reference URIs for schemas.
+	 *
+	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
+	 *   The OData metadata model
+	 * @param {string} sSchema
+	 *   A namespace of a schema, for example "foo.bar."
+	 * @param {string} sReferenceUri
+	 *   A URI to the metadata document for the given schema
+	 * @param {string} [sDocumentUri]
+	 *   The URI to the metadata document containing the given reference to the given schema
+	 * @throws {Error}
+	 *   If the schema has already been loaded from a different URI
+	 */
+	function addUrlForSchema(oMetaModel, sSchema, sReferenceUri, sDocumentUri) {
+		var sUrl0,
+			mUrls = oMetaModel.mSchema2MetadataUrl[sSchema];
+
+		if (!mUrls) {
+			mUrls = oMetaModel.mSchema2MetadataUrl[sSchema] = {};
+			mUrls[sReferenceUri] = false;
+		} else if (!(sReferenceUri in mUrls)) {
+			sUrl0 = Object.keys(mUrls)[0];
+			if (mUrls[sUrl0]) {
+				// document already processed, no different URLs allowed
+				reportAndThrowError(oMetaModel, "A schema cannot span more than one document: "
+					+ sSchema + " - expected reference URI " + sUrl0 + " but instead saw "
+					+ sReferenceUri, sDocumentUri);
+			}
+			mUrls[sReferenceUri] = false;
+		}
+	}
+
+	/**
+	 * Returns the schema with the given namespace, or a promise which is resolved as soon as the
+	 * schema has been included, or <code>undefined</code> in case the schema is neither present nor
+	 * referenced.
+	 *
+	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
+	 *   The OData metadata model
+	 * @param {object} mScope
+	 *   The $metadata "JSON" of the root service
+	 * @param {string} sSchema
+	 *   A namespace, for example "foo.bar.", of a schema.
+	 * @param {function} fnLog
+	 *   The log function
+	 * @returns {object|sap.ui.base.SyncPromise|undefined}
+	 *   The schema, or a promise which is resolved without details or rejected with an error, or
+	 *   <code>undefined</code>.
+	 * @throws {Error}
+	 *   If the schema has already been loaded and read from a different URI
+	 */
+	function getOrFetchSchema(oMetaModel, mScope, sSchema, fnLog) {
+		var oPromise, sUrl, aUrls, mUrls;
+
+		/*
+		 * Include the schema (and all of its children) with namespace <code>sSchema</code> from
+		 * the given referenced scope.
+		 *
+		 * @param {object} mReferencedScope
+		 *   The $metadata "JSON"
+		 */
+		function includeSchema(mReferencedScope) {
+			var oElement,
+				sKey;
+
+			if (!(sSchema in mReferencedScope)) {
+				fnLog(WARNING, sUrl, " does not contain ", sSchema);
+				return;
+			}
+
+			fnLog(DEBUG, "Including ", sSchema, " from ", sUrl);
+			for (sKey in mReferencedScope) {
+				// $EntityContainer can be ignored; $Reference, $Version is handled above
+				if (sKey[0] !== "$" && schema(sKey) === sSchema) {
+					oElement = mReferencedScope[sKey];
+					mScope[sKey] = oElement;
+					mergeAnnotations(oElement, mScope.$Annotations);
+				}
+			}
+		}
+
+		if (sSchema in mScope) {
+			return mScope[sSchema];
+		}
+
+		mUrls = oMetaModel.mSchema2MetadataUrl[sSchema];
+		if (mUrls) {
+			aUrls = Object.keys(mUrls);
+			if (aUrls.length > 1) {
+				reportAndThrowError(oMetaModel, "A schema cannot span more than one document: "
+					+ "schema is referenced by following URLs: " + aUrls.join(", "), sSchema);
+			}
+
+			sUrl = aUrls[0];
+			mUrls[sUrl] = true;
+			fnLog(DEBUG, "Namespace ", sSchema, " found in $Include of ", sUrl);
+			oPromise = oMetaModel.mMetadataUrl2Promise[sUrl];
+			if (!oPromise) {
+				fnLog(DEBUG, "Reading ", sUrl);
+				oPromise = oMetaModel.mMetadataUrl2Promise[sUrl]
+					= SyncPromise.resolve(oMetaModel.oRequestor.read(sUrl))
+						.then(oMetaModel.validate.bind(oMetaModel, sUrl));
+			}
+			oPromise = oPromise.then(includeSchema);
+			// BEWARE: oPromise may already be resolved, then includeSchema() is done now
+			if (sSchema in mScope) {
+				return mScope[sSchema];
+			}
+			mScope[sSchema] = oPromise;
+			return oPromise;
+		}
+	}
 
 	/**
 	 * Checks that the term is the expected term and determines the qualifier.
@@ -219,6 +332,65 @@ sap.ui.define([
 					return oParameter.$Name === sName;
 				});
 		});
+	}
+
+	/**
+	 * Merges the given schema's annotations into the root scope's $Annotations.
+	 *
+	 * @param {object} oSchema
+	 *   a schema; schema children are ignored because they do not contain $Annotations
+	 * @param {object} mAnnotations
+	 *   the root scope's $Annotations
+	 * @param {boolean} [bPrivileged]
+	 *   whether the schema has been loaded from a privileged source and thus may overwrite
+	 *   existing annotations
+	 */
+	function mergeAnnotations(oSchema, mAnnotations, bPrivileged) {
+		var sTarget;
+
+		/*
+		 * "PUT" semantics on term/qualifier level, only privileged sources may overwrite.
+		 *
+		 * @param {object} oTarget
+		 *   The target object (which is modified)
+		 * @param {object} oSource
+		 *   The source object
+		 */
+		function extend(oTarget, oSource) {
+			var sName;
+
+			for (sName in oSource) {
+				if (bPrivileged || !(sName in oTarget)) {
+					oTarget[sName] = oSource[sName];
+				}
+			}
+		}
+
+		for (sTarget in oSchema.$Annotations) {
+			if (!(sTarget in mAnnotations)) {
+				mAnnotations[sTarget] = {};
+			}
+			extend(mAnnotations[sTarget], oSchema.$Annotations[sTarget]);
+		}
+		delete oSchema.$Annotations;
+	}
+
+	/**
+	 * Reports an error with the given message and details and throws it.
+	 *
+	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
+	 *   The OData metadata model
+	 * @param {string} sMessage
+	 *   Error message
+	 * @param {string} sDetails
+	 *   Error details
+	 * @throws {Error}
+	 */
+	function reportAndThrowError(oMetaModel, sMessage, sDetails) {
+		var oError = new Error(sDetails + ": " + sMessage);
+
+		oMetaModel.oModel.reportError(sMessage, sODataMetaModel, oError);
+		throw oError;
 	}
 
 	/**
@@ -413,8 +585,8 @@ sap.ui.define([
 			if (oPromise.isFulfilled()) {
 				aContexts = oPromise.getResult();
 			} else {
-				oPromise.then(function (aContexts0) {
-					that.setContexts(aContexts0);
+				oPromise.then(function (aContexts) {
+					that.setContexts(aContexts);
 					that._fireChange({reason : ChangeReason.Change});
 				});
 				aContexts.dataRequested = true;
@@ -536,7 +708,6 @@ sap.ui.define([
 		// no need to use UI5Date.getInstance as only the timestamp is relevant
 		this.oLastModified = new Date(0);
 		this.oMetadataPromise = null;
-		this.oMetaModelForAnnotations = null; // see #_copyAnnotations
 		this.oModel = oModel;
 		this.mMetadataUrl2Promise = {};
 		this.oRequestor = oRequestor;
@@ -551,7 +722,6 @@ sap.ui.define([
 		//   "B." : {"/B/$metadata" : true} // namespace already read
 		// }
 		this.mSchema2MetadataUrl = {};
-		this.mSharedModelByUrl = {}; // see #getOrCreateSharedModel
 		this.mSupportedBindingModes = {OneTime : true, OneWay : true};
 		this.bSupportReferences = bSupportReferences !== false; // default is true
 		// ClientListBinding#filter calls checkFilter on the model; ClientModel does
@@ -568,248 +738,6 @@ sap.ui.define([
 	 * @private
 	 */
 	ODataMetaModel.prototype.$$valueAsPromise = true;
-
-	/**
-	 * Adds the given reference URI to the map of reference URIs for schemas.
-	 *
-	 * @param {string} sSchema
-	 *   A namespace of a schema, for example "foo.bar."
-	 * @param {string} sReferenceUri
-	 *   A URI to the metadata document for the given schema
-	 * @param {string} [sDocumentUri]
-	 *   The URI to the metadata document containing the given reference to the given schema
-	 * @throws {Error}
-	 *   If the schema has already been loaded from a different URI
-	 *
-	 * @private
-	 */
-	ODataMetaModel.prototype._addUrlForSchema = function (sSchema, sReferenceUri, sDocumentUri) {
-		var sUrl0,
-			mUrls = this.mSchema2MetadataUrl[sSchema];
-
-		if (!mUrls) {
-			mUrls = this.mSchema2MetadataUrl[sSchema] = {};
-			mUrls[sReferenceUri] = false;
-		} else if (!(sReferenceUri in mUrls)) {
-			sUrl0 = Object.keys(mUrls)[0];
-			if (mUrls[sUrl0]) {
-				// document already processed, no different URLs allowed
-				this._reportAndThrowError("A schema cannot span more than one document: "
-					+ sSchema + " - expected reference URI " + sUrl0 + " but instead saw "
-					+ sReferenceUri, sDocumentUri);
-			}
-			mUrls[sReferenceUri] = false;
-		}
-	};
-
-	/**
-	 * Changes the given scope's map of annotations by applying the current array of change objects
-	 * defining a metamodel path (pointing to an annotation) and a value to be set for that
-	 * annotation.
-	 *
-	 * Additionally imports annotations for all own schemas from
-	 * <code>oMetaModelForAnnotations</code>.
-	 *
-	 * @param {object} mScope
-	 *   The $metadata "JSON" of the root service
-	 *
-	 * @private
-	 * @see #_copyAnnotations
-	 */
-	ODataMetaModel.prototype._changeAnnotations = function (mScope) {
-		if (this.oMetaModelForAnnotations) {
-			Object.keys(mScope).forEach((sElement) => {
-				if (mScope[sElement].$kind === "Schema") {
-					this._doMergeAnnotations({
-						$Annotations
-							: this.oMetaModelForAnnotations._getAnnotationsForSchema(sElement)
-					}, mScope.$Annotations, true);
-				}
-			});
-		}
-
-		this.aAnnotationChanges?.forEach(({path : sPath, value : vValue}) => {
-			const iIndexOfAt = sPath.indexOf("@");
-			const sTarget = this.getObject(sPath.slice(0, iIndexOfAt) + "@$ui5.target");
-			if (sTarget) {
-				mScope.$Annotations[sTarget] ??= {};
-				mScope.$Annotations[sTarget][sPath.slice(iIndexOfAt)] = vValue;
-			}
-		});
-	};
-
-	/**
-	 * Saves the meta model delivering annotations that have to be merged later.
-	 *
-	 * @param {sap.ui.model.odata.v4.ODataMetaModel} oMetaModel
-	 *   The meta model delivering annotations
-	 * @throws {Error}
-	 *   If there are local annotation files
-	 *
-	 * @private
-	 * @see #_changeAnnotations
-	 * @see #_getAnnotationsForSchema
-	 */
-	ODataMetaModel.prototype._copyAnnotations = function (oMetaModel) {
-		if (this.aAnnotationUris) {
-			throw new Error("Must not copy annotations when there are local annotation files");
-		}
-
-		this.oMetaModelForAnnotations = oMetaModel;
-	};
-
-	/**
-	 * Merges the given schema's annotations into the root scope's $Annotations.
-	 *
-	 * @param {object} oSchema
-	 *   A schema; schema children are ignored because they do not contain $Annotations
-	 * @param {object} mAnnotations
-	 *   The root scope's $Annotations
-	 * @param {boolean} [bPrivileged]
-	 *   Whether the schema has been loaded from a privileged source and thus may overwrite
-	 *   existing annotations
-	 * @returns {boolean}
-	 *   Whether at least one annotation has been merged
-	 *
-	 * @private
-	 */
-	ODataMetaModel.prototype._doMergeAnnotations = function (oSchema, mAnnotations, bPrivileged) {
-		let bMerged = false;
-
-		/*
-		 * "PUT" semantics on term/qualifier level, only privileged sources may overwrite.
-		 *
-		 * @param {object} oTarget
-		 *   The target object (which is modified)
-		 * @param {object} oSource
-		 *   The source object
-		 */
-		function extend(oTarget, oSource) {
-			for (const sName in oSource) {
-				if (bPrivileged || !(sName in oTarget)) {
-					oTarget[sName] = oSource[sName];
-					bMerged = true;
-				}
-			}
-		}
-
-		for (const sTarget in oSchema.$Annotations) {
-			mAnnotations[sTarget] ??= {};
-			extend(mAnnotations[sTarget], oSchema.$Annotations[sTarget]);
-		}
-		delete oSchema.$Annotations;
-
-		return bMerged;
-	};
-
-	/**
-	 * Gets all annotations targeting the given schema. The function expects that the metadata and
-	 * the local annotation files have already been loaded.
-	 *
-	 * @param {string} sSchema
-	 *   A namespace, for example "foo.bar.", of a schema
-	 * @returns {object}
-	 *   All annotations targeting the given schema
-	 *
-	 * @private
-	 * @see #_changeAnnotations
-	 * @see #_copyAnnotations
-	 */
-	ODataMetaModel.prototype._getAnnotationsForSchema = function (sSchema) {
-		const mAnnotations = {};
-		const mScope = this.fetchEntityContainer().getResult();
-		Object.keys(mScope.$Annotations).forEach((sTarget) => {
-			if (sTarget.startsWith(sSchema)) {
-				mAnnotations[sTarget] = mScope.$Annotations[sTarget];
-			}
-		});
-
-		return mAnnotations;
-	};
-
-	/**
-	 * Returns the schema with the given namespace, or a promise which is resolved as soon as the
-	 * schema has been included, or <code>undefined</code> in case the schema is neither present nor
-	 * referenced.
-	 *
-	 * @param {object} mScope
-	 *   The $metadata "JSON" of the root service
-	 * @param {string} sSchema
-	 *   A namespace, for example "foo.bar.", of a schema
-	 * @param {function} fnLog
-	 *   The log function
-	 * @returns {object|sap.ui.base.SyncPromise|undefined}
-	 *   The schema, or a promise which is resolved without details or rejected with an error, or
-	 *   <code>undefined</code>.
-	 * @throws {Error}
-	 *   If the schema has already been loaded and read from a different URI
-	 *
-	 * @private
-	 */
-	ODataMetaModel.prototype._getOrFetchSchema = function (mScope, sSchema, fnLog) {
-		var oPromise, sUrl, aUrls, mUrls,
-			that = this;
-
-		/*
-		 * Include the schema (and all of its children) with namespace <code>sSchema</code> from
-		 * the given referenced scope.
-		 *
-		 * @param {object} mReferencedScope
-		 *   The $metadata "JSON"
-		 */
-		function includeSchema(mReferencedScope) {
-			if (!(sSchema in mReferencedScope)) {
-				fnLog(WARNING, sUrl, " does not contain ", sSchema);
-				return;
-			}
-
-			fnLog(DEBUG, "Including ", sSchema, " from ", sUrl);
-			let bMerged = false;
-			for (const sKey in mReferencedScope) {
-				// $EntityContainer can be ignored; $Reference, $Version is handled above
-				if (sKey[0] !== "$" && schema(sKey) === sSchema) {
-					mScope[sKey] = mReferencedScope[sKey];
-					if (that._doMergeAnnotations(mScope[sKey], mScope.$Annotations)) {
-						bMerged = true;
-					}
-				}
-			}
-			if (bMerged) {
-				that._changeAnnotations(mScope);
-			}
-		}
-
-		if (sSchema in mScope) {
-			return mScope[sSchema];
-		}
-
-		mUrls = this.mSchema2MetadataUrl[sSchema];
-		if (mUrls) {
-			aUrls = Object.keys(mUrls);
-			if (aUrls.length > 1) {
-				this._reportAndThrowError("A schema cannot span more than one document: "
-					+ "schema is referenced by following URLs: " + aUrls.join(", "), sSchema);
-			}
-
-			sUrl = aUrls[0];
-			mUrls[sUrl] = true;
-			fnLog(DEBUG, "Namespace ", sSchema, " found in $Include of ", sUrl);
-			oPromise = this.mMetadataUrl2Promise[sUrl];
-			if (!oPromise) {
-				fnLog(DEBUG, "Reading ", sUrl);
-				oPromise = this.mMetadataUrl2Promise[sUrl]
-					= SyncPromise.resolve(this.oRequestor.read(sUrl))
-						.then(this.validate.bind(this, sUrl));
-			}
-			oPromise = oPromise.then(includeSchema);
-			// BEWARE: oPromise may already be resolved, then includeSchema() is done now
-			if (sSchema in mScope) {
-				return mScope[sSchema];
-			}
-			mScope[sSchema] = oPromise;
-			return oPromise;
-		}
-	};
 
 	/**
 	 * Merges <code>$Annotations</code> from the given $metadata and additional annotation files
@@ -833,8 +761,8 @@ sap.ui.define([
 		mScope.$Annotations = {};
 		Object.keys(mScope).forEach(function (sElement) {
 			if (mScope[sElement].$kind === "Schema") {
-				that._addUrlForSchema(sElement, that.sUrl);
-				that._doMergeAnnotations(mScope[sElement], mScope.$Annotations);
+				addUrlForSchema(that, sElement, that.sUrl);
+				mergeAnnotations(mScope[sElement], mScope.$Annotations);
 			}
 		});
 
@@ -847,36 +775,18 @@ sap.ui.define([
 			for (sQualifiedName in mAnnotationScope) {
 				if (sQualifiedName[0] !== "$") {
 					if (sQualifiedName in mScope) {
-						that._reportAndThrowError("A schema cannot span more than one document: "
+						reportAndThrowError(that, "A schema cannot span more than one document: "
 							+ sQualifiedName, that.aAnnotationUris[i]);
 					}
 					oElement = mAnnotationScope[sQualifiedName];
 					mScope[sQualifiedName] = oElement;
 					if (oElement.$kind === "Schema") {
-						that._addUrlForSchema(sQualifiedName, that.aAnnotationUris[i]);
-						that._doMergeAnnotations(oElement, mScope.$Annotations, true);
+						addUrlForSchema(that, sQualifiedName, that.aAnnotationUris[i]);
+						mergeAnnotations(oElement, mScope.$Annotations, true);
 					}
 				}
 			}
 		});
-	};
-
-	/**
-	 * Reports an error with the given message and details and throws it.
-	 *
-	 * @param {string} sMessage
-	 *   Error message
-	 * @param {string} sDetails
-	 *   Error details
-	 * @throws {Error}
-	 *
-	 * @private
-	 */
-	ODataMetaModel.prototype._reportAndThrowError = function (sMessage, sDetails) {
-		var oError = new Error(sDetails + ": " + sMessage);
-
-		this.oModel.reportError(sMessage, sODataMetaModel, oError);
-		throw oError;
 	};
 
 	/**
@@ -1003,19 +913,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Destroys this meta model.
-	 *
-	 * @private
-	 */
-	ODataMetaModel.prototype.destroy = function () {
-		this.oMetaModelForAnnotations = undefined;
-		Object.values(this.mSharedModelByUrl).forEach((oModel) => oModel.destroy());
-		this.mSharedModelByUrl = undefined;
-
-		MetaModel.prototype.destroy.apply(this);
-	};
-
-	/**
 	 * Returns a promise for an absolute data binding path of a "4.3.1 Canonical URL" for the given
 	 * context.
 	 *
@@ -1067,7 +964,7 @@ sap.ui.define([
 	 *   Whether to just read the $metadata document and annotations, but not yet convert them from
 	 *   XML to JSON; this is useful at most once in an early call that precedes all other normal
 	 *   calls and ignored after the first call without this.
-	 * @returns {sap.ui.base.SyncPromise|null}
+	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise which is resolved with the $metadata "JSON" object as soon as the entity
 	 *   container is fully available, or rejected with an error. In case of
 	 *   <code>bPrefetch</code> in an early call, <code>null</code> is returned.
@@ -1089,20 +986,13 @@ sap.ui.define([
 				});
 			}
 			if (!bPrefetch) {
-				aPromises.push(this.oModel._requestAnnotationChanges());
 				this.oMetadataPromise = SyncPromise.all(aPromises).then(function (aMetadata) {
 					var mScope = aMetadata[0];
 
-					that.aAnnotationChanges = aMetadata.pop();
 					that._mergeAnnotations(mScope, aMetadata.slice(1));
 
 					return mScope;
 				});
-				// apply annotation changes before anyone else has access, but after the promise has
-				// already resolved (else #fetchObject cannot really be used)
-				this.oMetadataPromise.then(
-					(mScope) => this._changeAnnotations(mScope),
-					() => { /* avoid "Uncaught (in promise)" */ });
 			}
 		}
 		return this.oMetadataPromise;
@@ -1168,7 +1058,7 @@ sap.ui.define([
 			 * @returns {boolean}
 			 *   Whether further steps are needed
 			 */
-			function annotationAtOperationOrParameter(sSegment, sTerm, sSuffix = "") {
+			function annotationAtOperationOrParameter(sSegment, sTerm, sSuffix) {
 				var mAnnotationsXAllOverloads,
 					iIndexOfAtAt,
 					sIndividualOverloadTarget,
@@ -1188,6 +1078,7 @@ sap.ui.define([
 					sTerm = sSegment;
 				}
 
+				sSuffix = sSuffix || "";
 				if (vBindingParameterType) {
 					oSchemaChild = aOverloads = vResult.filter(isRightOverload);
 					if (aOverloads.length !== 1) {
@@ -1233,12 +1124,12 @@ sap.ui.define([
 			 *
 			 * @param {string} sSegment
 			 *   Contains the name of the computed annotation as "@@..."
-			 * @param {string} sPath0
+			 * @param {string} sPath
 			 *   Path where the segment was found
 			 * @returns {boolean}
 			 *   <code>true</code>
 			 */
-			function computedAnnotation(sSegment, sPath0) {
+			function computedAnnotation(sSegment, sPath) {
 				var fnAnnotation,
 					aArguments,
 					iLeftParenthesis,
@@ -1283,7 +1174,7 @@ sap.ui.define([
 					vResult = fnAnnotation(vResult, {
 						$$valueAsPromise : mParameters && mParameters.$$valueAsPromise,
 						arguments : aArguments,
-						context : new BaseContext(that, sPath0),
+						context : new BaseContext(that, sPath),
 						schemaChildName : sSchemaChildName,
 						// Note: length === 1 implies Array.isArray(oSchemaChild)
 						overload : oSchemaChild.length === 1 ? oSchemaChild[0] : undefined
@@ -1393,19 +1284,16 @@ sap.ui.define([
 				 * Sets <code>vLocation</code> and delegates to {@link log}.
 				 */
 				function logWithLocation() {
-					vLocation ??= sTarget && sPropertyName && sTarget + "/" + sPropertyName;
+					vLocation = vLocation
+						|| sTarget && sPropertyName && sTarget + "/" + sPropertyName;
 					return log.apply(this, arguments);
 				}
 
 				vBindingParameterType = vResult && vResult.$Type || vBindingParameterType;
 				if (that.bSupportReferences && !(sQualifiedName in mScope)) {
-					if (sResolvedPath.endsWith("@$ui5.target")) { // do not fetch schema
-						vResult = undefined;
-						return false;
-					}
 					// unknown qualified name: maybe schema is referenced and can be included?
 					sSchema = schema(sQualifiedName);
-					vResult = that._getOrFetchSchema(mScope, sSchema, logWithLocation);
+					vResult = getOrFetchSchema(that, mScope, sSchema, logWithLocation);
 				}
 
 				if (sQualifiedName in mScope) {
@@ -1518,8 +1406,8 @@ sap.ui.define([
 								// "17.2 SimpleIdentifier" (or placeholder):
 								// lookup inside schema child (which is determined lazily)
 								sTarget = sName = sSchemaChildName
-									??= mScope.$EntityContainer;
-								vResult = oSchemaChild ??= mScope[sSchemaChildName];
+									= sSchemaChildName || mScope.$EntityContainer;
+								vResult = oSchemaChild = oSchemaChild || mScope[sSchemaChildName];
 								if (Array.isArray(vResult)) {
 									if (vBindingParameterType) {
 										vResult = vResult.filter(isRightOverload);
@@ -1602,33 +1490,14 @@ sap.ui.define([
 						return i + 1 >= aSegments.length || log(WARNING, "Invalid empty segment");
 					}
 					if (sSegment[0] === "@") {
-						/*
-						 * Sets the result to the given value, which must not be
-						 * <code>undefined</code>, and checks that the current segment is the last.
-						 *
-						 * @param {any} vValue - the new <code>vResult</code>
-						 * @returns {boolean} <code>false</code>
-						 */
-						// eslint-disable-next-line no-inner-declarations
-						function terminal(vValue) {
-							vResult = vValue;
+						if (sSegment === "@sapui.name") {
+							vResult = sName;
 							if (vResult === undefined) {
-								log(WARNING, "Unsupported path before " + sSegment);
+								log(WARNING, "Unsupported path before @sapui.name");
 							} else if (i + 1 < aSegments.length) {
-								log(WARNING, "Unsupported path after " + sSegment);
+								log(WARNING, "Unsupported path after @sapui.name");
 							}
 							return false;
-						}
-
-						if (sSegment === "@sapui.name") {
-							if (sName === undefined && bSplitSegment && i
-								&& aSegments[i - 1] === "$NavigationPropertyBinding") {
-								sName = vResult;
-							}
-							return terminal(sName);
-						}
-						if (sSegment === "@$ui5.target") {
-							return terminal(sTarget);
 						}
 						if (sSegment[1] === "@") {
 							// computed annotation
@@ -1709,7 +1578,7 @@ sap.ui.define([
 			}
 
 			if (!steps(sResolvedPath.slice(1)) && SyncPromise.isThenable(vResult)) {
-				// try again after #_getOrFetchSchema's promise has resolved,
+				// try again after getOrFetchSchema's promise has resolved,
 				// but avoid endless loop for computed annotations returning a promise!
 				vResult = vResult.then(function () {
 					return that.fetchObject(sPath, oContext, mParameters);
@@ -1739,25 +1608,17 @@ sap.ui.define([
 	 * @see #requestUI5Type
 	 */
 	ODataMetaModel.prototype.fetchUI5Type = function (sPath, mFormatOptions) {
-		const sLastSegment = sPath.slice(sPath.lastIndexOf("/") + 1);
-		if (sLastSegment[0] === "$" || sLastSegment[0] === "@") {
-			if (aInt64Names.includes(sLastSegment)) {
-				oInt64Type ??= new Int64();
-				return SyncPromise.resolve(oInt64Type);
-			}
-			if (sLastSegment.startsWith("@$ui5.context.is")
-					|| sLastSegment.startsWith("@$ui5.node.is")) {
-				oBooleanType ??= new Boolean();
-				return SyncPromise.resolve(oBooleanType);
-			}
+		var oMetaContext = this.getMetaContext(sPath),
+			that = this;
+
+		if (sPath.endsWith("/$count")) {
+			oCountType = oCountType || new Int64();
+			return SyncPromise.resolve(oCountType);
 		}
-
-		const oMetaContext = this.getMetaContext(sPath);
-
 		// Note: undefined is more efficient than "" here
 		return this.fetchObject(undefined, oMetaContext).catch(
 			this.oModel.getReporter()
-		).then((oProperty) => {
+		).then(function (oProperty) {
 			var oType = oRawType,
 				oTypeInfo;
 
@@ -1792,7 +1653,7 @@ sap.ui.define([
 				oTypeInfo = mUi5TypeForEdmType[oProperty.$Type];
 				if (oTypeInfo) {
 					oType = new oTypeInfo.Type(mFormatOptions,
-						this.getConstraints(oProperty, oMetaContext.getPath()));
+						that.getConstraints(oProperty, oMetaContext.getPath()));
 				} else {
 					Log.warning("Unsupported type '" + oProperty.$Type + "', using "
 						+ oType.getName(), sPath, sODataMetaModel);
@@ -1817,9 +1678,7 @@ sap.ui.define([
 	 * @param {sap.ui.model.odata.v4.Context} oContext
 	 *   A context, used for building the path and for determining the key predicate
 	 * @param {boolean} [bNoEditUrl]
-	 *   Whether no edit URL is required; must be <code>undefined</code> from APIs for canonical
-	 *   paths (based on {@link #fetchCanonicalPath}). Since 1.133.0, when a boolean value is given,
-	 *   the edit URL is allowed to be adjusted for upsert use cases.
+	 *   Whether no edit URL is required
 	 * @returns {sap.ui.base.SyncPromise}
 	 *   A promise that gets resolved with an object having the following properties:
 	 *   <ul>
@@ -1831,8 +1690,6 @@ sap.ui.define([
 	 *   cannot be determined.
 	 *
 	 * @private
-	 * @since 1.125.0
-	 * @ui5-restricted sap.fe
 	 */
 	ODataMetaModel.prototype.fetchUpdateData = function (sPropertyPath, oContext, bNoEditUrl) {
 		var oModel = oContext.getModel(),
@@ -1842,9 +1699,7 @@ sap.ui.define([
 		function error(sMessage) {
 			var oError = new Error(sResolvedPath + ": " + sMessage);
 
-			if (bNoEditUrl !== undefined) {
-				oModel.reportError(sMessage, sODataMetaModel, oError);
-			} // else: do not log to console or message model for APIs
+			oModel.reportError(sMessage, sODataMetaModel, oError);
 			throw oError;
 		}
 
@@ -1869,8 +1724,7 @@ sap.ui.define([
 				//sPropertyPath,
 				aSegments, // The resource path split in segments (encoded)
 				bTransient = false, // Whether the property is within a transient entity
-				oType, // The type of the data at sInstancePath
-				bUpsert = false; // Whether the entity is already or about to be created via upsert
+				oType; // The type of the data at sInstancePath
 
 			// Determines the predicate from a segment (empty string if there is none)
 			function predicate(sSegment) {
@@ -1919,8 +1773,7 @@ sap.ui.define([
 					oProperty = bInsideAnnotation ? {} : oType[sPropertyName];
 					if (!oProperty) {
 						if (sPropertyName.includes("@")) {
-							if (sPropertyName.includes("@$ui5.")
-									&& sPropertyName !== "@$ui5.context.isSelected") {
+							if (sPropertyName.includes("@$ui5.")) {
 								error("Read-only path must not be updated");
 							}
 							bInsideAnnotation = true;
@@ -1970,7 +1823,7 @@ sap.ui.define([
 			}
 
 			// aEditUrl may still contain key predicate requests, run them and wait for the promises
-			return SyncPromise.all(aEditUrl.map(function (vSegment, i) {
+			return SyncPromise.all(aEditUrl.map(function (vSegment) {
 				if (typeof vSegment === "string") {
 					return vSegment;
 				}
@@ -1978,12 +1831,6 @@ sap.ui.define([
 				return oContext.fetchValue(vSegment.path).then(function (oEntity) {
 					var sPredicate;
 
-					if (bNoEditUrl !== undefined && i === aEditUrl.length - 1
-							&& (oEntity === null
-								|| oEntity && _Helper.hasPrivateAnnotation(oEntity, "upsert"))) {
-						bUpsert = true;
-						return undefined;
-					}
 					if (!oEntity) {
 						error("No instance to calculate key predicate at " + vSegment.path);
 					}
@@ -1997,7 +1844,7 @@ sap.ui.define([
 				});
 			})).then(function (aFinalEditUrl) {
 				return {
-					editUrl : bUpsert ? sEntityPath.slice(1) : aFinalEditUrl.join("/"),
+					editUrl : aFinalEditUrl.join("/"),
 					entityPath : sEntityPath,
 					propertyPath : sPropertyPath
 				};
@@ -2177,41 +2024,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Determines which value lists are relevant. Filters out irrelevant value lists by using the
-	 * <code>aRawRelevantQualifiers</code> parameter.
-	 *
-	 * @param {object} mValueListByQualifier
-	 *   A map of qualifier to value list mapping objects that should be filtered
-	 * @param {object[]} aRawRelevantQualifiers
-	 *   The raw value of the "ValueListRelevantQualifiers" annotation
-	 * @param {string} sMetaPath
-	 *   Absolute path that points to the annotation
-	 * @param {sap.ui.model.odata.v4.Context} oContext
-	 *   Context to resolve edm:Path references contained in the annotation
-	 * @returns {Promise}
-	 *   A promise which is resolved with the filtered map of qualifier to value list mapping
-	 *   objects
-	 *
-	 * @private
-	 * @see #requestValueListInfo
-	 */
-	ODataMetaModel.prototype.filterValueListRelevantQualifiers = function (mValueListByQualifier,
-		aRawRelevantQualifiers, sMetaPath, oContext) {
-		return this.requestValue4Annotation(aRawRelevantQualifiers, sMetaPath, oContext)
-			.then(function (aRelevantQualifiers) {
-				var mValueListByRelevantQualifier = {};
-
-				aRelevantQualifiers.forEach(function (sKey) {
-					if (sKey in mValueListByQualifier) {
-						mValueListByRelevantQualifier[sKey] = mValueListByQualifier[sKey];
-					}
-				});
-
-				return mValueListByRelevantQualifier;
-			});
-	};
-
-	/**
 	 * Returns the absolute service URL corresponding to the given relative $metadata URL.
 	 *
 	 * @param {string} sUrl
@@ -2365,7 +2177,7 @@ sap.ui.define([
 		 */
 		function setConstraint(sKey, vValue) {
 			if (vValue !== undefined) {
-				mConstraints ??= {};
+				mConstraints = mConstraints || {};
 				mConstraints[sKey] = vValue;
 			}
 		}
@@ -2435,8 +2247,8 @@ sap.ui.define([
 	 *   of "cross-service references" (see parameter <code>supportReferences</code> of
 	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}).
 	 *
-	 * @deprecated As of version 1.51.0, use {@link #getETags} instead because modifications to old
-	 *   files may be shadowed by a new file in certain scenarios.
+	 * @deprecated As of 1.51.0, use {@link #getETags} instead because modifications to old files
+	 *   may be shadowed by a new file in certain scenarios.
 	 * @public
 	 * @since 1.47.0
 	 */
@@ -2506,50 +2318,37 @@ sap.ui.define([
 	/**
 	 * Creates an OData model for the given URL, normalizes the path, caches it, and retrieves it
 	 * from the cache upon further requests. The model is read-only ("OneWay") and can, thus, safely
-	 * be shared across multiple calls to this method (but not across multiple meta models). It
-	 * shares this meta model's security token and "Retry-After" handler. Annotations are copied if
-	 * requested; in this case it is expected that the metadata and the local annotation files have
-	 * already been loaded.
+	 * be shared. It shares this meta model's security token.
 	 *
 	 * @param {string} sUrl
 	 *   The (relative) $metadata URL, for example "../ValueListService/$metadata"
-	 * @param {boolean} [bCopyAnnotations]
-	 *   Whether to copy annotations to the shared model, which is a value list model - not a code
-	 *   list model!
+	 * @param {string} [sGroupId]
+	 *   The group ID, for example "$direct"
 	 * @param {boolean} [bAutoExpandSelect]
 	 *   Whether the model is to be created with autoExpandSelect
 	 * @returns {sap.ui.model.odata.v4.ODataModel}
-	 *   The shared model
+	 *   The value list model
 	 *
 	 * @private
 	 */
-	ODataMetaModel.prototype.getOrCreateSharedModel = function (sUrl, bCopyAnnotations,
-			bAutoExpandSelect) {
+	ODataMetaModel.prototype.getOrCreateSharedModel = function (sUrl, sGroupId, bAutoExpandSelect) {
+		var sCacheKey,
+			oSharedModel;
+
 		sUrl = this.getAbsoluteServiceUrl(sUrl);
-		const sMapKey = !!bAutoExpandSelect + sUrl; // no separator needed as sUrl.startsWith("/")
-		let mSharedModelByUrl = this.mSharedModelByUrl;
-		if (!bCopyAnnotations) {
-			// #requestCodeList must not fail, but no need to share if already destroyed
-			mSharedModelByUrl ??= {};
-		}
-		let oSharedModel = mSharedModelByUrl[sMapKey];
+		sCacheKey = !!bAutoExpandSelect + sUrl;
+		oSharedModel = mSharedModelByUrl.get(sCacheKey);
 		if (!oSharedModel) {
 			oSharedModel = new this.oModel.constructor({
 				autoExpandSelect : bAutoExpandSelect,
-				groupId : bCopyAnnotations ? undefined : "$direct",
+				groupId : sGroupId,
 				httpHeaders : this.oModel.getHttpHeaders(),
 				metadataUrlParams : this.sLanguage && {"sap-language" : this.sLanguage},
 				operationMode : OperationMode.Server,
 				serviceUrl : sUrl,
 				sharedRequests : true
 			});
-			if (bCopyAnnotations) {
-				oSharedModel.getMetaModel()._copyAnnotations(this.oMetaModelForAnnotations ?? this);
-			}
-			oSharedModel.setRetryAfterHandler((oError) => {
-				return this.oModel.getOrCreateRetryAfterPromise(oError);
-			});
-			mSharedModelByUrl[sMapKey] = oSharedModel;
+			mSharedModelByUrl.set(sCacheKey, oSharedModel);
 		}
 		return oSharedModel;
 	};
@@ -2762,17 +2561,14 @@ sap.ui.define([
 					return null;
 				}
 
-				sUrl = that.getAbsoluteServiceUrl(
-					_Helper.setLanguage(oCodeList.Url, that.sLanguage));
-				// separator needed (Note: path must not include hash)
-				sCacheKey = oCodeList.CollectionPath + "#" + sUrl;
-				oPromise = mCodeListUrl2Promise[sCacheKey];
+				sUrl = _Helper.setLanguage(oCodeList.Url, that.sLanguage);
+				sCacheKey = that.getAbsoluteServiceUrl(sUrl) + "#" + oCodeList.CollectionPath;
+				oPromise = mCodeListUrl2Promise.get(sCacheKey);
 				if (oPromise) {
 					return oPromise;
 				}
 
-				const bDestroyAlreadyCalled = !that.mSharedModelByUrl;
-				oCodeListModel = that.getOrCreateSharedModel(sUrl);
+				oCodeListModel = that.getOrCreateSharedModel(sUrl, "$direct");
 				oCodeListMetaModel = oCodeListModel.getMetaModel();
 				sTypePath = "/" + oCodeList.CollectionPath + "/";
 				oPromise = oCodeListMetaModel.requestObject(sTypePath).then(function (oType) {
@@ -2875,12 +2671,9 @@ sap.ui.define([
 							return aContexts.reduce(addCustomizing, {});
 						}).finally(function () {
 							oCodeListBinding.destroy();
-							if (bDestroyAlreadyCalled) {
-								oCodeListModel.destroy();
-							}
 						});
 				});
-				mCodeListUrl2Promise[sCacheKey] = oPromise;
+				mCodeListUrl2Promise.set(sCacheKey, oPromise);
 
 				return oPromise;
 			});
@@ -3012,13 +2805,6 @@ sap.ui.define([
 	 *     as the annotation does not have a "$Type" property.
 	 *   <li> A technical property (that is, a numerical segment or one starting with a "$")
 	 *     immediately before "@sapui.name" is invalid, for example "/$EntityContainer@sapui.name".
-	 *   <li> Since 1.127.0, "@sapui.name" can also be used to access the resulting name of an
-	 *     entity set via a navigation property binding. This allows XML Templating to use
-	 *     "${entitySet>@sapui.name}" no matter whether the variable "entitySet" refers to "/TEAMS"
-	 *     or "/TEAMS/$NavigationPropertyBinding/TEAM_2_EMPLOYEES". This way, "/TEAMS@sapui.name"
-	 *     results in "TEAMS" and "/TEAMS/$NavigationPropertyBinding/TEAM_2_EMPLOYEES@sapui.name"
-	 *     results either in a simple name like "EMPLOYEES" or maybe in a path like
-	 *     "some.other.EntityContainer/SomeEntitySet".
 	 * </ul>
 	 * The path must not continue after "@sapui.name".
 	 *
@@ -3073,7 +2859,7 @@ sap.ui.define([
 	 * with a dot, which is stripped before lookup; see the <code>&lt;template:alias></code>
 	 * instruction for XML Templating. In case of an absolute name, it is searched in
 	 * <code>mParameters.scope</code> first and then in the global namespace. (Using the global
-	 * namespace is <b>deprecated</b> as of version 1.120.3). The names "requestCurrencyCodes" and
+	 * namespace is deprecated as of version 1.120.3). The names "requestCurrencyCodes" and
 	 * "requestUnitsOfMeasure" default to {@link #requestCurrencyCodes} and
 	 * {@link #requestUnitsOfMeasure} resp. if not present in <code>mParameters.scope</code>. This
 	 * function is called with the current object (or primitive value) and additional details and
@@ -3156,7 +2942,7 @@ sap.ui.define([
 	 *     type lookup, for example "/TEAMS/acme.NewAction//Team_ID".
 	 *
 	 *     For primitive return types, the special segment "value" can be used to refer to the
-	 *     return type itself (see {@link sap.ui.model.odata.v4.ODataContextBinding#invoke}). This
+	 *     return type itself (see {@link sap.ui.model.odata.v4.ODataContextBinding#execute}). This
 	 *     way, "/GetOldestAge/value" addresses the same object as "/GetOldestAge/$ReturnType"
 	 *     or "/GetOldestAge/$Function/0/$ReturnType" or
 	 *     "/GetOldestAge/@$ui5.overload/0/$ReturnType" (which is needed for automatic type
@@ -3193,12 +2979,9 @@ sap.ui.define([
 	 *   The context to be used as a starting point in case of a relative path
 	 * @param {object} [mParameters]
 	 *   Optional (binding) parameters; if they are given, <code>oContext</code> cannot be omitted
-	 * @param {Object<object|function>} [mParameters.scope]
-	 *   Scope for lookup of aliases for computed annotations (since 1.43.0) as a map from alias to
-	 *   a module (like <code>{AH : AnnotationHelper}</code>) or function (like
-	 *   <code>{format : AnnotationHelper.format}</code>); the alias must not contain a dot.
-	 *   Since 1.120.3 looking up a computed annotation via its global name is <b>deprecated</b>;
-	 *   always use this scope instead.
+	 * @param {object} [mParameters.scope]
+	 *   Scope for lookup of aliases for computed annotations (since 1.43.0). Since 1.120.3 looking
+	 *   up a computed annotation via its global name is deprecated; always use this scope instead.
 	 * @returns {Promise<any>}
 	 *   A promise which is resolved with the requested metadata value as soon as it is available;
 	 *   it is rejected if the requested metadata cannot be loaded
@@ -3363,9 +3146,7 @@ sap.ui.define([
 	 *   data model. Since 1.80.0, that model's parameter "sharedRequests" is set automatically (see
 	 *   {@link sap.ui.model.odata.v4.ODataModel#constructor}). If the value list model is the data
 	 *   model associated with this meta model, use the binding-specific parameter "$$sharedRequest"
-	 *   instead, see {@link sap.ui.model.odata.v4.ODataModel#bindList}. Since 1.132.0, the data
-	 *   model's {@link sap.ui.model.odata.v4.ODataModel#setRetryAfterHandler "Retry-After" handler}
-	 *   is reused by default, but can of course be overwritten.
+	 *   instead, see {@link sap.ui.model.odata.v4.ODataModel#bindList}.
 	 *
 	 *   For fixed values, only one mapping is expected and the qualifier is ignored. The mapping
 	 *   is available with key "" and has an additional property "$qualifier" which is the original
@@ -3435,7 +3216,7 @@ sap.ui.define([
 			function addMapping(mValueListMapping, sQualifier, sMappingUrl, oModel) {
 				if ("CollectionRoot" in mValueListMapping) {
 					oModel = that.getOrCreateSharedModel(mValueListMapping.CollectionRoot,
-						/*bCopyAnnotations*/true, bAutoExpandSelect);
+						undefined, bAutoExpandSelect);
 					if (oValueListInfo[sQualifier]
 							&& oValueListInfo[sQualifier].$model === oModel) {
 						// same model -> allow overriding the qualifier
@@ -3469,8 +3250,8 @@ sap.ui.define([
 
 				// fetch mappings for each entry and wait for all
 				return Promise.all(aMappingUrls.map(function (sMappingUrl) {
-					var oValueListModel = that.getOrCreateSharedModel(sMappingUrl,
-							/*bCopyAnnotations*/true, bAutoExpandSelect);
+					var oValueListModel = that.getOrCreateSharedModel(sMappingUrl, undefined,
+							bAutoExpandSelect);
 
 					// fetch the mappings for the given mapping URL
 					return that.fetchValueListMappings(oValueListModel,
@@ -3482,14 +3263,14 @@ sap.ui.define([
 							$model : oValueListModel
 						};
 					});
-				})).then(function (aResults0) {
+				})).then(function (aResults) {
 					// insert the returned mappings into oValueListInfo in the order of aMappingUrls
 					aMappingUrls.forEach(function (sMappingUrl, i) {
-						var mValueListMappingByQualifier = aResults0[i].valueListMappingByQualifier;
+						var mValueListMappingByQualifier = aResults[i].valueListMappingByQualifier;
 
 						Object.keys(mValueListMappingByQualifier).forEach(function (sQualifier) {
 							addMapping(mValueListMappingByQualifier[sQualifier], sQualifier,
-								sMappingUrl, aResults0[i].$model);
+								sMappingUrl, aResults[i].$model);
 						});
 					});
 				});
@@ -3535,6 +3316,41 @@ sap.ui.define([
 				return mValueListByRelevantQualifier;
 			});
 		});
+	};
+
+	/**
+	 * Determines which value lists are relevant. Filters out irrelevant value lists by using the
+	 * <code>aRawRelevantQualifiers</code> parameter.
+	 *
+	 * @param {object} mValueListByQualifier
+	 *   A map of qualifier to value list mapping objects that should be filtered
+	 * @param {object[]} aRawRelevantQualifiers
+	 *   The raw value of the "ValueListRelevantQualifiers" annotation
+	 * @param {string} sMetaPath
+	 *   Absolute path that points to the annotation
+	 * @param {sap.ui.model.odata.v4.Context} oContext
+	 *   Context to resolve edm:Path references contained in the annotation
+	 * @returns {Promise}
+	 *   A promise which is resolved with the filtered map of qualifier to value list mapping
+	 *   objects
+	 *
+	 * @private
+	 * @see #requestValueListInfo
+	 */
+	ODataMetaModel.prototype.filterValueListRelevantQualifiers = function (mValueListByQualifier,
+		aRawRelevantQualifiers, sMetaPath, oContext) {
+		return this.requestValue4Annotation(aRawRelevantQualifiers, sMetaPath, oContext)
+			.then(function (aRelevantQualifiers) {
+				var mValueListByRelevantQualifier = {};
+
+				aRelevantQualifiers.forEach(function (sKey) {
+					if (sKey in mValueListByQualifier) {
+						mValueListByRelevantQualifier[sKey] = mValueListByQualifier[sKey];
+					}
+				});
+
+				return mValueListByRelevantQualifier;
+			});
 	};
 
 	/**
@@ -3667,16 +3483,16 @@ sap.ui.define([
 			sReferenceUri = new URI(sReferenceUri).absoluteTo(this.sUrl).toString();
 
 			if ("$IncludeAnnotations" in oReference) {
-				this._reportAndThrowError("Unsupported IncludeAnnotations", sUrl);
+				reportAndThrowError(this, "Unsupported IncludeAnnotations", sUrl);
 			}
 			for (i in oReference.$Include) {
 				sSchema = oReference.$Include[i];
 				if (sSchema in mScope) {
-					this._reportAndThrowError("A schema cannot span more than one document: "
+					reportAndThrowError(this, "A schema cannot span more than one document: "
 						+ sSchema + " - is both included and defined",
 						sUrl);
 				}
-				this._addUrlForSchema(sSchema, sReferenceUri, sUrl);
+				addUrlForSchema(this, sSchema, sReferenceUri, sUrl);
 			}
 		}
 
@@ -3686,7 +3502,7 @@ sap.ui.define([
 		this.mETags[sUrl] = mScope.$ETag ? mScope.$ETag : oLastModified;
 		// no need to use UI5Date.getInstance as only the timestamp is relevant
 		oDate = mScope.$Date ? new Date(mScope.$Date) : new Date();
-		oLastModified ??= oDate; // @see #getLastModified
+		oLastModified = oLastModified || oDate; // @see #getLastModified
 		if (this.oLastModified < oLastModified) {
 			this.oLastModified = oLastModified;
 		}
@@ -3695,15 +3511,6 @@ sap.ui.define([
 		delete mScope.$LastModified;
 
 		return mScope;
-	};
-
-	/**
-	 * Clears the cache used in {@link #requestCodeList}. To be used by test code only!
-	 *
-	 * @private
-	 */
-	ODataMetaModel.clearCodeListsCache = function () {
-		mCodeListUrl2Promise = {};
 	};
 
 	return ODataMetaModel;

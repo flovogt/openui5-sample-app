@@ -1,15 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Core",
 	"sap/ui/core/ValueStateSupport",
 	"sap/ui/core/library",
 	"sap/ui/Device"
-], function (ControlBehavior, ValueStateSupport, coreLibrary, Device) {
+], function (Core, ValueStateSupport, coreLibrary, Device) {
 	"use strict";
 
 	// shortcut for sap.ui.core.ValueState
@@ -54,10 +54,6 @@ sap.ui.define([
 
 		oRM.openStart("div", oRadioButton)
 			.class("sapMRb");
-
-		if (oRadioButton.getWrapping()) {
-			oRM.class("sapMRbWrapped");
-		}
 
 		if (oRadioButton.getUseEntireWidth()) {
 			oRM.style("width", oRadioButton.getWidth());
@@ -159,7 +155,7 @@ sap.ui.define([
 	RadioButtonRenderer.renderTooltip = function (oRM, oRadioButton) {
 		var sTooltipWithStateMessage = this.getTooltipText(oRadioButton);
 
-		if (sTooltipWithStateMessage && ControlBehavior.isAccessibilityEnabled()) {
+		if (sTooltipWithStateMessage && Core.getConfiguration().getAccessibility()) {
 			// for ARIA, the tooltip must be in a separate SPAN and assigned via aria-describedby.
 			// otherwise, JAWS does not read it.
 			oRM.openStart("span", oRadioButton.getId() + "-Descr")

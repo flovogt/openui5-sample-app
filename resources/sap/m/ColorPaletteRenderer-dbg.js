@@ -1,11 +1,11 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
-	function(Device, Library) {
+sap.ui.define(['sap/ui/Device'],
+	function (Device) {
 		"use strict";
 
 		/**
@@ -18,7 +18,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 
 
 		// reference to the message bundle
-		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
+		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 		/**
 		 * Renders the HTML for the given control, using the provided {@link sap.ui.core.RenderManager}.
@@ -70,15 +70,10 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 		 * @param {sap.m.ColorPalette} oColorPalette A palette instance
 		 */
 		ColorPaletteRenderer.renderSwatches = function (oRm, oColorPalette) {
-			var sColors = oColorPalette.getColors(),
-				sSelectedColor = oColorPalette.getSelectedColor(),
-				bInMainRegion = oColorPalette._isSelectedInMainRegion(),
-				iSelectedColorIndex = sColors.indexOf(sSelectedColor),
-				bIsSelected;
+			var sColors = oColorPalette.getColors();
 
 			oRm.openStart("div", oColorPalette.getId() + "-swatchCont-paletteColor");
 			oRm.class("sapMColorPaletteContent");
-			oRm.attr("data-sap-ui-region", "main-colors-palette");
 			oRm.accessibilityState(oColorPalette, {
 				"role": "region",
 				"label": oLibraryResourceBundle.getText("COLOR_PALETTE_SWATCH_CONTAINER_TITLE")
@@ -86,8 +81,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 			oRm.openEnd();
 
 			sColors.forEach(function (sColor, iIndex) {
-				bIsSelected = bInMainRegion && iSelectedColorIndex === iIndex && sColor === sSelectedColor;
-				this.renderSquare(oRm, oColorPalette, sColor, iIndex, false, bIsSelected);
+				this.renderSquare(oRm, oColorPalette, sColor, iIndex, false);
 			}, this);
 
 			oRm.close("div"); //close palette squares container
@@ -99,10 +93,8 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 		 * @param {sap.m.ColorPalette} oColorPalette A palette instance
 		 * @param {sap.ui.core.CSSColor} sColor A color used as background
 		 * @param {number} iIndex the index of the color amongst its siblings
-		 * @param {boolean} bIsRecentColor is in Recent Colors section
-		 * @param {boolean} bIsSelected is currently selected
 		 */
-		ColorPaletteRenderer.renderSquare = function (oRm, oColorPalette, sColor, iIndex, bIsRecentColor, bIsSelected) {
+		ColorPaletteRenderer.renderSquare = function (oRm, oColorPalette, sColor, iIndex, bIsRecentColor) {
 			var sNamedColor = oColorPalette._ColorsHelper.getNamedColor(sColor),
 				sCustomOrPredefinedColor = (sNamedColor === undefined) ? oLibraryResourceBundle.getText("COLOR_PALETTE_PREDEFINED_COLOR_CUSTOM") : oLibraryResourceBundle.getText("COLOR_PALETTE_PREDEFINED_COLOR_" + sNamedColor.toUpperCase()),
 				sColorNameAria = bIsRecentColor ? oLibraryResourceBundle.getText("COLOR_PALETTE_RECENT_COLOR", [iIndex + 1, sCustomOrPredefinedColor]) : oLibraryResourceBundle.getText("COLOR_PALETTE_PREDEFINED_COLOR", [iIndex + 1, sCustomOrPredefinedColor]);
@@ -111,10 +103,6 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 			oRm.class("sapMColorPaletteSquare");
 			if (bIsRecentColor && sColor === "") {
 				oRm.class("sapMRecentColorSquareDisabled");
-			}
-
-			if (bIsSelected) {
-				oRm.class("sapMColorPaletteSquareSelected");
 			}
 			oRm.attr("data-sap-ui-color", sColor);
 			oRm.attr("tabindex", "-1");
@@ -166,14 +154,10 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 			var sColor,
 				aRecentColors = oColorPalette._getRecentColors(),
 				iCountOfBoxes = 5,
-				sContainer = oLibraryResourceBundle.getText("COLOR_PALETTE_SWATCH_RECENT_COLOR_CONTAINER_TITLE"),
-				bInRecentColorsRegion = oColorPalette._isSelectedInRecentColors(),
-				sSelectedColor = oColorPalette.getSelectedColor(),
-				bIsSelected;
+				sContainer = oLibraryResourceBundle.getText("COLOR_PALETTE_SWATCH_RECENT_COLOR_CONTAINER_TITLE");
 
 			oRm.openStart("div", oColorPalette.getId() + "-swatchCont-recentColors");
 			oRm.class("sapMColorPaletteContent");
-			oRm.attr("data-sap-ui-region", "recent-colors-palette");
 			oRm.attr("role","region");
 			oRm.attr("aria-label",sContainer); // Change with translation variable
 			oRm.openEnd();
@@ -184,8 +168,7 @@ sap.ui.define(['sap/ui/Device', "sap/ui/core/Lib"],
 				} else {
 					sColor = "";
 				}
-				bIsSelected = bInRecentColorsRegion && i == 0 && sSelectedColor && (sColor === sSelectedColor);
-				this.renderSquare(oRm, oColorPalette, sColor, i, true, bIsSelected);
+				this.renderSquare(oRm, oColorPalette, sColor, i, true);
 			}
 			oRm.close("div");
 		};

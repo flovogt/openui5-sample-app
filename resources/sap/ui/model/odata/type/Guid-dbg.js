@@ -1,17 +1,16 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"sap/base/Log",
-	"sap/ui/core/Lib",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/ODataType"
-], function(Log, Library, FormatException, ParseException, ValidateException, ODataType) {
+], function (Log, FormatException, ParseException, ValidateException, ODataType) {
 	"use strict";
 
 	var rAllWhitespaceAndSeparators = /[-\s]/g, // whitespace and "-" separator, globally
@@ -25,7 +24,7 @@ sap.ui.define([
 	 * @private
 	 */
 	function getErrorMessage() {
-		return Library.getResourceBundleFor("sap.ui.core").getText("EnterGuid");
+		return sap.ui.getCore().getLibraryResourceBundle().getText("EnterGuid");
 	}
 
 	/**
@@ -63,7 +62,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @alias sap.ui.model.odata.type.Guid
 	 * @param {object} [oFormatOptions]

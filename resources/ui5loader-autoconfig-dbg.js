@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -168,7 +168,6 @@
 		var oWriteableConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
 		var mFrozenProperties = Object.create(null);
-		const multipleParams = new Map();
 		var bFrozen = false;
 		var Configuration;
 
@@ -184,7 +183,7 @@
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in global['sap-ui-config']!");
 					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						multipleParams.set(sNormalizedKey, mOriginalGlobalParams[sNormalizedKey]);
+						ui5loader._.logger.error("Configuration option '" + sKey + "' was already set by '" + mOriginalGlobalParams[sNormalizedKey] + "' and will be ignored!");
 					} else if (Object.hasOwn(mFrozenProperties, sNormalizedKey) && oGlobalConfig[sKey] !== vFrozenValue) {
 						oConfig[sNormalizedKey] = vFrozenValue;
 						ui5loader._.logger.error("Configuration option '" + sNormalizedKey + "' was frozen and cannot be changed to " + oGlobalConfig[sKey] + "!");
@@ -205,14 +204,10 @@
 		}
 
 		function get(sKey, bFreeze) {
-			var vValue = oWriteableConfig[sKey] || oConfig[sKey];
-			if (multipleParams.has(sKey)) {
-				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + vValue + "' will be used");
-				multipleParams.delete(sKey);
-			}
 			if (Object.hasOwn(mFrozenProperties,sKey)) {
 				return mFrozenProperties[sKey];
 			}
+			var vValue = oWriteableConfig[sKey] || oConfig[sKey];
 			if (!Object.hasOwn(oConfig, sKey) && !Object.hasOwn(oWriteableConfig, sKey)) {
 				var vMatch = sKey.match(rAlias);
 				var sLowerCaseAlias = vMatch ? vMatch[1] + vMatch[2][0] + vMatch[2].slice(1).toLowerCase() : undefined;
@@ -263,7 +258,6 @@
 	], function(camelize) {
 		var oConfig = Object.create(null);
 		var rAlias = /^(sapUiXx|sapUi|sap)((?:[A-Z0-9][a-z]*)+)$/; //for getter
-		const multipleParams = new Map();
 
 		var bootstrap = getBootstrapTag();
 		if (bootstrap.tag) {
@@ -274,7 +268,7 @@
 					if (!sNormalizedKey) {
 						ui5loader._.logger.error("Invalid configuration option '" + sKey + "' in bootstrap!");
 					} else if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						multipleParams.set(sNormalizedKey, sKey);
+						ui5loader._.logger.error("Configuration option '" + sKey + "' already exists and will be ignored!");
 					} else {
 						oConfig[sNormalizedKey] = dataset[sKey];
 					}
@@ -284,10 +278,6 @@
 
 		function get(sKey) {
 			var vValue = oConfig[sKey];
-			if (multipleParams.has(sKey)) {
-				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + vValue + "' will be used");
-				multipleParams.delete(sKey);
-			}
 			if (vValue === undefined) {
 				var vMatch = sKey.match(rAlias);
 				var sLowerCaseAlias = vMatch ? vMatch[1] + vMatch[2][0] + vMatch[2].slice(1).toLowerCase() : undefined;
@@ -309,7 +299,6 @@
 		"sap/base/strings/_camelize"
 	], function(camelize) {
 		var oConfig = Object.create(null);
-		const multipleParams = new Map();
 
 		if (globalThis.location) {
 			oConfig = Object.create(null);
@@ -321,7 +310,7 @@
 				var sNormalizedKey = camelize(key);
 				if (sNormalizedKey) {
 					if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						multipleParams.set(sNormalizedKey, mOriginalUrlParams[sNormalizedKey]);
+						ui5loader._.logger.error("Configuration option '" + key + "' was already set by '" + mOriginalUrlParams[sNormalizedKey] + "' and will be ignored!");
 					} else {
 						oConfig[sNormalizedKey] = value;
 						mOriginalUrlParams[sNormalizedKey] = key;
@@ -334,10 +323,6 @@
 		}
 
 		function get(sKey) {
-			if (multipleParams.has(sKey)) {
-				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + oConfig[sKey] + "' will be used");
-				multipleParams.delete(sKey);
-			}
 			return oConfig[sKey];
 		}
 
@@ -353,7 +338,6 @@
 		"sap/base/strings/_camelize"
 	], function (camelize) {
 		var oConfig = Object.create(null);
-		const multipleParams = new Map();
 
 		if (globalThis.document) {
 			oConfig = Object.create(null);
@@ -364,7 +348,7 @@
 				const bSapParam = /sap\-?([Uu]?i\-?)?/.test(tag.name);
 				if (sNormalizedKey) {
 					if (Object.hasOwn(oConfig, sNormalizedKey)) {
-						multipleParams.set(sNormalizedKey, mOriginalTagNames[sNormalizedKey]);
+						ui5loader._.logger.error("Configuration option '" + tag.name + "' was already set by '" + mOriginalTagNames[sNormalizedKey] + "' and will be ignored!");
 					} else {
 						oConfig[sNormalizedKey] = tag.content;
 						mOriginalTagNames[sNormalizedKey] = tag.name;
@@ -377,10 +361,6 @@
 		}
 
 		function get(sKey) {
-			if (multipleParams.has(sKey)) {
-				ui5loader._.logger.error("Configuration option '" + multipleParams.get(sKey) + "' was set multiple times. Value '" + oConfig[sKey] + "' will be used");
-				multipleParams.delete(sKey);
-			}
 			return oConfig[sKey];
 		}
 
@@ -722,8 +702,33 @@
 			mCache = Object.create(null);
 		}
 
+		/**
+		 * Returns a writable base configuration instance
+		 * @returns {module:sap/base/config/_Configuration} The writable base configuration
+		 */
+		function getWritableBootInstance() {
+			var oProvider = aProvider[0];
+
+			return {
+				set: function(sName, vValue) {
+					var rValidKey = /^[a-z][A-Za-z0-9]*$/;
+					if (rValidKey.test(sName)) {
+						oProvider.set(sName, vValue);
+						invalidate();
+					} else {
+						throw new TypeError(
+							"Invalid configuration key '" + sName + "'!"
+						);
+					}
+				},
+				get: get,
+				Type: TypeEnum
+			};
+		}
+
 		var Configuration = {
 			get: get,
+			getWritableBootInstance: getWritableBootInstance,
 			registerProvider: registerProvider,
 			Type: TypeEnum,
 			_: {
@@ -756,7 +761,7 @@
 	/** autoconfig */
 	var sBaseUrl, bNojQuery,
 		aScripts, rBootScripts, i,
-		sBootstrapUrl;
+		sBootstrapUrl, bExposeAsAMDLoader = false;
 
 	function findBaseUrl(oScript, rUrlPattern) {
 		var sUrl = oScript && oScript.getAttribute("src"),
@@ -960,32 +965,16 @@
 
 	})();
 
-	const bFuture = BaseConfig.get({
-		name: "sapUiXxFuture",
+	if (BaseConfig.get({
+		name: "sapUiAsync",
 		type: BaseConfig.Type.Boolean,
 		external: true,
 		freeze: true
-	});
-
-	/**
-	 * Evaluate legacy configuration.
-	 * @deprecated As of version 1.120
-	 */
-	(() => {
-		// xx-future implicitly sets the loader to async
-		const bAsync = BaseConfig.get({
-			name: "sapUiAsync",
-			type: BaseConfig.Type.Boolean,
-			external: true,
-			freeze: true
-		}) || bFuture;
-
-		if (bAsync) {
-			ui5loader.config({
-				async: true
-			});
-		}
-	})();
+	})) {
+		ui5loader.config({
+			async: true
+		});
+	}
 
 	// Note: loader converts any NaN value to a default value
 	ui5loader._.maxTaskDuration = BaseConfig.get({
@@ -997,7 +986,7 @@
 	});
 
 	// support legacy switch 'noLoaderConflict', but 'amdLoader' has higher precedence
-	const bExposeAsAMDLoader = BaseConfig.get({
+	bExposeAsAMDLoader = BaseConfig.get({
 		name: "sapUiAmd",
 		type: BaseConfig.Type.Boolean,
 		defaultValue: !BaseConfig.get({
@@ -1011,18 +1000,14 @@
 		freeze: true
 	});
 
-	// calculate syncCallBehavior
+	//calculate syncCallBehavior
 	let syncCallBehavior = 0; // ignore
-	let sNoSync = BaseConfig.get({ // call must be made to ensure freezing
+	const sNoSync = BaseConfig.get({
 		name: "sapUiXxNoSync",
 		type: BaseConfig.Type.String,
 		external: true,
 		freeze: true
 	});
-
-	// sap-ui-xx-future enforces strict sync call behavior
-	sNoSync = bFuture ? "x" : sNoSync;
-
 	if (sNoSync === 'warn') {
 		syncCallBehavior = 1;
 	} else if (/^(true|x)$/i.test(sNoSync)) {
@@ -1030,7 +1015,7 @@
 	}
 
 	/**
-	 * @deprecated As of version 1.120
+	 * @deprectaed As of Version 1.120
 	 */
 	(() => {
 		const GlobalConfigurationProvider = sap.ui.require("sap/base/config/GlobalConfigurationProvider");

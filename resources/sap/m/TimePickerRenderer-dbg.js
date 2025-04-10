@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -49,6 +49,19 @@ sap.ui.define(['sap/ui/core/Renderer', './DateTimeFieldRenderer', 'sap/ui/core/l
 			} else {
 				oRm.attr("value", oControl._formatValue(oControl.getDateValue()));
 			}
+		};
+
+		/**
+		 * Returns the inner aria labelledby announcement texts for the accessibility.
+		 *
+		 * @overrides sap.m.DateTimeFieldRenderer.getLabelledByAnnouncement
+		 * @param {sap.m.TimePicker} oControl an object representation of the control.
+		 * @returns {string}
+		 */
+		TimePickerRenderer.getLabelledByAnnouncement = function(oControl) {
+			// In the TimePicker we need to render the placeholder should be placed as
+			// hidden aria labelledby node for the accessibility
+			return oControl._getPlaceholder() || "";
 		};
 
 		/**

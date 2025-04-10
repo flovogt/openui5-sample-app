@@ -1,24 +1,22 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'./InputBase',
 	'sap/ui/Device',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/IconPool',
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
 	"sap/m/MaskInputRule",
-	// jQuery Plugin "cursorPos"
-	"sap/ui/dom/jquery/cursorPos"
-], function(Localization, Control, InputBase, Device, Library, coreLibrary, IconPool, KeyCodes, Log, jQuery, MaskInputRule) {
+	"sap/ui/core/Configuration",
+	"sap/ui/dom/jquery/cursorPos" // jQuery Plugin "cursorPos"
+], function(Control, InputBase, Device, coreLibrary, IconPool, KeyCodes, Log, jQuery, MaskInputRule, Configuration) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -28,7 +26,7 @@ sap.ui.define([
 	 * Applies mask support for input controls.
 	 * It should should be applied to the prototype of a <code>sap.m.InputBase</code>.
 	 *
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @private
 	 * @mixin
 	 * @alias sap.m.MaskEnabler
@@ -58,7 +56,7 @@ sap.ui.define([
 			// Skips setup of mask variables on every iteration when initializing default rules
 			this._bSkipSetupMaskVariables = null;
 
-			this._oRb = Library.getResourceBundleFor("sap.m");
+			this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			this._setDefaultRules();
 			this._setupMaskVariables();
@@ -1430,7 +1428,7 @@ sap.ui.define([
 		 * @returns {boolean} Whether the current control is in RTL mode
 		 */
 		this._isRtlMode = function () {
-			return Localization.getRTL() || (this.getTextDirection() === TextDirection.RTL);
+			return Configuration.getRTL() || (this.getTextDirection() === TextDirection.RTL);
 		};
 
 		/**

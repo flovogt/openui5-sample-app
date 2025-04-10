@@ -1,11 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/base/config", "sap/base/Log", "sap/ui/performance/Measurement", "sap/ui/core/Core"],
-	function(BaseConfig, Log, Measurement, Core) {
+sap.ui.define(["sap/base/config", "sap/base/Log", "sap/ui/performance/Measurement", "sap/ui/Global"],
+	function(BaseConfig, Log, Measurement, Global) {
 		"use strict";
 
 		/**
@@ -50,15 +50,6 @@ sap.ui.define(["sap/base/config", "sap/base/Log", "sap/ui/performance/Measuremen
 				 */
 				this._lru = -1;
 				return initIndexedDB(this);
-			},
-
-			/*
-			 * Retrieves the version property defined on the Core.
-			 * Can be stubbed in the QUnit test to fix a certain version expectation.
-			 * @private
-			 */
-			_getVersion() {
-				return Core.version;
 			},
 
 			_destroy: function () {
@@ -380,7 +371,7 @@ sap.ui.define(["sap/base/config", "sap/base/Log", "sap/ui/performance/Measuremen
 								transaction.abort();
 							};
 							clearMetadataStoreReq.onsuccess = function () {
-								self._metadata = initMetadata(self._getVersion());
+								self._metadata = initMetadata(Global.version);
 								assignRUCounters(self);
 							};
 						};
@@ -678,7 +669,7 @@ sap.ui.define(["sap/base/config", "sap/base/Log", "sap/ui/performance/Measuremen
 		}
 
 		function initIndexedDB(instance) {
-			instance._ui5version = instance._getVersion();
+			instance._ui5version = Global.version;
 			return new Promise(function executorInitIndexedDB(resolve, reject) {
 				var DBOpenRequest;
 

@@ -1,19 +1,16 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.f.DynamicPage.
 sap.ui.define([
 	"./library",
-	"sap/base/i18n/Localization",
 	"sap/ui/core/Control",
-	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Core",
 	"sap/m/library",
 	"sap/ui/base/ManagedObjectObserver",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/Configuration",
 	"sap/ui/core/InvisibleText",
@@ -29,13 +26,10 @@ sap.ui.define([
 	"sap/ui/core/library"
 ], function(
 	library,
-	Localization,
 	Control,
-	ControlBehavior,
+	Core,
 	mLibrary,
 	ManagedObjectObserver,
-	Element,
-	Library,
 	ResizeHandler,
 	Configuration,
 	InvisibleText,
@@ -118,7 +112,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -352,8 +346,6 @@ sap.ui.define([
 
 	DynamicPage.HEADER_MAX_ALLOWED_NON_SROLLABLE_ON_MOBILE = 0.3;
 
-	DynamicPage.MEDIA_RANGESET_NAME = "DynamicPageRangeSet";
-
 	DynamicPage.BREAK_POINTS = {
 		DESKTOP: 1439,
 		TABLET: 1024,
@@ -412,7 +404,6 @@ sap.ui.define([
 		this._headerBiggerThanAllowedHeight = false;
 		this._oStickySubheader = null;
 		this._bStickySubheaderInTitleArea = false;
-		this._bIsLastToggleUserInitiated = false;
 		this._oScrollHelper = new ScrollEnablement(this, this.getId() + "-content", {
 			horizontal: false,
 			vertical: true
@@ -426,10 +417,7 @@ sap.ui.define([
 				this._adjustStickyContent();
 			}};
 
-		this._setAriaRoleDescription(Library.getResourceBundleFor("sap.f").getText(DynamicPage.ARIA_ROLE_DESCRIPTION));
-		this._initRangeSet();
-		this._attachMediaContainerWidthChange(this._onMediaRangeChange,
-			this, DynamicPage.MEDIA_RANGESET_NAME);
+		this._setAriaRoleDescription(Core.getLibraryResourceBundle("sap.f").getText(DynamicPage.ARIA_ROLE_DESCRIPTION));
 	};
 
 	DynamicPage.prototype.onBeforeRendering = function () {
@@ -455,8 +443,7 @@ sap.ui.define([
 	DynamicPage.prototype.onAfterRendering = function () {
 
 		var bShouldSnapWithScroll,
-			iCurrentScrollPosition,
-			oHeader = this.getHeader();
+			iCurrentScrollPosition;
 
 		if (this.getPreserveHeaderStateOnScroll()) {
 			// Ensure that in this tick DP and it's aggregations are rendered
@@ -470,7 +457,7 @@ sap.ui.define([
 		this._updateTitlePositioning();
 		this._attachPageChildrenAfterRenderingDelegates();
 		this._updatePinButtonState();
-		this._showHidePinButton();
+		this._hidePinButtonIfNotApplicable();
 
 		if (!this.getHeaderExpanded()) {
 			this._snapHeader(false);
@@ -488,10 +475,6 @@ sap.ui.define([
 
 		this._updateToggleHeaderVisualIndicators();
 		this._updateTitleVisualState();
-
-		if (exists(oHeader) && oHeader._setLandmarkInfo) {
-			oHeader._setLandmarkInfo(this.getLandmarkInfo());
-		}
 	};
 
 	DynamicPage.prototype.exit = function () {
@@ -584,7 +567,7 @@ sap.ui.define([
 			return this;
 		}
 
-		oOldStickySubheaderProvider = Element.getElementById(sOldStickySubheaderProviderId);
+		oOldStickySubheaderProvider = Core.byId(sOldStickySubheaderProviderId);
 
 		if (this._oStickySubheader && oOldStickySubheaderProvider) {
 			oOldStickySubheaderProvider._returnStickyContent();
@@ -699,7 +682,7 @@ sap.ui.define([
 			return;
 		}
 
-		sAnimationMode = ControlBehavior.getAnimationMode();
+		sAnimationMode = Core.getConfiguration().getAnimationMode();
 		bUseAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 		if (exists(this.$contentFitContainer)) {
@@ -813,7 +796,6 @@ sap.ui.define([
 		}
 
 		this.setProperty("headerExpanded", false, true);
-		this._bIsLastToggleUserInitiated = !!bUserInteraction;
 		this._adjustStickyContent();
 		if (this._hasVisibleTitleAndHeader()) {
 			this.$titleArea.addClass(Device.system.phone && oDynamicPageTitle.getSnappedTitleOnMobile() ?
@@ -854,7 +836,6 @@ sap.ui.define([
 		}
 
 		this.setProperty("headerExpanded", true, true);
-		this._bIsLastToggleUserInitiated = !!bUserInteraction;
 		this._adjustStickyContent();
 		if (this._hasVisibleTitleAndHeader()) {
 			this.$titleArea.removeClass(Device.system.phone && oDynamicPageTitle.getSnappedTitleOnMobile() ?
@@ -1007,7 +988,6 @@ sap.ui.define([
 
 		if (!this._bHeaderInTitleArea) {
 			this._moveHeaderToTitleArea(true);
-			this._adjustStickyContent();
 			this._updateTitlePositioning();
 		}
 
@@ -1064,11 +1044,13 @@ sap.ui.define([
 
 
 	/**
-	 * Shows/hides the pin button if pin scenario is possible/not possible
+	 * Hides the pin button if no pin scenario is possible
 	 * @private
 	 */
-	DynamicPage.prototype._showHidePinButton = function () {
-		this._togglePinButtonVisibility(!this._preserveHeaderStateOnScroll());
+	DynamicPage.prototype._hidePinButtonIfNotApplicable = function () {
+		if (this._preserveHeaderStateOnScroll()) {
+			this._togglePinButtonVisibility(false);
+		}
 	};
 
 	/**
@@ -1379,7 +1361,7 @@ sap.ui.define([
 			+ iTitleWidth + 'px ' + Math.floor(iTitleHeight) + 'px, '
 			+ iTitleWidth + 'px 0, 100% 0, 100% 100%, 0 100%)'; //
 
-		if (Localization.getRTL()) {
+		if (Core.getConfiguration().getRTL()) {
 			sClipPath = 'polygon(0px 0px, ' + iScrollbarWidth + 'px 0px, '
 			+ iScrollbarWidth + 'px ' + iTitleHeight + 'px, 100% '
 			+ iTitleHeight + 'px, 100% 100%, 0 100%)';
@@ -1428,21 +1410,12 @@ sap.ui.define([
 		this._updateTitleARIAState(bExpanded);
 	};
 
-	/**
-	 * Initializes the specific Device.media range set for <code>DynamicPage</code>.
-	 */
-	DynamicPage.prototype._initRangeSet = function () {
-		if (!Device.media.hasRangeSet(DynamicPage.MEDIA_RANGESET_NAME)) {
-			Device.media.initRangeSet(DynamicPage.MEDIA_RANGESET_NAME,
-				[DynamicPage.BREAK_POINTS.PHONE,
-				DynamicPage.BREAK_POINTS.TABLET,
-				DynamicPage.BREAK_POINTS.DESKTOP], "px", ["phone", "tablet", "desktop"]);
-		}
-	};
+	DynamicPage.prototype._applyContextualSettings = function (oContextualSettings) {
+		var iCurrentWidth = oContextualSettings.contextualWidth;
 
-	DynamicPage.prototype._onMediaRangeChange = function () {
-		var iCurrentWidth = this._getMediaContainerWidth();
 		this._updateMedia(iCurrentWidth);
+
+		return ManagedObject.prototype._applyContextualSettings.call(this, oContextualSettings);
 	};
 
 	/**
@@ -1925,29 +1898,9 @@ sap.ui.define([
 			oDynamicPageTitle._onResize(iCurrentWidth);
 		}
 
-		if (this._shouldAutoExpandHeaderOnResize(oEvent)) {
-			this._expandHeader(true, false /* bUserInteraction */);
-			this.getHeader().$().removeClass("sapFDynamicPageHeaderHidden");
-		}
-
 		this._adjustSnap();
 		this._updateTitlePositioning();
 		this._updateMedia(iCurrentWidth);
-	};
-
-	DynamicPage.prototype._shouldAutoExpandHeaderOnResize = function (oResizeEvent) {
-		var oDynamicPageHeader = this.getHeader(),
-			bHeaderSnappedByUser = exists(oDynamicPageHeader) && !this.getHeaderExpanded() && this._bIsLastToggleUserInitiated,
-			bPageResized = oResizeEvent.target === this.getDomRef(),
-			canToggleHeaderOnScroll = this._canSnapHeaderOnScroll.bind(this);
-
-		// auto-expand the header if the user had snapped it but
-		// can no longer expand it neither by scrolling nor by title-click
-		return !this._preserveHeaderStateOnScroll() // header state is not locked
-			&& bHeaderSnappedByUser
-			&& bPageResized
-			&& !this.getToggleHeaderOnTitleClick() // user cannot expand the header by title-click
-			&& !canToggleHeaderOnScroll(); // user cannot expand the header by scrolling
 	};
 
 	/**
@@ -2000,7 +1953,7 @@ sap.ui.define([
 			return;
 		}
 
-		oStickySubheaderProvider = Element.getElementById(sStickySubheaderProviderId);
+		oStickySubheaderProvider = Core.byId(sStickySubheaderProviderId);
 
 		if (!exists(oStickySubheaderProvider)) {
 			return;
@@ -2385,7 +2338,7 @@ sap.ui.define([
 			sStickySubheaderProviderId = this.getStickySubheaderProvider(),
 			bIsInInterface;
 
-		oStickySubheaderProvider = Element.getElementById(sStickySubheaderProviderId);
+		oStickySubheaderProvider = Core.byId(sStickySubheaderProviderId);
 
 		if (exists(oStickySubheaderProvider) && !this._bAlreadyAddedStickySubheaderAfterRenderingDelegate) {
 			bIsInInterface = oStickySubheaderProvider.getMetadata()
@@ -2462,7 +2415,7 @@ sap.ui.define([
 	 * @private
 	 */
 	DynamicPage.prototype._bStickySubheaderProviderExists = function() {
-		var oSticky = Element.getElementById(this.getStickySubheaderProvider());
+		var oSticky = Core.byId(this.getStickySubheaderProvider());
 		return !!oSticky && oSticky.isA("sap.f.IDynamicPageStickyContent");
 	};
 
@@ -2500,17 +2453,6 @@ sap.ui.define([
 		}
 
 		return {};
-	};
-
-	DynamicPage.prototype._getAccessibilityStateTitle = function () {
-		var oInfo = this._formatLandmarkInfo(this.getLandmarkInfo(), "Header"),
-			oTitle = this.getTitle();
-
-		if (oTitle) {
-			oInfo.label = oTitle._getTitleText() || oInfo.label;
-		}
-
-		return oInfo;
 	};
 
 	/**
@@ -2553,7 +2495,7 @@ sap.ui.define([
 		if (oFooter && !oFooter.getAriaLabelledBy().length) {
 			this._oInvisibleText = new InvisibleText({
 				id: oFooter.getId() + "-FooterActions-InvisibleText",
-				text: Library.getResourceBundleFor("sap.f").getText(DynamicPage.ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS)
+				text: Core.getLibraryResourceBundle("sap.f").getText(DynamicPage.ARIA_LABEL_TOOLBAR_FOOTER_ACTIONS)
 			}).toStatic();
 
 			oFooter.addAriaLabelledBy(this._oInvisibleText);

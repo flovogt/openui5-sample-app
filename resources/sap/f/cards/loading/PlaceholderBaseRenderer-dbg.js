@@ -1,10 +1,10 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Lib"], function(Library) {
+sap.ui.define(["sap/ui/core/Core"], function(Core) {
 	"use strict";
 
 	/**
@@ -26,7 +26,7 @@ sap.ui.define(["sap/ui/core/Lib"], function(Library) {
 	 * @param {sap.f.cards.loading.PlaceholderBase} oControl An object representation of the control that should be rendered.
 	 */
 	PlaceholderBaseRenderer.render = function(oRm, oControl) {
-		var oResBundle = Library.getResourceBundleFor("sap.ui.core"),
+		var oResBundle = Core.getLibraryResourceBundle("sap.ui.core"),
 			sTitle = oResBundle.getText("BUSY_TEXT");
 
 		if (!oControl.getHasContent()) {

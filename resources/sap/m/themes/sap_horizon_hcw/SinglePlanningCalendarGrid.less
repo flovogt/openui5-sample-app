@@ -4,12 +4,13 @@
 /* ================================================= */
 
 .sapUiSizeCompact .sapMSinglePCGrid {
-
-	& .sapUiCalItem {
+	& .sapUiCalItem
+	{
 		text-align: left;
 	}
 
-	& .sapUiCalDayName {
+	& .sapUiCalDayName
+	{
 		text-align: right;
 	}
 }
@@ -19,22 +20,19 @@
 }
 
 html.sap-desktop {
-
 	.sapMSinglePCBlockersRow > .sapMSinglePCBlockersColumns > .sapMSinglePCBlockersColumn:focus::after,
 	.sapMSinglePCGridContent .sapMSinglePCColumns .sapMSinglePCRow:focus::after {
-		border: 0.125rem dotted var(--sapContent_FocusColor);
+		border: 0.125rem dotted @sapUiContentFocusColor;
 	}
 }
 
 .sapMSinglePC {
-
-	.sapMSinglePCRow,
-	.sapMSinglePCBlockersColumn {
-		border-color: var(--sapList_BorderColor);
+	.sapMSinglePCRow, .sapMSinglePCBlockersColumn {
+		border-color: @sapUiListBorderColor;
 	}
 
 	.sapMSinglePCColumnToday .sapMSinglePCRow::before {
-		border-color: var(--sapLegend_CurrentDateTime);
+		border-color: @sapUiLegendCurrentDateTime;
 	}
 
 	.sapMSinglePCColumnHeader .sapUiCalItem.sapUiCalItemNow {
@@ -42,51 +40,43 @@ html.sap-desktop {
 	}
 
 	.sapMSinglePCNowMarker {
-		color: var(--sapLegend_CurrentDateTime);
+		color: @sapUiLegendCurrentDateTime;
 	}
 
 	.sapMSinglePCColumnWeekend,
 	.sapMSinglePCNonWorkingRow,
 	.sapMSinglePCBlockersRow,
-	.sapMSinglePCNonWorkingPeriod,
 	.sapMSinglePCRowHeaders {
-		background-color: var(--sapList_AlternatingBackground);
+		background-color: @sapUiListAlternatingBackground;
 	}
 
 	.sapMPCHeadNavToolbar.sapMTB-Transparent-CTX.sapMTB {
-		background-color: var(--sapList_Background);
+		background-color: @sapUiListBackground;
 	}
 
 	.sapMSinglePCAppointmentWrap.sapUiCalendarRowApps {
-
 		.sapUiCalendarAppSel{
-			border: 0.0625rem solid var(--sapList_SelectionBorderColor);
-
+			border: 0.0625rem solid @sapUiListSelectionBorderColor;
 			.sapUiCalendarAppCont {
 				border: none;
 			}
 		}
-
 		&:focus {
-
-			.sapUiCalendarAppCont::after {
-				border: 0.125rem dotted var(--sapContent_ContrastFocusColor);
+			.sapUiCalendarAppCont:after {
+				border: 0.125rem dotted @sapUiContentContrastFocusColor;
 			}
-
-			.sapUiCalendarAppSel > .sapUiCalendarAppCont::after {
-				border: 0.125rem dotted var(--sapContent_ContrastFocusColor);
+			.sapUiCalendarAppSel > .sapUiCalendarAppCont:after {
+				border: 0.125rem dotted @sapUiContentContrastFocusColor;
 			}
 		}
 	}
 
-	.sapUiCalItem:focus {
+	.sapUiCalItem:focus{
 		outline: none;
 	}
 
 	.sapMSinglePCColumnHeader {
-
 		.sapUiCalItem.sapUiCalItemNow {
-
 			.sapUiCalSpecialDate {
 				position: absolute;
 				left: 0;
@@ -101,7 +91,6 @@ html.sap-desktop {
 	}
 
 	.sapMSinglePCAppointmentWrap.sapUiCalendarRowApps {
-
 		.sapUiCalendarApp {
 			border-top-left-radius: 0;
 			border-bottom-left-radius: 0;
@@ -110,7 +99,6 @@ html.sap-desktop {
 }
 
 .sapUiCalendarRowVisFilled .sapMSinglePCAppointmentWrap {
-
 	.sapUiCalendarApp,
 	.sapUiCalendarApp:hover:not(:active) {
 		background-color: transparent;
@@ -118,22 +106,17 @@ html.sap-desktop {
 }
 
 .sapUiSizeCompact .sapMSinglePC {
-
 	.sapMSinglePCColumnHeader {
-
 		.sapUiCalItem.sapUiCalItemNow {
 			outline: 0.0625rem solid white;
 			box-shadow: inset white;
-
 			&.sapUiCalItemSel {
 				outline: 0.0625rem solid black;
 				box-shadow: inset black;
 			}
-
 			&.sapUiCalItemSel:hover {
-				background-color: var(--sapActiveColor);
+				background-color: @sapUiActive;
 			}
-
 			&.sapUiCalItemSel .sapUiCalItemText,
 			.sapUiCalItemText {
 				box-shadow: none;
@@ -141,7 +124,6 @@ html.sap-desktop {
 				line-height: 1.75rem;
 			}
 		}
-
 		.sapUiCalItem.sapUiCalItemSel:not(.sapUiCalItemSelBetween) > .sapUiCalItemText,
 		.sapUiCalItem.sapUiCalItemSel:not(.sapUiCalItemNow):not(.sapUiCalItemSelBetween):focus > .sapUiCalItemText {
 			border: 0.0625rem solid transparent;
@@ -149,7 +131,6 @@ html.sap-desktop {
 
 		.sapUiCalItem.sapUiCalItemSel {
 			border: 0.0625rem solid black;
-
 			.sapUiCalItemText {
 				line-height: 1.825rem;
 			}
@@ -160,7 +141,6 @@ html.sap-desktop {
 		}
 
 		.sapUiCalItem {
-
 			.sapUiCalItemText,
 			.sapUiCalDayName {
 				padding-left: 0.125rem;
@@ -179,10 +159,7 @@ html.sap-desktop {
 	}
 }
 
-.sapMSinglePCBlockers,
-.sapMSinglePCAppointments {
-
-	&.sapUiCalendarRowVisFilled > .sapUiCalendarRowApps:hover > .sapUiCalendarApp:not(.sapUiCalendarAppSel) > .sapUiCalendarAppCont {
-		background-color: var(--sapList_Hover_Background);
-	}
+.sapMSinglePCBlockers > .sapUiCalendarRowApps > .sapUiCalendarApp > .sapUiCalendarAppCont,
+.sapMSinglePCAppointments > .sapUiCalendarRowApps > .sapUiCalendarApp > .sapUiCalendarAppCont {
+	background-color: @sapUiListHoverBackground;
 }

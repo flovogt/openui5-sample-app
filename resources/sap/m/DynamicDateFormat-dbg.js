@@ -1,13 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides class sap.m.DynamicDateFormat
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/ui/core/Lib",
 	'sap/ui/core/date/UI5Date',
 	'sap/ui/core/format/DateFormat',
 	'sap/ui/core/format/NumberFormat',
@@ -15,9 +13,10 @@ sap.ui.define([
 	'sap/ui/core/LocaleData',
 	"sap/base/util/deepExtend",
 	"sap/ui/unified/calendar/CalendarUtils",
-	"./library"
+	"./library",
+	"sap/ui/core/Configuration"
 ],
-	function(Formatting, Library, UI5Date, DateFormat, NumberFormat, Locale, LocaleData, deepExtend, CalendarUtils, library) {
+	function(UI5Date, DateFormat, NumberFormat, Locale, LocaleData, deepExtend, CalendarUtils, library, Configuration) {
 		"use strict";
 
 		/**
@@ -36,7 +35,7 @@ sap.ui.define([
 			throw new Error();
 		};
 
-		var _resourceBundle = Library.getResourceBundleFor("sap.m");
+		var _resourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		var _staticParts = {};
 		var _dynamicParameterIndexes = {};
 		var aParameterTypesByStandardOptionKey = {
@@ -51,13 +50,6 @@ sap.ui.define([
 			"LASTMONTHS": ["int"],
 			"LASTQUARTERS": ["int"],
 			"LASTYEARS": ["int"],
-			"LASTMINUTESINCLUDED": ["int"],
-			"LASTHOURSINCLUDED": ["int"],
-			"LASTDAYSINCLUDED": ["int"],
-			"LASTWEEKSINCLUDED": ["int"],
-			"LASTMONTHSINCLUDED": ["int"],
-			"LASTQUARTERSINCLUDED": ["int"],
-			"LASTYEARSINCLUDED": ["int"],
 			"NEXTMINUTES": ["int"],
 			"NEXTHOURS": ["int"],
 			"NEXTDAYS": ["int"],
@@ -65,13 +57,6 @@ sap.ui.define([
 			"NEXTMONTHS": ["int"],
 			"NEXTQUARTERS": ["int"],
 			"NEXTYEARS": ["int"],
-			"NEXTMINUTESINCLUDED": ["int"],
-			"NEXTHOURSINCLUDED": ["int"],
-			"NEXTDAYSINCLUDED": ["int"],
-			"NEXTWEEKSINCLUDED": ["int"],
-			"NEXTMONTHSINCLUDED": ["int"],
-			"NEXTQUARTERSINCLUDED": ["int"],
-			"NEXTYEARSINCLUDED": ["int"],
 			"FROM": ["date"],
 			"TO": ["date"],
 			"FROMDATETIME": ["datetime"],
@@ -168,7 +153,7 @@ sap.ui.define([
 			}
 
 			if (!oLocale) {
-				oLocale = new Locale(Formatting.getLanguageTag());
+				oLocale = Configuration.getFormatSettings().getFormatLocale();
 			}
 			oFormat.oLocale = oLocale;
 			oFormat.oLocaleData = LocaleData.getInstance(oLocale);
@@ -192,7 +177,7 @@ sap.ui.define([
 			oFormat._monthFormatter = DateFormat.getInstance(oFormat.oOriginalFormatOptions["month"]);
 			oFormat._yearFormatter = DateFormat.getInstance(oFormat.oOriginalFormatOptions["year"]);
 			oFormat._numberFormatter = NumberFormat.getInstance(oFormat.oOriginalFormatOptions["int"]);
-			oFormat._resourceBundle = Library.getResourceBundleFor("sap.m");
+			oFormat._resourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			return oFormat;
 		};
@@ -270,7 +255,7 @@ sap.ui.define([
 			}
 
 			if (aFormattedParams.length === 0) {
-				aFormattedParams = undefined;
+				aFormattedParams = null;
 			}
 
 			return this._resourceBundle.getText("DYNAMIC_DATE_" + sKey.toUpperCase() + "_FORMAT", aFormattedParams);

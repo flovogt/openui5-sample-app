@@ -1,6 +1,6 @@
 /* ======================================== */
 /* CSS for control sap.m/ProgressIndicator  */
-/* Horizon theme                            */
+/* Horizon theme							*/
 /* ======================================== */
 
 .sapMPI {
@@ -29,29 +29,19 @@
 	}
 }
 
-.sapMPI.sapMPINoValue {
-	padding-top: 0.3125rem;
-	padding-bottom: 0.6875rem;
-}
-
-.sapUiSizeCompact .sapMPI.sapMPINoValue:not(.sapMPIDisplayOnly) {
-	height: 1rem;
-	margin: 0;
-}
-
 .sapMPIValueMax .sapMPIBarRemaining {
 	display: flex;
 }
 
 .sapMPIBarRemaining {
 	position: absolute;
-	width: ~'calc(100% - 1.25rem)';
-	border: 0.0625rem solid var(--sapProgress_BorderColor);
+    width: ~'calc(100% - 1.25rem)';
+	border: 0.0625rem solid @sapUiProgressBorderColor;
 }
 
 .sapMPIBar {
 	z-index: 1;
-	border: 0.0625rem solid var(--sapProgress_Value_TextColor);
+	border: 0.0625rem solid @sapUiProgressValueTextColor;
 }
 
 .sapMPIValueMin .sapMPIBar {
@@ -59,7 +49,7 @@
 }
 
 .sapMPIBar::before {
-	font-family: var(--sapContent_IconFontFamily);
+	font-family: 'SAP-icons';
 	font-size: 1rem;
 	margin-left: 0.25rem;
 	position: absolute;
@@ -85,121 +75,116 @@
 }
 
 .sapMPIBarPositive {
-	background-color: var(--sapProgress_Value_PositiveBackground);
-	border-color: var(--sapProgress_Value_PositiveBorderColor);
-
+	background-color: @sapUiProgressValuePositiveBackground;
+	border-color: @sapUiProgressValuePositiveBorderColor;
 	.sapMPIText.sapMPITextLeft,
 	.sapMPIText.sapMPITextRight {
-		color: var(--sapProgress_PositiveTextColor);
+		color: @sapUiProgressPositiveTextColor;
 	}
 
 	&::before {
 		content: '\e1c1';
-		color: var(--sapProgress_Value_PositiveTextColor);
+		color: @sapUiProgressValuePositiveTextColor;
 	}
 
 	+ .sapMPIBarRemaining {
-		background-color: var(--sapProgress_PositiveBackground);
-		border-color: var(--sapProgress_PositiveBorderColor);
+		background-color: @sapUiProgressPositiveBackground;
+		border-color: @sapUiProgressPositiveBorderColor;
 
 		&::after,
 		&::before {
-			background-color: var(--sapProgress_Value_PositiveBackground);
+			background-color: @sapUiProgressValuePositiveBackground;
 		}
 	}
 }
 
 .sapMPIBarNegative {
-	background-color: var(--sapProgress_Value_NegativeBackground);
-	border-color: var(--sapProgress_Value_NegativeBorderColor);
-
+	background-color: @sapUiProgressValueNegativeBackground;
+	border-color: @sapUiProgressValueNegativeBorderColor;
 	.sapMPIText.sapMPITextLeft,
 	.sapMPIText.sapMPITextRight {
-		color: var(--sapProgress_NegativeTextColor);
+		color: @sapUiProgressNegativeTextColor;
 	}
 
 	&::before {
 		content: '\e1ec';
-		color: var(--sapProgress_Value_NegativeTextColor);
+		color: @sapUiProgressValueNegativeTextColor;
 	}
 
 	+ .sapMPIBarRemaining {
-		background-color: var(--sapProgress_NegativeBackground);
-		border-color: var(--sapProgress_NegativeBorderColor);
+		background-color: @sapUiProgressNegativeBackground;
+		border-color: @sapUiProgressNegativeBorderColor;
 
 		&::after,
 		&::before {
-			background: var(--sapProgress_Value_NegativeBackground);
+			background: @sapUiProgressValueNegativeBackground;
 		}
 	}
 }
 
 .sapMPIBarCritical {
-	background-color: var(--sapProgress_Value_CriticalBackground);
-	border-color: var(--sapProgress_Value_CriticalBorderColor);
-
+	background-color: @sapUiProgressValueCriticalBackground;
+	border-color: @sapUiProgressValueCriticalBorderColor;
 	.sapMPIText.sapMPITextLeft,
 	.sapMPIText.sapMPITextRight {
-		color: var(--sapProgress_CriticalTextColor);
+		color: @sapUiProgressCriticalTextColor;
 	}
 
 	&::before {
 		content: '\e053';
-		color: var(--sapProgress_Value_CriticalTextColor);
+		color: @sapUiProgressValueCriticalTextColor;
 	}
 
 	+ .sapMPIBarRemaining {
-		background-color: var(--sapProgress_CriticalBackground);
-		border-color: var(--sapProgress_CriticalBorderColor);
+		background-color: @sapUiProgressCriticalBackground;
+		border-color: @sapUiProgressCriticalBorderColor;
 
 		&::after,
 		&::before {
-			background: var(--sapProgress_Value_CriticalBackground);
+			background: @sapUiProgressValueCriticalBackground;
 		}
 	}
 }
 
 .sapMPIBarInformation {
-	background-color: var(--sapProgress_Value_InformationBackground);
-	border-color: var(--sapProgress_Value_InformationBorderColor);
-
+	background-color: @sapUiProgressValueInformationBackground;
+	border-color: @sapUiProgressValueInformationBorderColor;
 	.sapMPIText.sapMPITextLeft,
 	.sapMPIText.sapMPITextRight {
-		color: var(--sapProgress_InformationTextColor);
+		color: @sapUiProgressInformationTextColor;
 	}
 
 	&::before {
 		content: '\e289';
-		color: var(--sapProgress_Value_InformationTextColor);
+		color: @sapUiProgressValueInformationTextColor;
 	}
 
 	+ .sapMPIBarRemaining {
-		background-color: var(--sapProgress_InformationBackground);
-		border-color: var(--sapProgress_InformationBorderColor);
+		background-color: @sapUiProgressInformationBackground;
+		border-color: @sapUiProgressInformationBorderColor;
 
 		&::after,
 		&::before {
-			background: var(--sapProgress_Value_InformationBackground);
+			background: @sapUiProgressValueInformationBackground;
 		}
 	}
 }
 
 .sapMPIDisplayOnly:not(.sapMPIBarDisabled) .sapMPIBarNeutral,
 .sapMPIBarNeutral {
-	background-color: var(--sapProgress_Value_Background);
-
+	background-color: @sapUiProgressValueBackground;
 	.sapMPIText.sapMPITextLeft,
 	.sapMPIText.sapMPITextRight {
-		color: var(--sapProgress_TextColor);
+		color: @sapUiProgressTextColor;
 	}
 
 	+ .sapMPIBarRemaining {
-		background-color: var(--sapProgress_Background);
-		border-color: var(--sapProgress_BorderColor);
+		background-color: @sapUiProgressBackground;
+		border-color: @sapUiProgressBorderColor;
 
 		&::after,
 		&::before {
-			background: var(--sapProgress_Value_Background);
+			background: @sapUiProgressValueBackground;
 		}
 	}
 }
@@ -208,18 +193,18 @@
 .sapMPIText {
 	padding: 0;
 	position: absolute;
-	top: 0.125rem;
+	top: 0;
 	left: 0;
 	margin-bottom: 0.1875rem;
-	font-size: var(--sapProgress_FontSize);
-	color: var(--sapProgress_TextColor);
+	font-size: @sapUiProgressFontSize;
+	color: @sapUiProgressTextColor;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
 
 	&.sapMPITextRight {
-		top: -1.25rem;
+		top: -1.3125rem;
 		right: -0.0675rem;
 	}
 }
@@ -232,8 +217,9 @@
 
 /* Condensed */
 .sapUiSizeCondensed .sapUiTableDataCell .sapMPI:not(.sapMPIDisplayOnly) {
-	padding: 0.375rem 1.25rem 0.375rem 0;
+	padding: 0.4375rem 0;
 	margin: 0;
+
 }
 
 .sapUiSizeCondensed .sapUiTableDataCell .sapMPIValueGreaterHalf .sapMPITextLeft {

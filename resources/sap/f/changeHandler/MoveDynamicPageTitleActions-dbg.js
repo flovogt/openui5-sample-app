@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,7 +16,8 @@ sap.ui.define([
 		 *
 		 * @alias sap.f.changeHandler.MoveDynamicPageTitleActions
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
+		 * @experimental Since 1.52
 		 */
 		var MoveActions = { };
 		var ACTION_AGGREGATION_NAME = "actions";
@@ -133,29 +134,26 @@ sap.ui.define([
 		MoveActions.getCondenserInfo = function(oChange) {
 			var oChangeContent = oChange.getContent();
 			var oRevertData = oChange.getRevertData();
-			var bSupportsCondenser = oChangeContent.targetAggregation && oChangeContent.targetContainer;
-			if (bSupportsCondenser) {
-				return {
-					affectedControl: oChangeContent.movedElements[0].selector,
-					classification: Condenser.Move,
-					sourceContainer: oRevertData.sourceParent,
-					targetContainer: oChangeContent.targetContainer,
-					sourceIndex: oRevertData.index,
-					sourceAggregation: oRevertData.aggregation,
-					targetAggregation: oChangeContent.targetAggregation,
-					setTargetIndex: function(oChange, iNewTargetIndex) {
-						oChange.getContent().movedElements[0].targetIndex = iNewTargetIndex;
-					},
-					getTargetIndex: function(oChange) {
-						return oChange.getContent().movedElements[0].targetIndex;
-					},
-					setIndexInRevertData: function(oChange, iIndex) {
-						var oRevertData = oChange.getRevertData();
-						oRevertData.index = iIndex;
-						oChange.setRevertData(oRevertData);
-					}
-				};
-			}
+			return {
+				affectedControl: oChangeContent.movedElements[0].selector,
+				classification: Condenser.Move,
+				sourceContainer: oRevertData.sourceParent,
+				targetContainer: oChangeContent.targetContainer,
+				sourceIndex: oRevertData.index,
+				sourceAggregation: oRevertData.aggregation,
+				targetAggregation: oChangeContent.targetAggregation,
+				setTargetIndex: function(oChange, iNewTargetIndex) {
+					oChange.getContent().movedElements[0].targetIndex = iNewTargetIndex;
+				},
+				getTargetIndex: function(oChange) {
+					return oChange.getContent().movedElements[0].targetIndex;
+				},
+				setIndexInRevertData: function(oChange, iIndex) {
+					var oRevertData = oChange.getRevertData();
+					oRevertData.index = iIndex;
+					oChange.setRevertData(oRevertData);
+				}
+			};
 		};
 
 		return MoveActions;

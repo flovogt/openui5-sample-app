@@ -1,45 +1,37 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Link.
 sap.ui.define([
 	"./library",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
-	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/core/EnabledPropagator",
 	"sap/ui/core/AccessKeysEnablement",
 	"sap/ui/core/LabelEnablement",
-	"sap/ui/core/Lib",
-	"sap/ui/core/Icon",
-	"sap/ui/core/IconPool",
 	"sap/ui/core/library",
 	"sap/ui/Device",
 	"./LinkRenderer",
 	"sap/ui/events/KeyCodes",
-	"sap/base/security/URLListValidator",
-	"sap/base/Log"
+	"sap/base/security/URLListValidator"
 ],
 function(
 	library,
+	Core,
 	Control,
-	Element,
 	InvisibleText,
 	EnabledPropagator,
 	AccessKeysEnablement,
 	LabelEnablement,
-	Library,
-	Icon,
-	IconPool,
 	coreLibrary,
 	Device,
 	LinkRenderer,
 	KeyCodes,
-	URLListValidator,
-	Log
+	URLListValidator
 ) {
 	"use strict";
 
@@ -57,9 +49,6 @@ function(
 
 	// shortcut for sap.m.EmptyIndicator
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
-
-	// shortcut for sap.m.ReactiveAreaMode
-	var ReactiveAreaMode = library.ReactiveAreaMode;
 
 	/**
 	 * Constructor for a new <code>Link</code>.
@@ -94,16 +83,10 @@ function(
 	 * @see {@link fiori:https://experience.sap.com/fiori-design-web/link/ Link}
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport, sap.ui.core.ILabelable
-	 *
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
-	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
+	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ITitleContent, sap.ui.core.IAccessKeySupport
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -116,11 +99,9 @@ function(
 			interfaces : [
 				"sap.ui.core.IShrinkable",
 				"sap.ui.core.IFormContent",
-				"sap.ui.core.ISemanticFormContent",
 				"sap.ui.core.ITitleContent",
 				"sap.ui.core.IAccessKeySupport",
-				"sap.m.IToolbarInteractiveControl",
-				"sap.ui.core.ILabelable"
+				"sap.m.IToolbarInteractiveControl"
 			],
 			library : "sap.m",
 			designtime: "sap/m/designtime/Link.designtime",
@@ -130,26 +111,6 @@ function(
 				 * Defines the displayed link text.
 				 */
 				text : {type : "string", group : "Data", defaultValue : ''},
-
-				/**
-				 * Defines the icon to be displayed as graphical element in the beginning of the <code>Link</code>.
-				 * It can be an icon from the icon font.
-				 * <b>Note:</b> Usage of icon-only link is not supported, the link must always have a text.
-				 * <b>Note:</b> We recommend using аn icon in the beginning or the end only, and always with text.
-				 * <b>Note:</b> Using an image instead of icon is not supported.
-				 * @since 1.128.0
-				 */
-				icon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue: "" },
-
-				/**
-				 * Defines the icon to be displayed as graphical element in the end of the <code>Link</code>.
-				 * It can be an icon from the icon font.
-				 * <b>Note:</b> Usage of icon-only link is not supported, the link must always have a text.
-				 * <b>Note:</b> We recommend using аn icon in the beginning or the end only, and always with text.
-				 * <b>Note:</b> Using an image instead of icon is not supported.
-				 * @since 1.128.0
-				 */
-				endIcon : {type : "sap.ui.core.URI", group : "Appearance", defaultValue: "" },
 
 				/**
 				 * Determines whether the link can be triggered by the user.
@@ -252,20 +213,6 @@ function(
 				accessibleRole : {type : "sap.m.LinkAccessibleRole", group : "Accessibility", defaultValue : LinkAccessibleRole.Default},
 
 				/**
-				 * Defines the size of the reactive area of the link:<ul>
-				 * <li><code>ReactiveAreaMode.Inline</code> - The link is displayed as part of a sentence.</li>
-				 * <li><code>ReactiveAreaMode.Overlay</code> - The link is displayed as an overlay on top of other interactive parts of the page.</li></ul>
-				 *
-				 * <b>Note:</b>It is designed to make links easier to activate and helps meet the WCAG 2.2 Target Size requirement. It is applicable only for the SAP Horizon themes.
-				 * <b>Note:</b>The Reactive area size is sufficiently large to help users avoid accidentally selecting (clicking or tapping) on unintented UI elements.
-				 * UI elements positioned over other parts of the page may need an invisible active touch area.
-				 * This will ensure that no elements beneath are activated accidentally when the user tries to interact with the overlay element.
-				 *
-				 * @since 1.133.0
-				 */
-				reactiveAreaMode : {type : "sap.m.ReactiveAreaMode", group : "Appearance", defaultValue : ReactiveAreaMode.Inline},
-
-				/**
 				 * Specifies if an empty indicator should be displayed when there is no text.
 				 *
 				 * @since 1.89
@@ -287,21 +234,6 @@ function(
 				 * @private
 				 */
 				accesskey: { type: "string", defaultValue: "", visibility: "hidden" }
-			},
-			aggregations: {
-
-				/**
-				 * The icon control to be displayed as graphical element in the beginning of the <code>Link</code>.
-				 * @since 1.128.0
-				 */
-				_icon: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"},
-
-				/**
-				 * The icon control to be displayed as graphical element at the end of the <code>Link</code>.
-				 * @since 1.128.0
-				 */
-				_endIcon: {type: "sap.ui.core.Icon", multiple: false, visibility: "hidden"}
-
 			},
 			associations : {
 
@@ -376,46 +308,28 @@ function(
 	Link.prototype.onAfterRendering = function() {
 		if (Device.system.phone || Device.system.tablet) {
 			var oAnchorElement = this.getDomRef();
-
 			// TODO: Adjust sap.m.internal.ObjectMarkerCustomLink rendering part of the sap.m.ObjectMarker implementation
 			if (!oAnchorElement) {
 				return;
 			}
-
-			oAnchorElement.removeEventListener("touchstart", this._onTouchStart);
-
-			if (oAnchorElement.getAttribute("href") === "#") {
-				oAnchorElement.addEventListener("touchstart", this._onTouchStart);
+			oAnchorElement.removeEventListener("click", this._onClick);
+			if (oAnchorElement.getAttribute("href") == "#") {
+				oAnchorElement.addEventListener("click", this._onClick);
 			}
 		}
 	};
 
 	Link.prototype.exit = function() {
-		var oIcon = this.getAggregation("_icon"),
-			oEndIcon = this.getAggregation("_endIcon");
-
 		if (Device.system.phone || Device.system.tablet) {
 			var oAnchorElement = this.getDomRef();
-
 			if (!oAnchorElement) {
 				return;
 			}
-
-			oAnchorElement.removeEventListener("touchstart", this._onTouchStart);
-		}
-
-		if (oIcon) {
-			oIcon.destroy();
-			oIcon = null;
-		}
-
-		if (oEndIcon) {
-			oEndIcon.destroy();
-			oEndIcon = null;
+			oAnchorElement.removeEventListener("click", this._onClick);
 		}
 	};
 
-	Link.prototype._onTouchStart = function(oEvent) {
+	Link.prototype._onClick = function(oEvent) {
 		oEvent.preventDefault();
 	};
 
@@ -477,6 +391,7 @@ function(
 		}
 	};
 
+
 	/**
 	 * Handler for the <code>press</code> event of the link.
 	 *
@@ -491,7 +406,7 @@ function(
 			// mark the event for components that needs to know if the event was handled by the link
 			oEvent.setMarked();
 
-			bEmptyHref = (oTarget.classList.contains("sapMLnk") || oTarget.parentElement.classList.contains("sapMLnk")) && (oTarget.getAttribute("href") == "#" || oTarget.parentElement.getAttribute("href") == "#");
+			bEmptyHref = oTarget.classList.contains("sapMLnk") && oTarget.getAttribute("href") == "#";
 			if (!this.firePress({ctrlKey: !!oEvent.ctrlKey, metaKey: !!oEvent.metaKey}) || bEmptyHref) { // fire event and check return value whether default action should be prevented
 				oEvent.preventDefault();
 			}
@@ -544,32 +459,6 @@ function(
 		return this;
 	};
 
-	Link.prototype.setIcon = function(sSrc) {
-		if (!IconPool.isIconURI(sSrc)) {
-			Log.error("setIcon: The provided URI ' + sSrc + ' is is not a valid Icon URI!");
-		} else {
-			var oIcon = this._getIcon();
-
-			oIcon.setSrc(sSrc);
-			this.setProperty("icon", sSrc);
-		}
-
-		return this;
-	};
-
-	Link.prototype.setEndIcon = function(sSrc) {
-		if (!IconPool.isIconURI(sSrc)) {
-			Log.error("setEndIcon: The provided URI ' + sSrc + ' is is not a valid Icon URI!");
-		} else {
-			var oIcon = this._getEndIcon();
-
-			oIcon.setSrc(sSrc);
-			this.setProperty("endIcon", sSrc);
-		}
-
-		return this;
-	};
-
 	/*************************************** Static members ******************************************/
 
 	/**
@@ -591,7 +480,7 @@ function(
 	 * @returns {sap.ui.core.AccessibilityInfo} The <code>sap.m.Link</code>  accessibility information
 	 */
 	Link.prototype.getAccessibilityInfo = function() {
-		var oResourceBundle = Library.getResourceBundleFor("sap.m"),
+		var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"),
 			sEmphasizedInfo = this.getEmphasized() ? oResourceBundle.getText("LINK_EMPHASIZED") : "",
 			sSubtleInfo = this.getSubtle() ? oResourceBundle.getText("LINK_SUBTLE") : "",
 			sText = this.getText(),
@@ -668,7 +557,7 @@ function(
 		var aLabels = this.getAriaLabelledBy();
 
 		if (aLabels.length) {
-			var oLabel = Element.getElementById(aLabels[0]);
+			var oLabel = Core.byId(aLabels[0]);
 
 			oLabel.setProperty("highlightAccKeysRef", bHighlightAccKeysRef);
 
@@ -676,68 +565,6 @@ function(
 				this.setProperty("accesskey", oLabel.getText()[0].toLowerCase());
 			}
 		}
-	};
-
-	Link.prototype.getFormFormattedValue = function () {
-		return this.getText();
-	};
-
-	Link.prototype.getFormValueProperty = function () {
-		return "text";
-	};
-
-	Link.prototype.getFormObservingProperties = function() {
-		return ["text"];
-	};
-
-	Link.prototype.getFormRenderAsControl = function () {
-		return true;
-	};
-
-	/**
-	 * Returns the icon control instance of the icon displayed in the beginning of the link. If it is not yet created, it will be created.
-	 * @private
-	 * @returns {sap.ui.core.Icon} icon control instance of the icon displayed in the beginning of the link
-	 */
-	Link.prototype._getIcon = function () {
-		var oIcon = this.getAggregation("_icon");
-
-		if (!oIcon) {
-			oIcon = new Icon(this.getId() + "-icon", {
-				useIconTooltip: false
-			}).addStyleClass("sapMLnkIcon");
-			this.setAggregation("_icon", oIcon);
-		}
-
-		return oIcon;
-	};
-
-	/**
-	 * Returns the icon control instance of the icon displayed at the end of the link. If it is not yet created, it will be created.
-	 * @private
-	 * @returns {sap.ui.core.Icon} icon control instance of the icon displayed at the end of the link
-	 */
-	Link.prototype._getEndIcon = function () {
-		var oIcon = this.getAggregation("_endIcon");
-
-		if (!oIcon) {
-			oIcon = new Icon(this.getId() + "-endIcon", {
-				useIconTooltip: false
-			}).addStyleClass("sapMLnkEndIcon");
-			this.setAggregation("_endIcon", oIcon);
-		}
-
-		return oIcon;
-	};
-
-	/**
-	 * Returns if the control can be bound to a label
-	 *
-	 * @returns {boolean} <code>true</code> if the control can be bound to a label
-	 * @public
-	 */
-	Link.prototype.hasLabelableHTMLElement = function () {
-		return false;
 	};
 
 	return Link;

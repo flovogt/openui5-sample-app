@@ -1,13 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.MessagePage.
 sap.ui.define([
 	'./library',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/Control',
 	'sap/ui/core/IconPool',
@@ -22,7 +21,6 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery"
 ], function(
 	library,
-	Library,
 	coreLibrary,
 	Control,
 	IconPool,
@@ -74,7 +72,7 @@ sap.ui.define([
 		 * @see {@link fiori:https://experience.sap.com/fiori-design-web/message-page/ Message Page}
 		 *
 		 * @extends sap.ui.core.Control
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @constructor
 		 * @public
@@ -223,7 +221,7 @@ sap.ui.define([
 		 * LIFECYCLE METHODS
 		 */
 		MessagePage.prototype.init = function() {
-			var oBundle = Library.getResourceBundleFor("sap.m");
+			var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			this._oTitle = null;
 			this._oNavButton = new Button(this.getId() + "-navButton", {
@@ -334,7 +332,7 @@ sap.ui.define([
 				height: "8rem",
 				width: "8rem",
 				useIconTooltip: true,
-				decorative: true,
+				decorative: false,
 				alt: this.getIconAlt()
 			}, Image).addStyleClass("sapMMessagePageIcon");
 

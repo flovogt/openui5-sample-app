@@ -22,23 +22,20 @@
 }
 
 .sapMListTblSubRow {
-	background: var(--sapList_Background);
+	background: @sapUiListBackground;
 }
 
 /* adding alternating rows background color */
 :nth-child(even of .sapMListTblRowAlternate),
 :nth-child(even of .sapMListTblRowAlternate) + .sapMListTblSubRow {
-	background-color: var(--sapList_AlternatingBackground);
-
+	background-color: @sapUiListAlternatingBackground;
 	&.sapMLIBHoverable:hover {
-		background: var(--sapList_Hover_Background);
+		background : @sapUiListHoverBackground;
 	}
-
 	&.sapMLIBSelected {
-		background: var(--sapList_SelectionBackgroundColor);
-
+		background: @sapUiListSelectionBackgroundColor;
 		&.sapMLIBHoverable:hover {
-			background: var(--sapList_Hover_SelectionBackground);
+			background: @sapUiListHoverSelectionBackground;
 		}
 	}
 }
@@ -46,7 +43,7 @@
 .sapMLIBHoverable:not(.sapMLIBSelected):hover + .sapMListTblSubRow,
 .sapMLIBHoverable:not(.sapMLIBSelected) + .sapMListTblSubRow:hover,
 .sapMLIBHoverable:not(.sapMLIBSelected).sapMPopinHovered {
-	background: var(--sapList_Hover_Background);
+	background : @sapUiListHoverBackground;
 }
 
 .sapMLIBHoverable + .sapMListTblSubRow:hover {
@@ -55,22 +52,22 @@
 
 .sapMLIBSelected + .sapMListTblSubRow,
 .sapMLIBSelected.sapMListTblRowAlternate + .sapMListTblSubRow {
-	background: var(--sapList_SelectionBackgroundColor);
+	background: @sapUiListSelectionBackgroundColor;
 }
 
 .sapMLIB.sapMLIBActive + .sapMListTblSubRow {
-	color: var(--sapList_Active_TextColor);
-	background: var(--sapList_Active_Background);
+	color: @sapUiListActiveTextColor;
+	background: @sapUiListActiveBackground;
 }
 
 .sapMLIBHoverable.sapMLIBSelected:hover + .sapMListTblSubRow,
 .sapMLIBHoverable.sapMLIBSelected + .sapMListTblSubRow:hover,
 .sapMLIBHoverable.sapMLIBSelected.sapMPopinHovered {
-	background: @sapUiListSelectionHoverBackground;
+	background : @sapUiListSelectionHoverBackground;
 }
 
 .sapMLIBHoverable.sapMLIBSelected.sapMLIBActive:hover + .sapMListTblSubRow {
-	background: var(--sapList_Active_Background);
+	background: @sapUiListActiveBackground;
 }
 
 /* table popin */
@@ -85,7 +82,7 @@
 	padding-left: calc(@_sap_m_table_SelectionControlWidth + 0.5rem);
 }
 
-.sapMListTblSubCntRow {
+.sapMListTblSubCntRow{
 	padding-bottom: 0;
 	padding-top: 1px;
 }
@@ -94,16 +91,12 @@
 	margin-top: .5rem;
 }
 
-.sapMListTblSubCntHdr {
-	display: inline-flex;
-}
-
 .sapMListTblSubCntValBlock {
 	margin-top: .25rem;
 	display : block;
 }
 
-.sapMListTblSubCntValInline {
+.sapMListTblSubCntValInline{
 	display: inline-block;
 	max-width: 100%;
 }
@@ -111,20 +104,20 @@
 .sapMListTblSubCntHdr > .sapMListTblSubCntSpr,
 .sapMListTblSubCntRow > .sapMListTblSubCntHdr .sapMText,
 .sapMListTblSubCntRow > .sapMListTblSubCntHdr .sapMLabel {
-	color: var(--sapContent_LabelColor);
+	color: @sapUiContentLabelColor;
 	padding-top: 0;
+	display: inline;
 }
 
 .sapMListTblSubCntRow > .sapMListTblSubCntVal .sapMText,
 .sapMListTblSubCntRow > .sapMListTblSubCntVal .sapMLabel {
-	color: var(--sapList_TextColor);
+	color: @sapUiListTextColor;
 	padding-top: 0;
 }
 
 .sapMListTblSubCntSpr {
 	font-size: @sapMFontMediumSize;
 	padding-right: .5rem;
-
 	&::before {
 		content: attr(data-popin-colon);
 		vertical-align: top;
@@ -139,7 +132,7 @@
 
  /* separators */
  .sapMLIBShowSeparator > td {
-	border-top: 1px solid var(--sapList_BorderColor);
+	border-top: 1px solid @sapUiListBorderColor;
 }
 
 .sapMListShowSeparatorsNone .sapMLIBShowSeparator > td:not(.sapMListTblDummyCell),
@@ -149,12 +142,12 @@
 
 .sapMListShowSeparatorsAll .sapMListTblSubRow:last-child > td:not(.sapMListTblDummyCell),
 .sapMListShowSeparatorsAll .sapMLIBShowSeparator:last-child > td:not(.sapMListTblDummyCell) {
-	border-bottom: 1px solid var(--sapList_BorderColor);
+	border-bottom: 1px solid @sapUiListBorderColor;
 }
 
 .sapMListShowSeparatorsAll .sapMLIBShowSeparator:last-child > td:not(.sapMListTblDummyCell),
 .sapMListShowSeparatorsAll .sapMListTblSubRow:last-child > td:not(.sapMListTblDummyCell) {
-	border-bottom: 1px solid var(--sapList_TableFooterBorder);
+	border-bottom: 1px solid @sapUiListTableFooterBorder;
 }
 
 .sapMListShowSeparatorsInner .sapMLIBShowSeparator:last-child > td,
@@ -162,12 +155,11 @@
 	border-bottom-color: transparent;
 }
 
-.sapMListShowSeparatorsNone .sapMListTblFooter > td {
+.sapMListShowSeparatorsNone .sapMListTblFooter > td{
 	border-top-width: 2px;
 }
 
 .sapMTableRowCustomFocus {
-
 	.sapMLIBIconDet,
 	.sapMLIBIconDel {
 		margin-left: 0;
@@ -183,6 +175,7 @@
 .sapMListTblHasPopin > .sapMTableRowCustomFocus:focus + .sapMListTblSubRow .sapMLIBNavigated {
 	top: 0;
 }
+
 
 /********** COMPACT DESIGN ************/
 

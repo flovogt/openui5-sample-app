@@ -1,12 +1,11 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	'sap/base/future',
 	'sap/base/Log'
-], function (future, Log) {
+], function (Log) {
 	"use strict";
 
 	var mLibThemeMetadata = {};
@@ -40,20 +39,17 @@ sap.ui.define([
 		"sap_fiori_3_hcb",
 		"sap_fiori_3_hcw",
 
-		/** @deprecated Obsolete themes should be removed in main */
-		...[
-			// belize (deprecated as of 1.120)
-			"sap_belize",
-			"sap_belize_plus",
-			"sap_belize_hcb",
-			"sap_belize_hcw",
+		// belize
+		"sap_belize",
+		"sap_belize_plus",
+		"sap_belize_hcb",
+		"sap_belize_hcw",
 
-			// bluecrystal (deprecated as of 1.40)
-			"sap_bluecrystal",
+		// bluecrystal (deprecated)
+		"sap_bluecrystal",
 
-			// hcb (deprecated as of 1.46) - the standard HCB theme, newer themes have a dedicated HCB/HCW variant
-			"sap_hcb"
-		]
+		// hcb (deprecated) - the standard HCB theme, newer themes have a dedicated HCB/HCW variant
+		"sap_hcb"
 	];
 
 	// cache for already calculated theme fallbacks
@@ -122,7 +118,7 @@ sap.ui.define([
 			oMetadata = JSON.parse(sMetadataJSON);
 			mLibThemeMetadata[sLibName] = oMetadata;
 		} catch (ex) {
-			future.errorThrows("Could not parse theme metadata for library " + sLibName + ".");
+			Log.error("[FUTURE FATAL] Could not parse theme metadata for library " + sLibName + ".");
 		}
 		return oMetadata;
 	};
@@ -157,14 +153,14 @@ sap.ui.define([
 				var bResult = bNoLinkElement || bSheet || bInnerHtml || bLinkElementFinishedLoading;
 
 				if (bLog) {
-					Log.debug("sap.ui.core.theming.ThemeHelper: " + sId + ": " + bResult + " (noLinkElement: " + bNoLinkElement + ", sheet: " + bSheet + ", innerHtml: " + bInnerHtml + ", linkElementFinishedLoading: " + bLinkElementFinishedLoading + ")");
+					Log.debug("ThemeHelper: " + sId + ": " + bResult + " (noLinkElement: " + bNoLinkElement + ", sheet: " + bSheet + ", innerHtml: " + bInnerHtml + ", linkElementFinishedLoading: " + bLinkElementFinishedLoading + ")");
 				}
 
 				return bResult;
 
 			} catch (e) {
 				if (bLog) {
-					future.errorThrows(`sap.ui.core.theming.ThemeHelper: Error during check styles for Id: "${sId}"`, { cause: e });
+					Log.error("[FUTURE FATAL] ThemeHelper: " + sId + ": Error during check styles '" + sId + "'", e);
 				}
 			}
 

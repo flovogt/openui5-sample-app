@@ -1,15 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.Page.
 sap.ui.define([
 	"./library",
-	"sap/ui/core/AnimationMode",
 	"sap/ui/core/Control",
-	"sap/ui/core/ControlBehavior",
 	"sap/ui/core/Lib",
 	"sap/ui/core/delegate/ScrollEnablement",
 	"sap/m/Title",
@@ -22,13 +20,12 @@ sap.ui.define([
 	"sap/ui/core/InvisibleText",
 	"./TitlePropagationSupport",
 	"./PageRenderer",
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
 function(
 	library,
-	AnimationMode,
 	Control,
-	ControlBehavior,
 	Library,
 	ScrollEnablement,
 	Title,
@@ -41,7 +38,8 @@ function(
 	InvisibleText,
 	TitlePropagationSupport,
 	PageRenderer,
-	jQuery
+	jQuery,
+	Configuration
 ) {
 		"use strict";
 
@@ -97,7 +95,7 @@ function(
 		 * @extends sap.ui.core.Control
 		 * @mixes sap.ui.core.ContextMenuSupport
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @public
 		 * @alias sap.m.Page
@@ -299,8 +297,6 @@ function(
 
 		Page.FOOTER_ANIMATION_DURATION = 350;
 
-		Page.SHELLBAR_IN_HEADER_CLASS = "sapFShellBar-CTX";
-
 		Page.prototype.init = function () {
 			this._initTitlePropagationSupport();
 			this._initResponsivePaddingsEnablement();
@@ -418,9 +414,6 @@ function(
 				this._navBtn = new Button(this.getId() + "-navButton", {
 					press: function () {
 						this.fireNavButtonPress();
-						/**
-						 * @deprecated As of version 1.12.2
-						 */
 						this.fireNavButtonTap();
 					}.bind(this)
 				});
@@ -458,8 +451,8 @@ function(
 			}
 
 			var $footer = jQuery(this.getDomRef()).find(".sapMPageFooter").last(),
-				sAnimationMode = ControlBehavior.getAnimationMode(),
-				bHasAnimations = sAnimationMode !== AnimationMode.none && sAnimationMode !== AnimationMode.minimal;
+				sAnimationMode = Configuration.getAnimationMode(),
+				bHasAnimations = sAnimationMode !== Configuration.AnimationMode.none && sAnimationMode !== Configuration.AnimationMode.minimal;
 
 			if (!this.getFloatingFooter()) {
 				this.setProperty("showFooter", bShowFooter);
@@ -477,9 +470,8 @@ function(
 			}
 
 			if (bHasAnimations) {
-				setTimeout(() => {
-					// check if the footer should be hidden after the animation
-					$footer.toggleClass("sapUiHidden", !this.getShowFooter());
+				setTimeout(function () {
+					$footer.toggleClass("sapUiHidden", !bShowFooter);
 				}, Page.FOOTER_ANIMATION_DURATION);
 			} else {
 				$footer.toggleClass("sapUiHidden", !bShowFooter);
@@ -711,7 +703,7 @@ function(
 
 			this.setAggregation("customHeader", oHeader);
 
-			this.toggleStyleClass(Page.SHELLBAR_IN_HEADER_CLASS, oHeader?.isA("sap.f.ShellBar"));
+			this.toggleStyleClass("sapFShellBar-CTX", !!oHeader && oHeader.isA("sap.f.ShellBar"));
 
 			/*
 			 * Runs Fiori 2.0 adaptation for the header
@@ -726,33 +718,6 @@ function(
 			return this;
 		};
 
-		Page.prototype.setSubHeader = function(oHeader) {
-
-			this.setAggregation("subHeader", oHeader);
-
-			this.toggleStyleClass(Page.SHELLBAR_IN_HEADER_CLASS, oHeader?.isA("sap.f.ShellBar"));
-
-			return this;
-		};
-
-		Page.prototype.destroyCustomHeader = function() {
-
-			this.destroyAggregation("customHeader");
-
-			this.removeStyleClass(Page.SHELLBAR_IN_HEADER_CLASS);
-
-			return this;
-		};
-
-		Page.prototype.destroySubHeader = function() {
-
-			this.destroyAggregation("subHeader");
-
-			this.removeStyleClass(Page.SHELLBAR_IN_HEADER_CLASS);
-
-			return this;
-		};
-
 		Page.prototype._getAdaptableContent = function () {
 			return this._getAnyHeader();
 		};
@@ -760,6 +725,9 @@ function(
 		/**
 		 * Returns an InvisibleText control for the ARIA labelled-by attribute of the header toolbar of the page.
 		 *
+		 * @memberof Page.prototype
+		 * @function
+		 * @name _getHeaderToolbarAriaLabelledBy
 		 * @param {string} sId - The ID of header toolbar aggregation.
 		 * @returns {sap.ui.core.InvisibleText} The InvisibleText control for the header toolbar ARIA labelled-by attribute.
 		 *
@@ -777,6 +745,9 @@ function(
 		/**
 		 * Returns an InvisibleText control for the ARIA labelled-by attribute of the footer toolbar of the page.
 		 *
+		 * @memberof Page.prototype
+		 * @function
+		 * @name _getFooterToolbarAriaLabelledBy
 		 * @param {string} sId - The ID of the page.
 		 * @returns {sap.ui.core.InvisibleText} The InvisibleText control for the footer toolbar ARIA labelled-by attribute.
 		 *

@@ -1,19 +1,14 @@
-/* ==================================== */
-/* CSS for control sap.m/PasteProvider  */
-/* Base theme                           */
-/* ==================================== */
-
 .sapMPluginsPasteProviderMessage {
 	outline: 0;
 	padding: 2rem;
 	font-size: @sapFontSize;
-	font-family: var(--sapFontFamily);
-	color: var(--sapTextColor);
+	font-family: @sapFontFamily;
+	color: @sapTextColor;
 }
 
 .sapMPluginsPasteProviderShortCut {
-	font-size: var(--sapFontLargeSize);
-	font-family: var(--sapFontBoldFamily);
+	font-size: @sapFontLargeSize;
+	font-family: @sapFontBoldFamily;
 }
 
 .sapMPluginsPasteProviderHighlight {
@@ -21,7 +16,7 @@
 }
 
 .sapMPluginsPasteProviderHighlight::after {
-	content: '';
+	content: "";
 	background: @sapUiDragAndDropActiveBackground;
 	border: 0.125rem solid @sapUiDragAndDropActiveBorderColor;
 	position: absolute;

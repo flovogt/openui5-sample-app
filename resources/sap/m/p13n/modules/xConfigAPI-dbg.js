@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -96,55 +96,32 @@ sap.ui.define([
 			});
 	};
 
-	async function findAsync(arr, asyncCallback) {
-		const promises = arr.map(asyncCallback);
-		const results = await Promise.all(promises);
-		const index = results.findIndex((result) => result);
-		return arr[index];
-	}
-
-	xConfigAPI.getCurrentItemState = async function (oControl, oModificationPayload, oConfig, sAggregationName) {
+	xConfigAPI.getCurrentItemState = async function(oControl, oModificationPayload, oConfig, sAggregationName) {
 		const changeType = oModificationPayload?.changeType;
 		if (!oModificationPayload.propertyBag || !changeType || changeType.indexOf("Item") === -1) {
 			return;
 		}
-		const { modifier, appComponent } = oModificationPayload.propertyBag;
+		const {modifier, appComponent} = oModificationPayload.propertyBag;
 		const aTargetAggregationItems = await modifier.getAggregation(oControl, sAggregationName);
 		const aAggregationItems = aTargetAggregationItems || [];
 		const aCurrentState = [];
-		if (oConfig?.aggregations?.[sAggregationName] !== undefined && Object.keys(oConfig.aggregations[sAggregationName]).length > 0) {
+		if (oConfig && Object.keys(oConfig.aggregations[sAggregationName]).length > 0) {
 			Object.entries(oConfig.aggregations[sAggregationName]).forEach(([sKey, oItem]) => {
 				if (oItem.visible !== false) {
-					aCurrentState.push({ key: sKey, position: oItem.position });
+					aCurrentState.push({key: sKey, position: oItem.position});
 				}
 			});
-			aCurrentState.sort((a, b) => a.position - b.position);
+			aCurrentState.sort((a,b) => a.position - b.position);
 			aCurrentState.map((o) => delete o.position);
 		} else {
-
-
 			await aAggregationItems.reduce(async (pAccum, oItem, iIndex) => {
 				const pCurrentAccum = await pAccum; //synchronize async loop
-
-				const aCustomData = await modifier.getAggregation(oItem, "customData");
-				const oAffectedItem = await findAsync(aCustomData, async (oItemCustomData) => {
-					return await modifier.getProperty(oItemCustomData, "key") === "p13nKey";
-				});
-
-				if (oAffectedItem) {
-					const sKey = await modifier.getProperty(oAffectedItem, "value");
-					const vRelevant = await modifier.getProperty(oItem, "visible");
-					if (vRelevant && sKey) {
-						aCurrentState.push({ key: sKey });
-					}
-				} else {
-					const sId = appComponent ? appComponent.getRootControl()?.getLocalId(modifier.getId(oItem)) : modifier.getId(oItem);
-					const vRelevant = await modifier.getProperty(oItem, "visible");
-					if (vRelevant && sId) {
-						aCurrentState.push({ key: sId });
-					}
+				const oRootControl = appComponent ? appComponent.getRootControl() : oControl;
+				const sId = oRootControl?.getLocalId instanceof Function ? oRootControl.getLocalId(modifier.getId(oItem)) : modifier.getId(oItem);
+				const vRelevant = await modifier.getProperty(oItem, "visible");
+				if (vRelevant && sId) {
+					aCurrentState.push({key: sId});
 				}
-
 				return pCurrentAccum;
 			}, Promise.resolve());
 		}
@@ -225,27 +202,22 @@ sap.ui.define([
 		return oConfig;
 	};
 
-	const updateIndex = function (oControl, oConfig, oModificationPayload) {
+	const updateIndex = function(oControl, oConfig, oModificationPayload) {
 		const key = oModificationPayload.key || oModificationPayload.name;
-		const { persistenceIdentifier } = oModificationPayload.value;
 		const mControlMeta = oModificationPayload.controlMeta;
 		const vValue = oModificationPayload.value;
 		const oControlMetadata = oModificationPayload.controlMetadata || oControl.getMetadata();
 		const sAffectedAggregation = mControlMeta.aggregation;
 		const sAggregationName = sAffectedAggregation ? sAffectedAggregation : oControlMetadata.getDefaultAggregation().name;
-		const { currentState } = oModificationPayload;
+		const {currentState} = oModificationPayload;
 		const newIndex = vValue.index;
 
-		const { operation } = oModificationPayload;
+		const {operation} = oModificationPayload;
 		const updatedState = merge([], currentState);
 
 		const operationActions = {
-			add: (affectedKey, index, affectedPersistenceIdentifier) => {
-				const obj = { key: affectedKey };
-				if (affectedPersistenceIdentifier) {
-					obj.persistenceIdentifier = affectedPersistenceIdentifier;
-				}
-				updatedState.splice(index, 0, obj);
+			add: (affectedKey, index) => {
+				updatedState.splice(index, 0, {key: affectedKey});
 			},
 			remove: (affectedKey, index) => {
 				const currentItemState = updatedState?.find((item) => item.key == affectedKey);
@@ -265,19 +237,19 @@ sap.ui.define([
 		};
 
 		if (currentState instanceof Array && operation && operationActions[operation] instanceof Function) {
-			operationActions[operation](key, newIndex, persistenceIdentifier);
+			operationActions[operation](key, newIndex);
 		}
 
 		updatedState.forEach((item, index) => {
 			//find the xConfig item with the same key as item.key
 			const xConfigItem = oConfig.aggregations[sAggregationName]?.[item.key];
-			if (xConfigItem) {
+			if (xConfigItem && xConfigItem.hasOwnProperty("position")) {
 				xConfigItem.position = index;
-			} else {
+			} else if (!xConfigItem) {
 				//find the index of the current item key in currentState
 				const currentItemIndex = currentState?.findIndex((currentItem) => currentItem.key === item.key);
 
-				if (currentItemIndex !== index) {
+				if (index !== undefined && currentItemIndex !== index && index !== -1) {
 					oConfig.aggregations[sAggregationName][item.key] = {
 						position: index
 					};
@@ -302,14 +274,15 @@ sap.ui.define([
 				oConfig.aggregations[sAggregationName] = {};
 				const currentState = await xConfigAPI.getCurrentItemState(oControl, oModificationPayload, oConfig, sAggregationName);
 				currentState?.forEach((oItem) => {
-					oConfig.aggregations[sAggregationName][oItem.key] = { position: oItem.position };
+					oConfig.aggregations[sAggregationName][oItem.key] = {position: oItem.position};
 				});
 			} else {
 				throw new Error("The aggregation " + sAggregationName + " does not exist for" + oControl);
 			}
 		}
 
-		oModificationPayload.currentState = oModificationPayload.currentState || await xConfigAPI.getCurrentItemState(oControl, oModificationPayload, oConfig, sAggregationName);
+		const aItemState = await xConfigAPI.getCurrentItemState(oControl, oModificationPayload, oConfig, sAggregationName);
+		oModificationPayload.currentState = oModificationPayload.currentState || aItemState;
 	};
 
 	/**

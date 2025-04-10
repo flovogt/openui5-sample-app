@@ -1,40 +1,34 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"./_SplitterRegistry",
-	'./SplitterRenderer',
-	"./SplitterLayoutData",
-	'./library',
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
-	"sap/ui/core/Core",
 	'sap/ui/core/CustomData',
+	'./library',
 	'sap/ui/core/library',
 	'sap/ui/core/ResizeHandler',
 	'sap/ui/core/RenderManager',
+	'./SplitterRenderer',
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/core/Theming"
+	"sap/ui/layout/SplitterLayoutData",
+	"sap/ui/core/Configuration"
 ],
 	function(
-		_SplitterRegistry,
-		SplitterRenderer,
-		SplitterLayoutData,
-		library,
-		Localization,
 		Control,
-		Core,
 		CustomData,
+		library,
 		coreLibrary,
 		ResizeHandler,
 		RenderManager,
+		SplitterRenderer,
 		Log,
 		jQuery,
-		Theming
+		SplitterLayoutData,
+		Configuration
 	) {
 	"use strict";
 
@@ -76,7 +70,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -142,9 +136,6 @@ sap.ui.define([
 	});
 
 	Splitter.prototype.init = function() {
-		/**
-		 * @deprecated As of version 1.21
-		 */
 		this._liveResize        = true;
 		this._keyboardEnabled   = true;
 		this._bHorizontal       = true;
@@ -162,7 +153,7 @@ sap.ui.define([
 		// We need the information whether auto resize is enabled to temporarily disable it
 		// during live resize and then set it back to the value before
 		this._autoResize = true;
-		this._enableAutoResize();
+		this.enableAutoResize();
 
 		// Bound versions for event handler registration
 		this._boundBarMoveEnd   = this._onBarMoveEnd.bind(this);
@@ -171,7 +162,7 @@ sap.ui.define([
 		// Switch resizing parameters based on orientation - this must be done to initialize the values
 		this._initOrientationProperties();
 
-		this._bRtl = Localization.getRTL();
+		this._bRtl = Configuration.getRTL();
 
 		// Create bound listener functions for keyboard event handling
 		this._keyListeners = {
@@ -183,12 +174,10 @@ sap.ui.define([
 			min          : this._onKeyboardResize.bind(this, "min", 20)
 		};
 		this._enableKeyboardListeners();
-		this._handleThemeAppliedBound = this._handleThemeApplied.bind(this);
 	};
 
 	Splitter.prototype.exit = function() {
-		_SplitterRegistry.removeInstance(this);
-		this._disableAutoResize();
+		this.disableAutoResize();
 		delete this._resizeCallback;
 
 		delete this._boundBarMoveEnd;
@@ -199,18 +188,12 @@ sap.ui.define([
 	};
 
 	Splitter.prototype.onBeforeRendering = function() {
-		_SplitterRegistry.removeInstance(this);
 		this._initOrientationProperties();
 	};
 
 	Splitter.prototype.onAfterRendering = function() {
-		_SplitterRegistry.addInstance(this);
 		this._$SplitterOverlay = this.$("overlay");
 		this._$SplitterOverlayBar = this.$("overlayBar");
-
-		if (!this._bThemeApplied) {
-			Theming.attachApplied(this._handleThemeAppliedBound);
-		}
 
 		// Calculate and apply correct sizes to the Splitter contents
 		this._resize();
@@ -272,10 +255,6 @@ sap.ui.define([
 	 * @deprecated As of version 1.21. This method is declared as protected in order to assess the need for this feature. It is declared as deprecated because the API might change in case the need for this is high enough to make it part of the official Splitter interface
 	 */
 	Splitter.prototype.enableAutoResize = function(bTemporarily) {
-		this._enableAutoResize(bTemporarily);
-	};
-
-	Splitter.prototype._enableAutoResize = function(bTemporarily) {
 		// Do not enable autoResize if it was deactivated temporarily and wasn't enabled before
 		if (bTemporarily && !this._autoResize) {
 			return;
@@ -284,7 +263,7 @@ sap.ui.define([
 		this._autoResize = true;
 
 		var that = this;
-		Core.ready(function() {
+		sap.ui.getCore().attachInit(function() {
 			that._resizeHandlerId = ResizeHandler.register(that, that._resizeCallback);
 		});
 
@@ -302,10 +281,6 @@ sap.ui.define([
 	 * @deprecated As of version 1.21. This method is declared as protected in order to assess the need for this feature. It is declared as deprecated because the API might change in case the need for this is high enough to make it part of the official Splitter interface
 	 */
 	Splitter.prototype.disableAutoResize = function(bTemporarily) {
-		this._disableAutoResize(bTemporarily);
-	};
-
-	Splitter.prototype._disableAutoResize = function(bTemporarily) {
 		ResizeHandler.deregister(this._resizeHandlerId);
 
 		if (!bTemporarily) {
@@ -433,12 +408,12 @@ sap.ui.define([
 		var sId = this.getId();
 
 		// Disable auto resize during bar move
-		this._disableAutoResize(/* temporarily: */ true);
+		this.disableAutoResize(/* temporarily: */ true);
 
 		var iPos = oEvent[this._moveCord];
 		var iBar = parseInt(oBar.id.substr((sId + "-splitbar-").length));
 		var $bar = jQuery(oBar);
-		var mCalcSizes = this._calculatedSizes;
+		var mCalcSizes = this.getCalculatedSizes();
 		var iBarSize = this._bHorizontal ? $bar.outerWidth() : $bar.outerHeight();
 		var aContentAreas = this._getContentAreas();
 		var oLd1   = aContentAreas[iBar].getLayoutData();
@@ -530,26 +505,21 @@ sap.ui.define([
 		if (bInBounds) {
 			this._$SplitterOverlayBar.css(this._sizeDir, this._move.relStart + iDelta);
 
-			/**
-			 * @deprecated As of version 1.21
-			 */
-			if (!this._liveResize) {
-				return;
+			if (this._liveResize) {
+				var fMove = (this._move["start"] - oConfig[this._moveCord]);
+
+				//We should only switch direction of change in case it is left or right.
+				//Otherwise the vertical splitter is moved opposite to the mouse movement
+				if (this.getOrientation() == Orientation.Horizontal && this._bRtl) {
+					fMove = -fMove;
+				}
+
+				this._resizeContents(
+					/* left content number:    */ this._move["barNum"],
+					/* number of pixels:       */ -fMove,
+					/* also change layoutData: */ false
+				);
 			}
-
-			var fMove = (this._move["start"] - oConfig[this._moveCord]);
-
-			//We should only switch direction of change in case it is left or right.
-			//Otherwise the vertical splitter is moved opposite to the mouse movement
-			if (this.getOrientation() == Orientation.Horizontal && this._bRtl) {
-				fMove = -fMove;
-			}
-
-			this._resizeContents(
-				/* left content number:    */ this._move["barNum"],
-				/* number of pixels:       */ -fMove,
-				/* also change layoutData: */ false
-			);
 		}
 
 	};
@@ -596,7 +566,7 @@ sap.ui.define([
 		document.removeEventListener("touchmove", this._boundBarMove);
 
 		// Enable auto resize after bar move if it was enabled before
-		this._enableAutoResize(/* temporarily: */ true);
+		this.enableAutoResize(/* temporarily: */ true);
 		if (this._move.$bar){
 			this._move.$bar.trigger("focus");
 		}
@@ -673,8 +643,6 @@ sap.ui.define([
 				oLd1._markModified();
 				oLd2._markModified();
 			}
-
-			this._delayedResize();
 		} else { // Live-Resize, resize contents in Dom
 			// in this case widths of the areas are % from the total size (bars included)
 			var iTotalSplitterSize = this._getTotalSize();
@@ -701,12 +669,6 @@ sap.ui.define([
 
 	Splitter.prototype._pxToPercent = function (iPx, iFullSize) {
 		return (iPx * 100) / iFullSize + "%";
-	};
-
-	Splitter.prototype._handleThemeApplied = function () {
-		Theming.detachApplied(this._handleThemeAppliedBound);
-		this._bThemeApplied = true;
-		this._resize();
 	};
 
 	////////////////////////////////////////// Private Methods /////////////////////////////////////////
@@ -764,10 +726,6 @@ sap.ui.define([
 	 * @private
 	 */
 	Splitter.prototype._resize = function() {
-		if (!this._bThemeApplied) {
-			return;
-		}
-
 		var oDomRef = this.getDomRef();
 
 		// Do not attempt to resize the content areas in case the splitter
@@ -785,9 +743,9 @@ sap.ui.define([
 		this._resizeBars(aContentAreas);
 
 		// Save calculated sizes to be able to tell whether a resize occurred
-		var oldCalculatedSizes = this._calculatedSizes;
+		var oldCalculatedSizes = this.getCalculatedSizes();
 		this._recalculateSizes();
-		var newCalculatedSizes = this._calculatedSizes;
+		var newCalculatedSizes = this.getCalculatedSizes();
 
 		var bSizesValid = false;
 		for (i = 0; i < newCalculatedSizes.length; ++i) {
@@ -1089,7 +1047,7 @@ sap.ui.define([
 		var iBigStep  = 999999;
 
 		var iBar = parseInt(oEvent.target.id.substr(sBarId.length));
-		var mCalcSizes = this._calculatedSizes;
+		var mCalcSizes = this.getCalculatedSizes();
 		// TODO: These two lines are incomprehensible magic - find better solution
 		this._move.c1Size = mCalcSizes[iBar];
 		this._move.c2Size = mCalcSizes[iBar + 1];
@@ -1155,6 +1113,8 @@ sap.ui.define([
 
 		this._keyboardEnabled = false;
 	};
+
+	///////////////////////////////////////// Hidden Functions /////////////////////////////////////////
 
 	/**
 	 * Returns the bar for the given target. If there isn't such, null is returned
@@ -1268,10 +1228,6 @@ sap.ui.define([
 	};
 
 	//////////////////////////////////////// Overridden Methods ////////////////////////////////////////
-
-	Splitter.prototype.getFocusDomRef = function() {
-		return this.getDomRef("splitbar-0") || this.getDomRef();
-	};
 
 	Splitter.prototype.invalidate = function(oOrigin) {
 		var bForce =

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -47,7 +47,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.ClientModel
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @param {XMLDocument|string} oData
 	 *   Either the URL where to load the XML from or an XML document
@@ -306,11 +306,7 @@ sap.ui.define([
 		if (!oRootNode) {
 			return null;
 		}
-		let oNode = [];
-		/** @deprecated As of version 1.88.0 */
-		if (this.isLegacySyntax()) {
-			oNode = [oRootNode];
-		}
+		var oNode = this.isLegacySyntax() ? [oRootNode] : [];
 		if (oContext instanceof Context) {
 			oNode = this._getObject(oContext.getPath());
 		} else if (oContext) {
@@ -468,11 +464,7 @@ sap.ui.define([
 			if (oContext) {
 				sResolvedPath = oContext.getPath() + "/" + sPath;
 			} else {
-				sResolvedPath = undefined;
-				/** @deprecated As of version 1.88.0 */
-				if (this.isLegacySyntax()) {
-					sResolvedPath = "/" + sPath;
-				}
+				sResolvedPath = this.isLegacySyntax() ? "/" + sPath : undefined;
 			}
 		}
 		return sResolvedPath;

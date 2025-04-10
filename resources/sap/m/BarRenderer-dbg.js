@@ -1,12 +1,12 @@
 /*!
 
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['./BarInPageEnabler', "sap/base/i18n/Localization", 'sap/ui/Device', "sap/base/Log", 'sap/m/HBox'],
-	function(BarInPageEnabler, Localization, Device, Log, HBox) {
+sap.ui.define(['./BarInPageEnabler', 'sap/ui/Device', "sap/base/Log", 'sap/m/HBox', "sap/ui/core/Configuration"],
+	function(BarInPageEnabler, Device, Log, HBox, Configuration) {
 	"use strict";
 
 
@@ -45,9 +45,8 @@ sap.ui.define(['./BarInPageEnabler', "sap/base/i18n/Localization", 'sap/ui/Devic
 		oRM.class(this.getContext(oControl));
 
 		oRM.accessibilityState(oControl, {
-			"role": oControl._getAccessibilityRole(),
-			"level":  oControl._getRootAriaLevel(),
-			"labelledby": {value: oControl._getAccessibilityRole() ? oControl.getAriaLabelledBy() : "", append: false}
+			"role": oControl._getRootAccessibilityRole(),
+			"level":  oControl._getRootAriaLevel()
 		});
 
 		/**
@@ -132,7 +131,7 @@ sap.ui.define(['./BarInPageEnabler', "sap/base/i18n/Localization", 'sap/ui/Devic
 		oRM.openStart("div", oControl.getId() + "-BarRight");
 		oRM.class("sapMBarRight");
 		oRM.class("sapMBarContainer");
-		if (Localization.getRTL()) {
+		if (Configuration.getRTL()) {
 			oRM.class("sapMRTL");
 		}
 		writeWidthIfContentOccupiesWholeArea("right", oRM, oControl);

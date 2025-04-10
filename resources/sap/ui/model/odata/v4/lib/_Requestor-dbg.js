@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -302,8 +302,6 @@ sap.ui.define([
 	 *   Whether all system query options are dropped (useful for non-GET requests)
 	 * @param {boolean} [bSortExpandSelect]
 	 *   Whether the paths in $expand and $select shall be sorted in the query string
-	 * @param {boolean} [bSortSystemQueryOptions]
-	 *   Whether system query options are sorted alphabetically and moved to the query string's end
 	 * @returns {string}
 	 *   The query string; it is empty if there are no options; it starts with "?" otherwise
 	 * @example
@@ -329,11 +327,10 @@ sap.ui.define([
 	 * @public
 	 */
 	_Requestor.prototype.buildQueryString = function (sMetaPath, mQueryOptions,
-			bDropSystemQueryOptions, bSortExpandSelect, bSortSystemQueryOptions) {
+			bDropSystemQueryOptions, bSortExpandSelect) {
 		return _Helper.buildQuery(
 			this.convertQueryOptions(sMetaPath, mQueryOptions, bDropSystemQueryOptions,
-				bSortExpandSelect),
-			bSortSystemQueryOptions);
+				bSortExpandSelect));
 	};
 
 	/**
@@ -469,8 +466,8 @@ sap.ui.define([
 			return iChangeSetNo !== i && aChangeSet.some(isUsingStrictHandling);
 		}
 
-		function isUsingStrictHandling(oRequest0) {
-			return oRequest0.headers.Prefer === "handling=strict";
+		function isUsingStrictHandling(oRequest) {
+			return oRequest.headers.Prefer === "handling=strict";
 		}
 
 		// do not look past aRequests.iChangeSet because these cannot be change sets
@@ -592,7 +589,7 @@ sap.ui.define([
 			} else {
 				aRequests[i] = aChangeSet;
 			}
-			bHasChanges ||= aChangeSet.length > 0;
+			bHasChanges = bHasChanges || aChangeSet.length > 0;
 		}
 
 		return bHasChanges;
@@ -822,17 +819,9 @@ sap.ui.define([
 					break;
 				case "$select":
 					if (Array.isArray(vValue)) {
-						if (bSortExpandSelect) {
-							vValue = vValue.slice().sort(); // Note: Array#sort is "in place"
-							for (let i = 1; i < vValue.length;) {
-								if (_Helper.hasPathPrefix(vValue[i], vValue[i - 1])) {
-									vValue.splice(i, 1);
-								} else {
-									i += 1;
-								}
-							}
-						}
-						vValue = vValue.join(",");
+						vValue = bSortExpandSelect
+							? vValue.slice().sort().join(",") // Note: Array#sort is "in place"
+							: vValue.join(",");
 					}
 					break;
 				default:
@@ -997,6 +986,7 @@ sap.ui.define([
 		var aArguments = [],
 			sName,
 			mName2Parameter = {}, // maps valid names to parameter metadata
+			oParameter,
 			that = this;
 
 		sPath = sPath.slice(1, -5);
@@ -1007,7 +997,7 @@ sap.ui.define([
 		}
 		if (oOperationMetadata.$kind === "Function") {
 			for (sName in mParameters) {
-				const oParameter = mName2Parameter[sName];
+				oParameter = mName2Parameter[sName];
 				if (oParameter) {
 					if (oParameter.$isCollection) {
 						throw new Error("Unsupported collection-valued parameter: " + sName);
@@ -1072,32 +1062,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Tells whether there are changes (that is, updates via PATCH or bound actions via POST) for
-	 * the given group ID and given entity.
-	 *
-	 * @param {string} sGroupId
-	 *   The group ID
-	 * @param {object} oEntity
-	 *   The entity used to identify a request based on its "If-Match" header
-	 * @returns {boolean}
-	 *   Whether there are changes for the given group ID and given entity
-	 *
-	 * @public
-	 */
-	_Requestor.prototype.hasChanges = function (sGroupId, oEntity) {
-		var aRequests = this.mBatchQueue[sGroupId];
-
-		if (aRequests) {
-			return aRequests.some(function (vRequests) {
-				return Array.isArray(vRequests) && vRequests.some(function (oRequest) {
-					return oRequest.headers["If-Match"] === oEntity;
-				});
-			});
-		}
-		return false;
-	};
-
-	/**
 	 * Tells whether there are only PATCH requests with the "Prefer" header set to "return=minimal"
 	 * (results from using $$patchWithoutSideEffects=true) enqueued in the batch queue with the
 	 * given group ID.
@@ -1121,6 +1085,32 @@ sap.ui.define([
 						&& oRequest.headers.Prefer === "return=minimal";
 				});
 			});
+	};
+
+	/**
+	 * Tells whether there are changes (that is, updates via PATCH or bound actions via POST) for
+	 * the given group ID and given entity.
+	 *
+	 * @param {string} sGroupId
+	 *   The group ID
+	 * @param {object} oEntity
+	 *   The entity used to identify a request based on its "If-Match" header
+	 * @returns {boolean}
+	 *   Whether there are changes for the given group ID and given entity
+	 *
+	 * @public
+	 */
+	_Requestor.prototype.hasChanges = function (sGroupId, oEntity) {
+		var aRequests = this.mBatchQueue[sGroupId];
+
+		if (aRequests) {
+			return aRequests.some(function (vRequests) {
+				return Array.isArray(vRequests) && vRequests.some(function (oRequest) {
+					return oRequest.headers["If-Match"] === oEntity;
+				});
+			});
+		}
+		return false;
 	};
 
 	/**
@@ -1201,46 +1191,6 @@ sap.ui.define([
 	};
 
 	/**
-	 * Creates a group lock for the given group.
-	 *
-	 * A group lock is a hint that a request is expected which may be added asynchronously.
-	 * If the expected request must be part of the next batch request for that group,
-	 * <code>bLocked</code> needs to be set to <code>true</code>. {@link #submitBatch} waits until
-	 * all group locks for that group are unlocked again. A group lock is automatically unlocked if
-	 * {@link #request} is called with that group lock. If the caller of {@link #lockGroup}
-	 * recognizes that no request needs to be added, the caller must unlock the group lock. In case
-	 * of an error the caller of {@link #lockGroup} must call
-	 * {@link sap.ui.model.odata.v4.lib._GroupLock#unlock} with <code>bForce = true</code>.
-	 *
-	 * @param {string} sGroupId
-	 *   The group ID
-	 * @param {object} oOwner
-	 *   The lock's owner for debugging
-	 * @param {boolean} [bLocked]
-	 *   Whether the created lock is locked
-	 * @param {boolean} [bModifying]
-	 *   Whether the reason for the group lock is a modifying request
-	 * @param {function} [fnCancel]
-	 *   Function that is called when the group lock is canceled
-	 * @returns {sap.ui.model.odata.v4.lib._GroupLock}
-	 *   The group lock
-	 * @throws {Error}
-	 *   If <code>bModifying</code> is set but <code>bLocked</code> is unset.
-	 *
-	 * @public
-	 */
-	_Requestor.prototype.lockGroup = function (sGroupId, oOwner, bLocked, bModifying, fnCancel) {
-		var oGroupLock;
-
-		oGroupLock = new _GroupLock(sGroupId, oOwner, bLocked, bModifying, this.getSerialNumber(),
-			fnCancel);
-		if (bLocked) {
-			this.aLockedGroupLocks.push(oGroupLock);
-		}
-		return oGroupLock;
-	};
-
-	/**
 	 * Merges all GET requests that are marked as mergeable (via parameter mQueryOptions of
 	 * {@link #request}) and have the same owner, resource path, and query options besides $expand
 	 * and $select. One request with the merged $expand and $select is left in the queue and all
@@ -1290,9 +1240,6 @@ sap.ui.define([
 			}
 		});
 		aResultingRequests.iChangeSet = aRequests.iChangeSet;
-		if (aRequests.bContinueOnError) {
-			aResultingRequests.bContinueOnError = true;
-		}
 
 		return aResultingRequests;
 	};
@@ -1347,27 +1294,27 @@ sap.ui.define([
 		 * Visits the given request/response pairs, rejecting or resolving the corresponding
 		 * promises accordingly.
 		 *
-		 * @param {object[]} aRequests0
+		 * @param {object[]} aRequests
 		 * @param {object[]} aResponses
 		 */
-		function visit(aRequests0, aResponses) {
+		function visit(aRequests, aResponses) {
 			var oCause;
 
-			aRequests0.forEach(function (vRequest, index) {
-				var sETag,
+			aRequests.forEach(function (vRequest, index) {
+				var oError,
+					sETag,
 					oResponse,
 					vResponse = aResponses[index];
 
 				if (Array.isArray(vResponse)) {
 					visit(vRequest, vResponse);
 				} else if (!vResponse) {
-					const oError = new Error(
+					oError = new Error(
 						"HTTP request was not processed because the previous request failed");
 					oError.cause = oCause;
 					oError.$reported = true; // do not create a message for this error
 					reject(oError, vRequest); // Note: vRequest may well be a change set
 				} else if (vResponse.status >= 400) {
-					that.oModelInterface.onHttpResponse(vResponse.headers);
 					vResponse.getResponseHeader = getResponseHeader;
 					// Note: vRequest is an array in case a change set fails, hence url and
 					// $resourcePath are undefined
@@ -1383,7 +1330,6 @@ sap.ui.define([
 						vRequest.$reject(oCause);
 					}
 				} else {
-					that.oModelInterface.onHttpResponse(vResponse.headers);
 					if (vResponse.responseText) {
 						try {
 							that.doCheckVersionHeader(getResponseHeader.bind(vResponse),
@@ -1399,8 +1345,8 @@ sap.ui.define([
 						// methods it must be possible to insert the ETag from the header
 						oResponse = vRequest.method === "GET" ? null : {};
 					}
-					that.reportHeaderMessages(vRequest.$resourcePath,
-						getResponseHeader.call(vResponse, "sap-messages"), oResponse);
+					that.reportHeaderMessages(vRequest.url,
+						getResponseHeader.call(vResponse, "sap-messages"));
 					sETag = getResponseHeader.call(vResponse, "ETag");
 					if (sETag) {
 						oResponse["@odata.etag"] = sETag;
@@ -1410,10 +1356,8 @@ sap.ui.define([
 			});
 		}
 
-		// call the onSubmit handlers before resetting the batch queue, so that further requests may
-		// be added
-		onSubmit(aRequests);
 		delete this.mBatchQueue[sGroupId];
+		onSubmit(aRequests);
 		bHasChanges = this.cleanUpChangeSets(aRequests);
 		if (aRequests.length === 0) {
 			return Promise.resolve();
@@ -1422,7 +1366,7 @@ sap.ui.define([
 		this.bBatchSent = true;
 		aRequests = this.mergeGetRequests(aRequests);
 		this.batchRequestSent(sGroupId, aRequests, bHasChanges);
-		return this.sendBatch(aRequests, sGroupId, bHasChanges)
+		return this.sendBatch(aRequests, sGroupId)
 			.then(function (aResponses) {
 				visit(aRequests, aResponses);
 			}).catch(function (oError) {
@@ -1430,12 +1374,63 @@ sap.ui.define([
 					"HTTP request was not processed because $batch failed");
 
 				oRequestError.cause = oError;
-				oRequestError.$reported = true; // do not create a message for this error
 				reject(oRequestError, aRequests);
 				throw oError;
 			}).finally(function () {
 				that.batchResponseReceived(sGroupId, aRequests, bHasChanges);
 			});
+	};
+
+	/**
+	 * Returns a sync promise that is resolved when the requestor is ready to be used. The V4
+	 * requestor is ready immediately. Subclasses may behave differently.
+	 *
+	 * @returns {sap.ui.base.SyncPromise} A sync promise that is resolved immediately with no result
+	 *
+	 * @public
+	 */
+	_Requestor.prototype.ready = function () {
+		return SyncPromise.resolve();
+	};
+
+	/**
+	 * Creates a group lock for the given group.
+	 *
+	 * A group lock is a hint that a request is expected which may be added asynchronously.
+	 * If the expected request must be part of the next batch request for that group,
+	 * <code>bLocked</code> needs to be set to <code>true</code>. {@link #submitBatch} waits until
+	 * all group locks for that group are unlocked again. A group lock is automatically unlocked if
+	 * {@link #request} is called with that group lock. If the caller of {@link #lockGroup}
+	 * recognizes that no request needs to be added, the caller must unlock the group lock. In case
+	 * of an error the caller of {@link #lockGroup} must call
+	 * {@link sap.ui.model.odata.v4.lib._GroupLock#unlock} with <code>bForce = true</code>.
+	 *
+	 * @param {string} sGroupId
+	 *   The group ID
+	 * @param {object} oOwner
+	 *   The lock's owner for debugging
+	 * @param {boolean} [bLocked]
+	 *   Whether the created lock is locked
+	 * @param {boolean} [bModifying]
+	 *   Whether the reason for the group lock is a modifying request
+	 * @param {function} [fnCancel]
+	 *   Function that is called when the group lock is canceled
+	 * @returns {sap.ui.model.odata.v4.lib._GroupLock}
+	 *   The group lock
+	 * @throws {Error}
+	 *   If <code>bModifying</code> is set but <code>bLocked</code> is unset.
+	 *
+	 * @public
+	 */
+	_Requestor.prototype.lockGroup = function (sGroupId, oOwner, bLocked, bModifying, fnCancel) {
+		var oGroupLock;
+
+		oGroupLock = new _GroupLock(sGroupId, oOwner, bLocked, bModifying, this.getSerialNumber(),
+			fnCancel);
+		if (bLocked) {
+			this.aLockedGroupLocks.push(oGroupLock);
+		}
+		return oGroupLock;
 	};
 
 	/**
@@ -1484,7 +1479,7 @@ sap.ui.define([
 					Promise.resolve(fnOptimisticBatchEnabler(sKey)).then(async (bEnabled) => {
 						if (!bEnabled) {
 							await CacheManager.del(sCachePrefix + sKey);
-							Log.info("optimistic batch: disabled, batch payload deleted", sKey,
+							Log.info("optimistic batch: disabled, response deleted", sKey,
 								sClassName);
 						}
 					}).catch(that.oModelInterface.getReporter());
@@ -1493,8 +1488,9 @@ sap.ui.define([
 				Log.info("optimistic batch: success, response consumed", sKey, sClassName);
 				return oOptimisticBatch.result;
 			}
-			Log.warning("optimistic batch: mismatch, response skipped", sKey, sClassName);
-			CacheManager.del(sCachePrefix + sKey).catch(this.oModelInterface.getReporter());
+			CacheManager.del(sCachePrefix + sKey).then(() => {
+				Log.warning("optimistic batch: mismatch, response skipped", sKey, sClassName);
+			}, this.oModelInterface.getReporter());
 		}
 
 		if (fnOptimisticBatchEnabler) { // 1st app start, or optimistic batch payload did not match
@@ -1560,23 +1556,9 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns a sync promise that is resolved when the requestor is ready to be used. The V4
-	 * requestor is ready immediately. Subclasses may behave differently.
-	 *
-	 * @returns {sap.ui.base.SyncPromise} A sync promise that is resolved immediately with no result
-	 *
-	 * @public
-	 */
-	_Requestor.prototype.ready = function () {
-		return SyncPromise.resolve();
-	};
-
-	/**
 	 * Returns a promise that will be resolved once the CSRF token has been refreshed, or rejected
 	 * if that fails. Makes sure that only one HEAD request is underway at any given time and
-	 * shares the promise accordingly. If the HEAD request fails with a 503 HTTP status code and
-	 * a "Retry-After" response header, the promise is also resolved because the next request (in
-	 * {@link #sendRequest}) will also fail with 503 and is handled there.
+	 * shares the promise accordingly.
 	 *
 	 * @param {string} [sOldSecurityToken]
 	 *   Security token that caused a 403. A new token is only fetched if the old one is still
@@ -1614,17 +1596,10 @@ sap.ui.define([
 							delete that.mHeaders["X-CSRF-Token"];
 						}
 						that.oSecurityTokenPromise = null;
-						that.oModelInterface.onHttpResponse(
-							_Helper.parseRawHeaders(jqXHR.getAllResponseHeaders()));
 						fnResolve();
 					}, function (jqXHR) {
 						that.oSecurityTokenPromise = null;
-						if (jqXHR.status === 503 && jqXHR.getResponseHeader("Retry-After")) {
-							fnResolve();
-						} else {
-							fnReject(
-								_Helper.createError(jqXHR, "Could not refresh security token"));
-						}
+						fnReject(_Helper.createError(jqXHR, "Could not refresh security token"));
 					});
 			});
 		}
@@ -1634,7 +1609,7 @@ sap.ui.define([
 
 	/**
 	 * Finds the request identified by the given group and body, removes it from that group and
-	 * initiates a new request with the new group ID, based on the found request.
+	 * triggers a new request with the new group ID, based on the found request.
 	 * The result of the new request is delegated to the found request.
 	 *
 	 * @param {string} sCurrentGroupId
@@ -1667,9 +1642,9 @@ sap.ui.define([
 
 	/**
 	 * Finds all requests identified by the given group and entity, removes them from that group
-	 * and initiates new requests with the new group ID, based on each found request.
+	 * and triggers new requests with the new group ID, based on each found request.
 	 * The result of each new request is delegated to the corresponding found request. If no entity
-	 * is given, all requests for that group are initiated again.
+	 * is given, all requests for that group are triggered again.
 	 *
 	 * @param {string} sCurrentGroupId
 	 *   The ID of the group in which to search
@@ -1750,28 +1725,18 @@ sap.ui.define([
 	};
 
 	/**
-	 * Reports OData messages from the "sap-messages" response header (or forwards them via the
-	 * response object).
+	 * Reports OData messages from the "sap-messages" response header.
 	 *
 	 * @param {string} sResourcePath
-	 *   The resource path of the request whose response contained the messages, see also
-	 *   {@link #request sOriginalResourcePath} which may well be "R#V#C"
+	 *   The resource path of the request whose response contained the messages
 	 * @param {string} [sMessages]
 	 *   The messages in the serialized form as contained in the "sap-messages" response header
-	 * @param {object} oResponse
-	 *   The response object, needed in case <code>sResourcePath === "R#V#C"</code> as described
-	 *   at {@link #request}
 	 *
 	 * @private
 	 */
-	_Requestor.prototype.reportHeaderMessages = function (sResourcePath, sMessages, oResponse) {
+	_Requestor.prototype.reportHeaderMessages = function (sResourcePath, sMessages) {
 		if (sMessages) {
-			const aMessages = JSON.parse(sMessages);
-			if (sResourcePath === "R#V#C") {
-				_Helper.setPrivateAnnotation(oResponse, "headerMessages", aMessages);
-			} else {
-				this.oModelInterface.reportTransitionMessages(aMessages, sResourcePath);
-			}
+			this.oModelInterface.reportTransitionMessages(JSON.parse(sMessages), sResourcePath);
 		}
 	};
 
@@ -1788,8 +1753,7 @@ sap.ui.define([
 	 *   A resource path relative to the service URL for which this requestor has been created
 	 * @param {sap.ui.model.odata.v4.lib._GroupLock} [oGroupLock]
 	 *   A lock for the group to associate the request with; if no lock is given or its group ID has
-	 *   {@link sap.ui.model.odata.v4.SubmitMode.Direct}, the request is sent immediately; for group
-	 *   ID "$single" the request is added to the queue but also sent immediately; for all
+	 *   {@link sap.ui.model.odata.v4.SubmitMode.Direct}, the request is sent immediately; for all
 	 *   other group ID values, the request is added to the given group and you can use
 	 *   {@link #submitBatch} to send all requests in that group. This group lock will be unlocked
 	 *   immediately, even if the request itself is queued. The request is rejected if the lock is
@@ -1802,11 +1766,8 @@ sap.ui.define([
 	 *   Data to be sent to the server; this object is live and can be modified until the request
 	 *   is really sent
 	 * @param {function} [fnSubmit]
-	 *   A function that is called when the request is being submitted, either immediately (when
-	 *   the group ID is "$direct") or via {@link #submitBatch}. It is possible to add another
-	 *   request to the same batch in this callback by calling {#request} with the same group ID. A
-	 *   request added in another request's <code>fnSubmit</code> must not have a
-	 *   <code>fnSubmit</code> of its own, it will not be called.
+	 *   A function that is called when the request has been submitted, either immediately (when
+	 *   the group ID is "$direct") or via {@link #submitBatch}
 	 * @param {function(boolean):boolean} [fnCancel]
 	 *   A function that is called for clean-up if the request is canceled while waiting in a batch
 	 *   queue, ignored for GET requests; {@link #cancelChanges} cancels this request only if this
@@ -1819,10 +1780,7 @@ sap.ui.define([
 	 * @param {string} [sOriginalResourcePath=sResourcePath]
 	 *   The path by which this resource has originally been requested and thus can be identified on
 	 *   the client. Only required for non-GET requests where <code>sResourcePath</code> is a
-	 *   different (canonical) path. The special value "R#V#C" can be given to indicate that the
-	 *   resource path may be a return value context and cannot be provided in advance; in this
-	 *   case header messages are not reported automatically, but forwarded via the response object
-	 *   as a private annotation "headerMessages" which the caller needs to take care of.
+	 *   different (canonical) path.
 	 * @param {boolean} [bAtFront]
 	 *   Whether the request is added at the front of the first change set (ignored for method
 	 *   "GET")
@@ -1841,11 +1799,9 @@ sap.ui.define([
 	 *   A promise on the outcome of the HTTP request; it will be rejected with an error having the
 	 *   property <code>canceled = true</code> instead of sending a request if
 	 *   <code>oGroupLock</code> is already canceled.
-	 * @throws {Error} If
-	 *   <ul>
-	 *     <li>group ID is '$cached'. The error has a property <code>$cached = true</code>
-	 *     <li>group ID is '$single' and there is already an existing batch queue for this group
-	 *   </ul>
+	 * @throws {Error}
+	 *   If group ID is '$cached'. The error has a property <code>$cached = true</code>
+	 *
 	 * @public
 	 */
 	_Requestor.prototype.request = function (sMethod, sResourcePath, oGroupLock, mHeaders, oPayload,
@@ -1879,11 +1835,8 @@ sap.ui.define([
 			iRequestSerialNumber = oGroupLock.getSerialNumber();
 		}
 		sResourcePath = this.convertResourcePath(sResourcePath);
-		sOriginalResourcePath ??= sResourcePath;
+		sOriginalResourcePath = sOriginalResourcePath || sResourcePath;
 		if (this.getGroupSubmitMode(sGroupId) !== "Direct") {
-			if (sGroupId === "$single" && this.mBatchQueue[sGroupId]) {
-				throw new Error("Cannot add new request to already existing $single queue");
-			}
 			oPromise = new Promise(function (fnResolve, fnReject) {
 				var aRequests = that.getOrCreateBatchQueue(sGroupId);
 
@@ -1903,14 +1856,14 @@ sap.ui.define([
 					$queryOptions : mQueryOptions,
 					$reject : fnReject,
 					$resolve : fnResolve,
-					$resourcePath : sOriginalResourcePath, // BEWARE of "R#V#C"!
+					$resourcePath : sOriginalResourcePath,
 					$submit : fnSubmit
 				};
 				if (sMethod === "GET") { // push behind last GET and all change sets
 					aRequests.push(oRequest);
 				} else if (bAtFront) { // add at front of first change set
 					aRequests[0].unshift(oRequest);
-				} else { // push into change set which was current when the request was initiated
+				} else { // push into change set which was current when the request was triggered
 					iChangeSetNo = aRequests.iChangeSet;
 					while (aRequests[iChangeSetNo].iSerialNumber > iRequestSerialNumber) {
 						iChangeSetNo -= 1;
@@ -1919,12 +1872,8 @@ sap.ui.define([
 
 					aRequests[iChangeSetNo].push(oRequest);
 				}
-				if (sGroupId === "$single") {
-					that.submitBatch("$single").catch(that.oModelInterface.getReporter());
-				}
 			});
 			oRequest.$promise = oPromise;
-
 			return oPromise;
 		}
 
@@ -1938,19 +1887,14 @@ sap.ui.define([
 			fnSubmit();
 		}
 		return this.sendRequest(sMethod, sResourcePath,
-			Object.assign({}, mHeaders, this.mFinalHeaders,
-				sMethod === "GET" ? {"sap-cancel-on-close" : "true"} : undefined),
-			JSON.stringify(oPayload),
-			sOriginalResourcePath === "R#V#C"
-				? sResourcePath
-				: sOriginalResourcePath
+			Object.assign({}, mHeaders, this.mFinalHeaders),
+			JSON.stringify(oPayload), sOriginalResourcePath
 		).then(function (oResponse) {
-			const oResult = that.doConvertResponse(
+			that.reportHeaderMessages(oResponse.resourcePath, oResponse.messages);
+			return that.doConvertResponse(
 				// Note: "text/plain" used for $count
 				typeof oResponse.body === "string" ? JSON.parse(oResponse.body) : oResponse.body,
 				sMetaPath);
-			that.reportHeaderMessages(sOriginalResourcePath, oResponse.messages, oResult);
-			return oResult;
 		});
 	};
 
@@ -1959,12 +1903,11 @@ sap.ui.define([
 	 *
 	 * @param {object[]} aRequests The requests
 	 * @param {string} sGroupId The group ID
-	 * @param {boolean} bHasChanges Whether the batch contains change requests
 	 * @returns {Promise} A promise on the responses
 	 *
 	 * @private
 	 */
-	_Requestor.prototype.sendBatch = function (aRequests, sGroupId, bHasChanges) {
+	_Requestor.prototype.sendBatch = function (aRequests, sGroupId) {
 		var oBatchRequest = _Batch.serializeBatchRequest(aRequests,
 				this.getGroupSubmitMode(sGroupId) === "Auto"
 					? "Group ID: " + sGroupId
@@ -1974,10 +1917,7 @@ sap.ui.define([
 
 		return this.processOptimisticBatch(aRequests, sGroupId)
 			|| this.sendRequest("POST", "$batch" + this.sQueryParams,
-				Object.assign(oBatchRequest.headers, mBatchHeaders,
-					bHasChanges ? undefined : {"sap-cancel-on-close" : "true"},
-					aRequests.bContinueOnError ? {Prefer : "odata.continue-on-error"} : undefined),
-				oBatchRequest.body
+				Object.assign(oBatchRequest.headers, mBatchHeaders), oBatchRequest.body
 			).then(function (oResponse) {
 				if (oResponse.messages !== null) {
 					throw new Error("Unexpected 'sap-messages' response header for batch request");
@@ -2028,7 +1968,7 @@ sap.ui.define([
 	 * @param {string} [sPayload]
 	 *   Data to be sent to the server
 	 * @param {string} [sOriginalResourcePath]
-	 *  The path by which the resource has originally been requested; MUST NOT be "R#V#C"!
+	 *  The path by which the resource has originally been requested
 	 * @returns {Promise}
 	 *   A promise that is resolved with an object having the properties body, contentType, messages
 	 *   and resourcePath. The body is already an object if the contentType is "application/json".
@@ -2059,13 +1999,10 @@ sap.ui.define([
 				if (that.bWithCredentials) {
 					oAjaxSettings.xhrFields = {withCredentials : true};
 				}
-				jQuery.ajax(sRequestUrl, oAjaxSettings)
+				return jQuery.ajax(sRequestUrl, oAjaxSettings)
 				.then(function (/*{object|string}*/vResponse, _sTextStatus, jqXHR) {
 					var sETag = jqXHR.getResponseHeader("ETag"),
 						sCsrfToken = jqXHR.getResponseHeader("X-CSRF-Token");
-
-					that.oModelInterface.onHttpResponse(
-						_Helper.parseRawHeaders(jqXHR.getAllResponseHeaders()));
 
 					try {
 						that.doCheckVersionHeader(jqXHR.getResponseHeader, sResourcePath,
@@ -2082,9 +2019,11 @@ sap.ui.define([
 
 					// Note: string response appears only for $batch and thus cannot be empty;
 					// for 204 "No Content", vResponse === undefined
-					// With GET it must be visible that there is no content, with the other
-					// methods it must be possible to insert the ETag from the header
-					vResponse ||= sMethod === "GET" ? null : {};
+					if (!vResponse) {
+						// With GET it must be visible that there is no content, with the other
+						// methods it must be possible to insert the ETag from the header
+						vResponse = sMethod === "GET" ? null : {};
+					}
 					if (sETag && typeof vResponse === "object") {
 						vResponse["@odata.etag"] = sETag;
 					}
@@ -2106,10 +2045,6 @@ sap.ui.define([
 						that.refreshSecurityToken(sOldCsrfToken).then(function () {
 							send(true);
 						}, fnReject);
-					} else if (jqXHR.status === 503 && jqXHR.getResponseHeader("Retry-After")
-							&& that.oModelInterface.getOrCreateRetryAfterPromise(
-								_Helper.createError(jqXHR, ""))) {
-						that.oModelInterface.getOrCreateRetryAfterPromise().then(send, fnReject);
 					} else {
 						sMessage = "Communication error";
 						if (sContextId) {
@@ -2129,28 +2064,12 @@ sap.ui.define([
 				});
 			}
 
-			const oRetryAfterPromise = that.oModelInterface.getOrCreateRetryAfterPromise();
-			if (oRetryAfterPromise) {
-				oRetryAfterPromise.then(send, fnReject);
-			} else if (that.oSecurityTokenPromise && sMethod !== "GET") {
+			if (that.oSecurityTokenPromise && sMethod !== "GET") {
 				that.oSecurityTokenPromise.then(send);
 			} else {
 				send();
 			}
 		});
-	};
-
-	/**
-	 * Sets the "odata.continue-on-error" preference once for the <b>current</b> batch request
-	 * associated with the given group ID.
-	 *
-	 * @param {string} sGroupId
-	 *   The group ID
-	 *
-	 * @public
-	 */
-	_Requestor.prototype.setContinueOnError = function (sGroupId) {
-		this.getOrCreateBatchQueue(sGroupId).bContinueOnError = true;
 	};
 
 	/**
@@ -2211,8 +2130,8 @@ sap.ui.define([
 	/**
 	 * Waits until all group locks for the given group ID have been unlocked and submits the
 	 * requests associated with this group ID in one batch request. If only PATCH requests are
-	 * enqueued (see {@link #hasOnlyPatchesWithoutSideEffects}), this will delay the invocation to
-	 * wait for potential side effect requests initiated by a
+	 * enqueued (see {@link #hasOnlyPatchesWithoutSideEffects}), this will delay the execution to
+	 * wait for potential side effect requests triggered by a
 	 * {@link sap.ui.core.Control#event:validateFieldGroup 'validateFieldGroup'} event.
 	 *
 	 * @param {string} sGroupId
@@ -2359,8 +2278,6 @@ sap.ui.define([
 	 * @param {function} oModelInterface.getOptimisticBatchEnabler
 	 *   A function that returns a callback function which controls the optimistic batch handling,
 	 *   see also {@link sap.ui.model.odata.v4.ODataModel#setOptimisticBatchEnabler}
-	 * @param {function} oModelInterface.getOrCreateRetryAfterPromise
-	 *   A function that returns or creates the "Retry-After" promise
 	 * @param {function} oModelInterface.getReporter
 	 *   A catch handler function expecting an <code>Error</code> instance. This function will call
 	 *   {@link sap.ui.model.odata.v4.ODataModel#reportError} if the error has not been reported
@@ -2370,16 +2287,14 @@ sap.ui.define([
 	 * @param {function} oModelInterface.onCreateGroup
 	 *   A callback function that is called with the group name as parameter when the first
 	 *   request is added to a group
-	 * @param {function} oModelInterface.reportError
-	 *   A function to report OData errors
 	 * @param {function} oModelInterface.reportStateMessages
 	 *   A function to report OData state messages
 	 * @param {function} oModelInterface.reportTransitionMessages
 	 *   A function to report OData transition messages
 	 * @param {function(sap.ui.core.message.Message[],sap.ui.core.message.Message[]):void} oModelInterface.updateMessages
-	 *   A function to report messages to {@link module:sap/ui/core/Messaging}, expecting two arrays
-	 *   of {@link sap.ui.core.message.Message} as parameters. The first array should be the old
-	 *   messages and the second array the new messages.
+	 *   A function to report messages to {@link sap.ui.core.Messaging}, expecting two arrays of
+	 *   {sap.ui.core.message.Message} as parameters. The first array should be the old messages and
+	 *   the second array the new messages.
 	 * @param {object} [mHeaders={}]
 	 *   Map of default headers; may be overridden with request-specific headers; certain
 	 *   OData V4 headers are predefined, but may be overridden by the default or

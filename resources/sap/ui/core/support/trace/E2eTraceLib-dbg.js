@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['sap/ui/Device', 'sap/ui/performance/trace/Passport', 'sap/base/Log', 'sap/ui/thirdparty/URI'],
@@ -275,17 +275,17 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/performance/trace/Passport', 'sap/base/L
 					return tstmp;
 				};
 				//check if browser supports PerformanceTiming
-				if (performance && performance.timeOrigin) {
+				if (window.performance && performance.timing && performance.timing.navigationStart) {
 					// handle browser dependencies in (hires) time stamps
 					if (Device.browser.chrome && Device.browser.version >= 49) {
 						getTstmp = function(tstmp) {
 							Log.info(tstmp, "", "E2ETraceLibCR");
-							return performance.timeOrigin + tstmp;
+							return performance.timing.navigationStart + tstmp;
 						};
 					} else if (Device.browser.firefox && Device.browser.version >= 48) {
 						getTstmp = function(tstmp) {
 							Log.info(tstmp, "", "E2ETraceLibFF");
-							return performance.timeOrigin + tstmp;
+							return performance.timing.navigationStart + tstmp;
 						};
 					}
 				}
@@ -354,8 +354,8 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/performance/trace/Passport', 'sap/base/L
 
 						//add tracing attributes
 						this.xidx = idx;
-						if (performance && performance.timeOrigin && performance.now !== undefined) {
-							this.xstartTimestamp = performance.timeOrigin + performance.now();
+						if (window.performance && performance.timing.navigationStart && performance.now !== undefined) {
+							this.xstartTimestamp = performance.timing.navigationStart + performance.now();
 						} else {
 							this.xstartTimestamp = Date.now();
 						}

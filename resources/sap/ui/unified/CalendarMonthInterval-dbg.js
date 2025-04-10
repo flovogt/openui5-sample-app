@@ -1,16 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/Localization",
 	'sap/m/Popover',
 	'sap/ui/Device',
 	'sap/ui/core/Control',
+	'sap/ui/core/Core',
 	'sap/ui/core/Locale',
 	'sap/ui/core/LocaleData',
 	'sap/ui/core/format/DateFormat',
@@ -24,13 +23,13 @@ sap.ui.define([
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
-	"sap/ui/unified/DateRange"
+	"sap/ui/unified/DateRange",
+	"sap/ui/core/Configuration"
 ], function(
-	Formatting,
-	Localization,
 	Popover,
 	Device,
 	Control,
+	Core,
 	Locale,
 	LocaleData,
 	DateFormat,
@@ -44,7 +43,8 @@ sap.ui.define([
 	containsOrEquals,
 	deepEqual,
 	Log,
-	DateRange
+	DateRange,
+	Configuration
 ) {
 		"use strict";
 
@@ -65,7 +65,7 @@ sap.ui.define([
 	 * <b>Note:</b> UI5Date or JavaScript Date objects are used to set and return the months, mark them as selected or as a special type.
 	 * But the date part of the Date object is not used. If a Date object is returned the date will be set to the 1st of the corresponding month.
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -458,7 +458,7 @@ sap.ui.define([
 	CalendarMonthInterval.prototype.getLocale = function(){
 
 		if (!this._sLocale) {
-			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
+			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
 		}
 
 		return this._sLocale;
@@ -1329,7 +1329,7 @@ sap.ui.define([
 			var $Popover = this._oPopup.$();
 			var iOffsetX = Math.floor(($Popover.width() - $Button.width()) / 2);
 
-			this._oPopup.setOffsetX(Localization.getRTL() ? iOffsetX : -iOffsetX);
+			this._oPopup.setOffsetX(Core.getConfiguration().getRTL() ? iOffsetX : -iOffsetX);
 
 			var iOffsetY = $Button.height();
 

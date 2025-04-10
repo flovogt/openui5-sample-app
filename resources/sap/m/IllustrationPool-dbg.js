@@ -1,16 +1,16 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	"sap/base/Log",
 	"./library",
-	"sap/ui/core/EventBus",
+	'sap/ui/core/Core',
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/StaticArea"
 ],
-	function(Log, mLibrary, EventBus, jQuery, StaticArea) {
+	function(Log, mLibrary, Core, jQuery, StaticArea) {
 		"use strict";
 
 		/**
@@ -373,7 +373,7 @@ sap.ui.define([
 					error: function (jqXHR, sStatus) {
 						if (sStatus !== "abort") { // log an error if it isn't aborted
 							delete oAssetRegistry[sRegistryKey];
-							EventBus.getInstance().publish("sapMIllusPool-assetLdgFailed");
+							Core.getEventBus().publish("sapMIllusPool-assetLdgFailed");
 							Log.error(sId + " asset could not be loaded");
 							fnResolve();
 						}

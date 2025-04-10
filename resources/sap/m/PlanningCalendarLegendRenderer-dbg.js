@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -42,7 +42,8 @@ sap.ui.define(['sap/ui/unified/CalendarLegendRenderer', 'sap/ui/core/Renderer'],
 			} else if (oLeg.getAppointmentItems().length && (oLeg.getItems().length || oLeg.getStandardItems().length)) {
 				//the upper list has items, and the lower list too, but the second header is an empty string
 				//and we still need a delimiter
-				this._renderSeparator(oRm);
+				oRm.voidStart("hr");
+				oRm.voidEnd();
 			}
 		};
 
@@ -55,23 +56,13 @@ sap.ui.define(['sap/ui/unified/CalendarLegendRenderer', 'sap/ui/core/Renderer'],
 		PlanningCalendarLegendRenderer._renderItemsHeader = function(oRm, sHeaderText) {
 			oRm.openStart("div");
 			oRm.class("sapMPlanCalLegendHeader");
-			oRm.attr("role", "listitem");
+			oRm.attr("role", "heading");
 			oRm.attr("aria-level", "3");
 			oRm.openEnd();
 			oRm.text(sHeaderText);
 			oRm.close("div");
-			this._renderSeparator(oRm);
-		};
-
-		PlanningCalendarLegendRenderer._renderSeparator = function(oRm) {
-			oRm.openStart("div");
-			oRm.attr("role", "listitem");
-			oRm.openEnd();
-
 			oRm.voidStart("hr");
 			oRm.voidEnd();
-
-			oRm.close("div");
 		};
 
 		/**

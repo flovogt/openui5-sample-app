@@ -21,9 +21,14 @@
 }
 
 html.sap-desktop .sapMTokenizer:focus {
-	outline: 2px solid @sapContent_FocusColor;
-	outline-offset: -0.125rem;
+	outline: none;
+	box-shadow: 0px 0px 0px 2px @sapContent_FocusColor;
 	border-radius: @sapField_BorderCornerRadius;
+}
+
+/* editable tokens in read-only tokenizer */
+.sapMTokenizer.sapMTokenizerReadonly .sapMToken {
+		color: @sapUiContentLabelColor;
 }
 
 .sapMTokenizer.sapMTokenizerReadonly .sapMToken.sapMTokenReadOnly {

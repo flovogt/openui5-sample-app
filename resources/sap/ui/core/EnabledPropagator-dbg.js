@@ -1,14 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides mixin sap.ui.core.EnabledPropagator
-sap.ui.define(["./FocusMode"], function(FocusMode) {
+sap.ui.define([
+	"sap/ui/dom/jquery/Selectors"// jQuery custom selectors ":focusable"
+], function() {
 	"use strict";
-
-	let Element;
 
 	/**
 	 * Mixin for enhancement of a control prototype with propagation of the <code>enabled</code> property.
@@ -43,7 +43,7 @@ sap.ui.define(["./FocusMode"], function(FocusMode) {
 	 *
 	 * @param {boolean} [bDefault=true] Value that should be used as default value for the enhancement of the control.
 	 * @param {boolean} [bLegacy=false] Whether the introduced property should use the old name <code>Enabled</code>.
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 * @public
 	 * @class
 	 * @alias sap.ui.core.EnabledPropagator
@@ -81,15 +81,10 @@ sap.ui.define(["./FocusMode"], function(FocusMode) {
 			};
 		}
 
-
 		if (this.setEnabled === undefined) {
 			this.setEnabled = function(bEnabled) {
-				this.setProperty("enabled", bEnabled);
-				if (!bEnabled && this.getDomRef()?.contains(document.activeElement)) {
-					Element ??= sap.ui.require("sap/ui/core/Element");
-					Element?.fireFocusFail.call(this, FocusMode.RENDERING_PENDING);
-				}
-				return this;
+				checkAndMoveFocus(this, bEnabled);
+				return this.setProperty("enabled", bEnabled);
 			};
 
 			this.getMetadata().addPublicMethods("setEnabled");
@@ -97,12 +92,8 @@ sap.ui.define(["./FocusMode"], function(FocusMode) {
 			var fnOrigSet = this.setEnabled;
 
 			this.setEnabled = function(bEnabled) {
-				fnOrigSet.apply(this, arguments);
-				if (!bEnabled && this.getDomRef()?.contains(document.activeElement)) {
-					Element ??= sap.ui.require("sap/ui/core/Element");
-					Element?.fireFocusFail.call(this, FocusMode.RENDERING_PENDING);
-				}
-				return this;
+				checkAndMoveFocus(this, bEnabled);
+				return fnOrigSet.apply(this, arguments);
 			};
 		}
 
@@ -140,6 +131,29 @@ sap.ui.define(["./FocusMode"], function(FocusMode) {
 		let oParent;
 		for (oParent = oControl.getParent(); oParent && !oParent.getEnabled && oParent.getParent; oParent = oParent.getParent()) {/* empty */}
 		return oParent && oParent.getEnabled && !oParent.getEnabled();
+	}
+
+	/**
+	 * Moves the focus to the nearest ancestor that is focusable when the control that is going to be disabled
+	 * (bEnabled === false) currently has the focus. This is done to prevent the focus from being set to the body
+	 * tag
+	 *
+	 * @param {sap.ui.core.Control} oControl the control that is going to be enabled/disalbed
+	 * @param {boolean} bEnabled whether the control is going to be enabled
+	 * @private
+	 */
+	function checkAndMoveFocus(oControl, bEnabled) {
+		var oDomRef = oControl.getDomRef();
+
+		if (!bEnabled && oDomRef && oDomRef.contains(document.activeElement)) {
+			var oFocusableAncestor = oControl.$().parent().closest(":focusable")[0];
+
+			if (oFocusableAncestor) {
+				oFocusableAncestor.focus({
+					preventScroll: true
+				});
+			}
+		}
 	}
 
 	return EnabledPropagator;

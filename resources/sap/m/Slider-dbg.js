@@ -1,15 +1,13 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/InvisibleText',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/core/ResizeHandler',
 	'sap/base/Log',
@@ -20,14 +18,13 @@ sap.ui.define([
 	'./SliderRenderer',
 	'./ResponsiveScale',
 	"sap/ui/thirdparty/jquery",
-	"sap/ui/events/KeyCodes"
+	"sap/ui/events/KeyCodes",
+	"sap/ui/core/Configuration"
 ],
 function(
-	Localization,
 	Control,
 	EnabledPropagator,
 	InvisibleText,
-	Library,
 	coreLibrary,
 	ResizeHandler,
 	log,
@@ -38,7 +35,8 @@ function(
 	SliderRenderer,
 	ResponsiveScale,
 	jQuery,
-	KeyCodes
+	KeyCodes,
+	Configuration
 ) {
 		"use strict";
 
@@ -96,15 +94,10 @@ function(
 		 * </ul>
 		 *
 		 * @extends sap.ui.core.Control
-		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
-		 *
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.20
 		 *
 		 * @constructor
 		 * @public
@@ -114,11 +107,7 @@ function(
 		var Slider = Control.extend("sap.m.Slider", /** @lends sap.m.Slider.prototype */ {
 			metadata: {
 
-				interfaces: [
-					"sap.ui.core.IFormContent",
-					"sap.ui.core.ISemanticFormContent",
-					"sap.m.IToolbarInteractiveControl"
-				],
+				interfaces: ["sap.ui.core.IFormContent"],
 				library: "sap.m",
 				properties: {
 
@@ -187,7 +176,6 @@ function(
 					/**
 					 * Indicates whether input fields should be used as tooltips for the handles. <b>Note:</b> Setting this option to <code>true</code>
 					 * will only work if <code>showAdvancedTooltip</code> is set to <code>true</code>.
-					 * **Note:** To comply with the accessibility standard, it is recommended to set the <code>inputsAsTooltips</code> property to true.
 					 * @since 1.42
 					 */
 					inputsAsTooltips: {type: "boolean", group: "Appearance", defaultValue: false},
@@ -430,19 +418,6 @@ function(
 		};
 
 		/**
-		 * Required by the {@link sap.m.IToolbarInteractiveControl} interface.
-		 * Determines if the Control is interactive.
-		 *
-		 * @returns {boolean} If it is an interactive Control
-		 *
-		 * @private
-		 * @ui5-restricted sap.m.OverflowToolBar, sap.m.Toolbar
-		 */
-		Slider.prototype._getToolbarInteractive = function () {
-			return true;
-		};
-
-		/**
 		 * Checks whether the given step is of the proper type.
 		 *
 		 * @param {int} iStep The step size
@@ -578,7 +553,7 @@ function(
 			}
 
 			// update the position of the handle
-			oHandleDomRef.style[Localization.getRTL() ? "right" : "left"] = sPerValue;
+			oHandleDomRef.style[Configuration.getRTL() ? "right" : "left"] = sPerValue;
 
 			// update the position of the advanced tooltip
 			if (this.getShowAdvancedTooltip() && oTooltipContainer.getDomRef()) {
@@ -837,7 +812,7 @@ function(
 			// resize handler of the slider
 			this._parentResizeHandler = null;
 
-			this._oResourceBundle = Library.getResourceBundleFor("sap.m");
+			this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			// a reference to the SliderTooltipContainer
 			this._oTooltipContainer = null;
@@ -1099,7 +1074,7 @@ function(
 
 				fNewValue = (((oTouch.pageX - this._fSliderPaddingLeft - this._fSliderOffsetLeft) / this._fSliderWidth) * (this.getMax() - fMin)) +  fMin;
 
-				if (Localization.getRTL()) {
+				if (Configuration.getRTL()) {
 					fNewValue = this._convertValueToRtlMode(fNewValue);
 				}
 
@@ -1148,7 +1123,7 @@ function(
 				fNewValue = (((iPageX - this._fDiffX - this._fSliderOffsetLeft) / this._fSliderWidth) * (this.getMax() - fMin)) +  fMin;
 
 			// RTL mirror
-			if (Localization.getRTL()) {
+			if (Configuration.getRTL()) {
 				fNewValue = this._convertValueToRtlMode(fNewValue);
 			}
 
@@ -1638,23 +1613,6 @@ function(
 			}
 
 			return this;
-		};
-
-		// support for SemanticFormElement
-		Slider.prototype.getFormFormattedValue = function() {
-			return this.getValue();
-		};
-
-		Slider.prototype.getFormValueProperty = function () {
-			return "value";
-		};
-
-		Slider.prototype.getFormObservingProperties = function() {
-			return ["value"];
-		};
-
-		Slider.prototype.getFormRenderAsControl = function () {
-			return false;
 		};
 
 		return Slider;

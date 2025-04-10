@@ -4,52 +4,52 @@
 /* ==================================== */
 
 .sapMILI {
-	min-height: 3rem;
+	display: -webkit-box;
+	display: flex;
+	height: 3rem;
 }
 
 .sapMILILabel {
+	-webkit-box-flex: 1;
+	flex: auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
 	font-size: 1.125rem;
-	color: var(--sapList_TextColor);
+	max-width: 60%;	/*we can have very long title so lets give a limit */
+	color: @sapUiListTextColor;
 }
 
 .sapMLIBActionable .sapMILILabel {
 	cursor: pointer;
 }
 
-.sapMILIContentWrapper {
+.sapMILI > .sapMLIBContent {
+	display: -webkit-box;
 	display: flex;
-	gap: 0 1rem;
+	-webkit-box-align: center;
 	align-items: center;
 }
 
-.sapMILIContentWrapperL {
-	flex-wrap: wrap;
-
-	& > .sapMILILabel {
-		flex: 1 1 auto;
-	}
-}
-
-.sapMILILabel {
-	padding: 0.25rem 0;
-}
-
 .sapMILIDiv {
-	flex: 1 1 auto;
+	-webkit-box-flex: 9;
+	flex: 1 0 auto;
 	text-align: right;
+	margin: 0 0 0 1rem;
 }
 
-html[dir='rtl'] .sapMILIDiv {
+html[dir=rtl] .sapMILIDiv {
 	text-align: left;
 }
 
 .sapMLIBActive .sapMILILabel {
-	color: var(--sapList_Active_TextColor);
+	color: @sapUiListActiveTextColor;
 }
 
 /* Compact size */
 .sapUiSizeCompact .sapMILI {
-	min-height: 2rem;
+	height: 2rem;
 }
 
 .sapUiSizeCompact .sapMILILabel {

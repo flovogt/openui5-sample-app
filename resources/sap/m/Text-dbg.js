@@ -1,20 +1,20 @@
 /*!
 * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
 */
 
 // Provides control sap.m.Text
 sap.ui.define([
 	'./library',
-	"sap/base/i18n/Localization",
+	'sap/ui/core/Core',
 	'sap/ui/core/Control',
 	'sap/ui/core/library',
 	'sap/ui/Device',
 	'sap/m/HyphenationSupport',
 	"./TextRenderer"
 ],
-function(library, Localization, Control, coreLibrary, Device, HyphenationSupport, TextRenderer) {
+function(library, Core, Control, coreLibrary, Device, HyphenationSupport, TextRenderer) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextAlign
@@ -51,16 +51,10 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * to <code>true</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ILabelable
-	 *
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
-	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
-	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
+	 * @implements sap.ui.core.IShrinkable, sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.20
 	 *
 	 * @constructor
 	 * @public
@@ -76,8 +70,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 				"sap.ui.core.IFormContent",
 				"sap.ui.core.ISemanticFormContent",
 				"sap.m.IHyphenation",
-				"sap.m.IToolbarInteractiveControl",
-				"sap.ui.core.ILabelable"
+				"sap.m.IToolbarInteractiveControl"
 			],
 			library: "sap.m",
 			properties: {
@@ -85,7 +78,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 				/**
 				 * Determines the text to be displayed.
 				 */
-				text: { type: "string", group: "Data", defaultValue: '', bindable: "bindable" },
+				text: { type: "string", defaultValue: '', bindable: "bindable" },
 
 				/**
 				 * Available options for the text direction are LTR and RTL. By default the control inherits the text direction from its parent control.
@@ -120,6 +113,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 				/**
 				 * Limits the number of lines for wrapping texts.
 				 *
+				 * <b>Note</b>: The multi-line overflow indicator depends on the browser line clamping support. For such browsers, this will be shown as ellipsis, for the other browsers the overflow will just be hidden.
 				 * @since 1.13.2
 				 */
 				maxLines: { type: "int", group: "Appearance", defaultValue: null },
@@ -156,7 +150,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @since 1.22
 	 * @protected
 	 * @type {int}
-	 * @deprecated As of version 1.121.
 	 */
 	Text.prototype.normalLineHeight = 1.2;
 
@@ -168,7 +161,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @since 1.22
 	 * @protected
 	 * @type {boolean}
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.cacheLineHeight = true;
 
@@ -180,7 +172,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @since 1.13.2
 	 * @protected
 	 * @type {string}
-	 * @deprecated As of version 1.121.  Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.ellipsis = '...';
 
@@ -192,7 +183,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @protected
 	 * @readonly
 	 * @static
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.hasNativeLineClamp = ("webkitLineClamp" in document.documentElement.style);
 
@@ -204,7 +194,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @param {HTMLElement} oDomRef DOM reference of the text node container.
 	 * @param {string} [sNodeValue] new Node value.
 	 * @since 1.30.3
-	 * @deprecated As of version 1.121. Since native line clamp is now available in all supported browsers and the renderer uses <code>apiVersion: 2</code>, this method is no longer needed.
 	 */
 	Text.setNodeValue = function (oDomRef, sNodeValue) {
 		sNodeValue = sNodeValue || "";
@@ -220,7 +209,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * Gets the text.
 	 *
 	 * @public
-	 * @param {boolean} [bNormalize] Indication for normalized text.
+	 * @param {boolean} bNormalize Indication for normalized text.
 	 * @returns {string} Text value.
 	 */
 	Text.prototype.getText = function (bNormalize) {
@@ -233,6 +222,39 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 		}
 
 		return sText;
+	};
+	/**
+	 * Overwrites onAfterRendering
+	 *
+	 * @public
+	 */
+	Text.prototype.onAfterRendering = function () {
+		// required adaptations after rendering
+		// check visible, max-lines and line-clamping support
+		if (this.getVisible() &&
+			this.hasMaxLines() &&
+			!this.canUseNativeLineClamp()) {
+
+				if (Core.isThemeApplied()) {
+					// set max-height for maxLines support
+					this.clampHeight();
+				} else {
+					Core.attachThemeChanged(this._handleThemeLoad, this);
+				}
+		}
+	};
+
+	/**
+	 * Fired when the theme is loaded
+	 *
+	 * @private
+	 */
+	Text.prototype._handleThemeLoad = function() {
+
+		// set max-height for maxLines support
+		this.clampHeight();
+
+		Core.detachThemeChanged(this._handleThemeLoad, this);
 	};
 
 	/**
@@ -274,7 +296,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @since 1.20
 	 * @protected
 	 * @return {boolean}
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.canUseNativeLineClamp = function () {
 		// has line clamp feature
@@ -288,7 +309,7 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 		}
 
 		// is text direction inherited as rtl
-		if (this.getTextDirection() == TextDirection.Inherit && Localization.getRTL()) {
+		if (this.getTextDirection() == TextDirection.Inherit && Core.getConfiguration().getRTL()) {
 			return false;
 		}
 
@@ -303,7 +324,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @returns {int} returns calculated line height
 	 * @see sap.m.Text#cacheLineHeight
 	 * @since 1.22
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.getLineHeight = function (oDomRef) {
 		// return cached value if possible and available
@@ -357,7 +377,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @param {HTMLElement} [oDomRef] DOM reference of the text container.
 	 * @returns {int} The clamp height of the text.
 	 * @since 1.22
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.getClampHeight = function (oDomRef) {
 		oDomRef = oDomRef || this.getTextDomRef();
@@ -371,7 +390,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @param {HTMLElement} [oDomRef] DOM reference of the text container.
 	 * @returns {int} Calculated max height value.
 	 * @since 1.22
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.clampHeight = function (oDomRef) {
 		oDomRef = oDomRef || this.getTextDomRef();
@@ -398,7 +416,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 	 * @param {int} [iEndPos] End point of the ellipsis search.
 	 * @returns {int|undefined} Returns found ellipsis position or <code>undefined</code>.
 	 * @since 1.20
-	 * @deprecated As of version 1.121. Native line clamp is now available in all supported browsers.
 	 */
 	Text.prototype.clampText = function (oDomRef, iStartPos, iEndPos) {
 		// check DOM reference
@@ -509,32 +526,6 @@ function(library, Localization, Control, coreLibrary, Device, HyphenationSupport
 		return {
 			"main": this.getTextDomRef()
 		};
-	};
-
-	Text.prototype.getFormFormattedValue = function () {
-		return this.getText();
-	};
-
-	Text.prototype.getFormValueProperty = function () {
-		return "text";
-	};
-
-	Text.prototype.getFormObservingProperties = function() {
-		return ["text"];
-	};
-
-	Text.prototype.getFormRenderAsControl = function () {
-		return true;
-	};
-
-	/**
-	 * Returns if the control can be bound to a label
-	 *
-	 * @returns {boolean} <code>true</code> if the control can be bound to a label
-	 * @public
-	 */
-	Text.prototype.hasLabelableHTMLElement = function () {
-		return false;
 	};
 
 	// Add hyphenation to Text functionality

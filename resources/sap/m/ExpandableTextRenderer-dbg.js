@@ -1,18 +1,18 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for control sap.m.ExpandableText
 sap.ui.define([
-	"sap/ui/core/Lib",
+	'sap/ui/core/Core',
 	'sap/ui/core/Renderer',
 	'sap/ui/core/library',
 	'sap/m/HyphenationSupport',
 	'./library'
 ], function(
-	Library,
+	Core,
 	Renderer,
 	coreLibrary,
 	HyphenationSupport,
@@ -30,7 +30,7 @@ sap.ui.define([
 	var EmptyIndicatorMode = mobileLibrary.EmptyIndicatorMode;
 
 	// shortcut for library resource bundle
-	var oRb = Library.getResourceBundleFor("sap.m");
+	var oRb = Core.getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Text renderer.
