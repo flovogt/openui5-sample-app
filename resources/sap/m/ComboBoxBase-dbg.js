@@ -10,6 +10,8 @@ sap.ui.define([
 	'./ComboBoxBaseRenderer',
 	'./SuggestionsPopover',
 	'sap/ui/base/ManagedObjectObserver',
+	"sap/ui/core/Element",
+	"sap/ui/core/Lib",
 	'sap/ui/core/SeparatorItem',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/base/ManagedObject',
@@ -23,8 +25,7 @@ sap.ui.define([
 	"sap/m/inputUtils/highlightDOMElements",
 	"sap/m/inputUtils/highlightItemsWithContains",
 	"sap/m/inputUtils/ListHelpers",
-	"sap/ui/core/IconPool",
-	"sap/ui/core/Core"
+	"sap/ui/core/IconPool"
 ],
 	function(
 		Input,
@@ -32,6 +33,8 @@ sap.ui.define([
 		ComboBoxBaseRenderer,
 		SuggestionsPopover,
 		ManagedObjectObserver,
+		Element,
+		Library,
 		SeparatorItem,
 		InvisibleText,
 		ManagedObject,
@@ -45,8 +48,7 @@ sap.ui.define([
 		highlightDOMElements,
 		highlightItemsWithContains,
 		ListHelpers,
-		IconPool,
-		Core
+		IconPool
 	) {
 		"use strict";
 
@@ -68,7 +70,7 @@ sap.ui.define([
 		 * @abstract
 		 *
 		 * @author SAP SE
-		 * @version 1.120.28
+		 * @version 1.134.0
 		 *
 		 * @constructor
 		 * @public
@@ -94,10 +96,11 @@ sap.ui.define([
 
 					/**
 					 * Indicates whether the picker is opened.
-					 * @deprecated since version 1.110
+					 * @deprecated As of version 1.110 Please check the <code>showItems</code> functionality if you need to open the picker programmatically.
 					 * @private
+					 * @ui5-restricted sap.m.ComboBoxBase
 					 */
-					 open: {
+					open: {
 						type: "boolean",
 						defaultValue: false
 					},
@@ -571,7 +574,7 @@ sap.ui.define([
 
 		ComboBoxBase.prototype.init = function() {
 			ComboBoxTextField.prototype.init.apply(this, arguments);
-			this._oRb = Core.getLibraryResourceBundle("sap.m");
+			this._oRb = Library.getResourceBundleFor("sap.m");
 
 			// sets the picker popup type
 			this.setPickerType(Device.system.phone ? "Dialog" : "Dropdown");
@@ -850,7 +853,7 @@ sap.ui.define([
 				return;
 			}
 
-			var oRelatedControl = sap.ui.getCore().byId(oEvent.relatedControlId);
+			var oRelatedControl = Element.getElementById(oEvent.relatedControlId);
 
 			// to prevent the change event from firing when the downward-facing arrow button is pressed
 			if (oRelatedControl === this) {
@@ -1149,6 +1152,7 @@ sap.ui.define([
 		 *
 		 */
 		ComboBoxBase.prototype.onBeforeOpen = function () {
+			this.closeValueStateMessage();
 			this._updateSuggestionsPopoverValueState();
 			if (!this._getItemsShownWithFilter()) {
 				this.toggleIconPressedStyle(true);
@@ -1581,8 +1585,7 @@ sap.ui.define([
 		 * Should be overwritten in children classes to apply control specific filtering over the items.
 		 *
 		 * @since 1.64
-		 * @experimental Since 1.64
-		 * @private
+		 * @protected
 		 * @ui5-restricted
 		 */
 		ComboBoxBase.prototype.applyShowItemsFilters = function () {};

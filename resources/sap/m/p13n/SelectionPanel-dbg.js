@@ -9,6 +9,7 @@ sap.ui.define([
 	"sap/m/ColumnListItem",
 	"sap/m/HBox",
 	"sap/m/VBox",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/Icon",
 	"sap/m/Text",
@@ -21,23 +22,42 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/base/util/merge",
 	"sap/ui/core/InvisibleText"
-], function(BasePanel, Label, ColumnListItem, HBox, VBox, coreLibrary, Icon, Text, Column, Table, mLibrary, ToolbarSpacer, Button, OverflowToolbar, Filter, merge, InvisibleText) {
+], (
+	BasePanel,
+	Label,
+	ColumnListItem,
+	HBox,
+	VBox,
+	Library,
+	coreLibrary,
+	Icon,
+	Text,
+	Column,
+	Table,
+	mLibrary,
+	ToolbarSpacer,
+	Button,
+	OverflowToolbar,
+	Filter,
+	merge,
+	InvisibleText
+) => {
 	"use strict";
 
 	// shortcut for sap.ui.core.IconColor
-	var IconColor = coreLibrary.IconColor;
+	const {IconColor} = coreLibrary;
 
 	// shortcut for sap.m.ListKeyboardMode
-	var ListKeyboardMode = mLibrary.ListKeyboardMode;
+	const {ListKeyboardMode} = mLibrary;
 
 	// shortcut for sap.m.FlexJustifyContent
-	var FlexJustifyContent = mLibrary.FlexJustifyContent;
+	const {FlexJustifyContent} = mLibrary;
 
 	// shortcut for sap.m.ListType
-	var ListType = mLibrary.ListType;
+	const {ListType} = mLibrary;
 
 	// shortcut for sap.m.MultiSelectMode
-	var MultiSelectMode = mLibrary.MultiSelectMode;
+	const {MultiSelectMode} = mLibrary;
 
 	/**
 	 * Constructor for a new <code>SelectionPanel</code>.
@@ -51,13 +71,13 @@ sap.ui.define([
 	 * @extends sap.m.p13n.BasePanel
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @public
 	 * @since 1.96
 	 * @alias sap.m.p13n.SelectionPanel
 	 */
-	var SelectionPanel = BasePanel.extend("sap.m.p13n.SelectionPanel", {
+	const SelectionPanel = BasePanel.extend("sap.m.p13n.SelectionPanel", {
 		metadata: {
 			library: "sap.m",
 			properties: {
@@ -67,7 +87,7 @@ sap.ui.define([
 				 */
 				title: {
 					type: "string",
-					defaultValue: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("p13n.DEFAULT_TITLE_SELECTION")
+					defaultValue: Library.getResourceBundleFor("sap.m").getText("p13n.DEFAULT_TITLE_SELECTION")
 				},
 				/**
 				/**
@@ -90,9 +110,9 @@ sap.ui.define([
 				 */
 				fieldColumn: {
 					type: "string",
-					defaultValue: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("p13n.DEFAULT_DESCRIPTION")
+					defaultValue: ""
 				},
-				 /**
+				/**
 				 * The second column in the panel showing the move buttons for reordering.
 				 */
 				activeColumn: {
@@ -124,7 +144,20 @@ sap.ui.define([
 		}
 	});
 
-	SelectionPanel.prototype.applySettings = function(){
+	SelectionPanel.prototype.init = function() {
+		BasePanel.prototype.init.apply(this, arguments);
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showAllText", this._getResourceText("p13n.SHOW_ALL"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/fieldColumn", this._getResourceText("p13n.DEFAULT_DESCRIPTION"));
+		if (this.isPropertyInitial("fieldColumn")) {
+			this.bindProperty("fieldColumn", {
+				model: this.LOCALIZATION_MODEL,
+				path: `/fieldColumn`
+			});
+		}
+	};
+
+	SelectionPanel.prototype.applySettings = function() {
 		BasePanel.prototype.applySettings.apply(this, arguments);
 		this._setTemplate(this._getListTemplate());
 		this.addStyleClass("sapMSelectionPanel");
@@ -132,9 +165,11 @@ sap.ui.define([
 		//Do not show the factory by default
 		this._bShowFactory = false;
 		this.addStyleClass("SelectionPanelHover");
+		// needed for automatic localization of text when language is switched without refreshing the browser
 		this._displayColumns();
 		this._updateMovement(this.getEnableReorder());
 		this._oListControl.setMultiSelectMode(this.getMultiSelectMode());
+
 	};
 
 	SelectionPanel.prototype.setMultiSelectMode = function(sMultiSelectMode) {
@@ -149,15 +184,15 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._getListTemplate = function() {
-		var oColumnListItem = new ColumnListItem({
+		const oColumnListItem = new ColumnListItem({
 			selected: "{" + this.P13N_MODEL + ">" + this.PRESENCE_ATTRIBUTE + "}",
 			type: {
 				path: this.P13N_MODEL + ">" + this.PRESENCE_ATTRIBUTE,
-				formatter: function(bSelected) {
+				formatter: (bSelected) => {
 					//In case the factory control is displayed, no move buttons are displayed --> item should be inactive
 					//to avoid issues with the label for mechanism
 					return bSelected && !this._bShowFactory ? ListType.Active : ListType.Inactive;
-				}.bind(this)
+				}
 			},
 			cells: [
 				new VBox({
@@ -180,7 +215,7 @@ sap.ui.define([
 							visible: {
 								path: this.P13N_MODEL + ">active",
 								formatter: function(bactive) {
-									if (bactive){
+									if (bactive) {
 										return true;
 									} else {
 										return false;
@@ -197,12 +232,12 @@ sap.ui.define([
 			// The active status is visiually represented as dot icon in the tabular view, for the screen reader it needs to be ensured
 			// that a similar information is available without the UI. This InvisibleText will provide a text in the screen reader as:
 			// "Active Field is active" & "Active Field is inactive" --> this should only be done in case the active column is being used
-			var oActiveTextOutput = new InvisibleText({
+			const oActiveTextOutput = new InvisibleText({
 				text: {
 					path: this.P13N_MODEL + ">active",
-					formatter: function(bactive) {
+					formatter: (bactive) => {
 						return bactive ? this._getResourceText("p13n.ACTIVESTATE_ACTIVE") : this._getResourceText("p13n.ACTIVESTATE_INACTIVE");
-					}.bind(this)
+					}
 				}
 			});
 
@@ -215,7 +250,7 @@ sap.ui.define([
 	SelectionPanel.prototype.setActiveColumn = function(sActiveText) {
 		this.setProperty("activeColumn", sActiveText);
 		this._setTemplate(this._getListTemplate()); //recreate template since its depending on this property
-		this._displayColumns();//update header texts in Table columns
+		this._displayColumns(); //update header texts in Table columns
 		return this;
 	};
 
@@ -226,21 +261,22 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype.setShowHeader = function(bShowHeader) {
-		if (bShowHeader){
-			var sShowSelected = this._getResourceText("p13n.SHOW_SELECTED");
-			var sShowAll = this._getResourceText("p13n.SHOW_ALL");
+		if (bShowHeader) {
+			this._oShowSelectedButton = new Button({
+				press: (oEvt) => {
+					this._bShowSelected = !this._bShowSelected;
+					this._filterList(this._bShowSelected, this._sSearch);
+					this._updateShowSelectedButton();
+				},
+				text: `{${this.LOCALIZATION_MODEL}>/showSelectedText}`
+			});
+			this._updateShowSelectedButton();
+
 			this._oListControl.setHeaderToolbar(new OverflowToolbar({
 				content: [
 					this._getSearchField(),
 					new ToolbarSpacer(),
-					new Button({
-						press: function(oEvt){
-							this._bShowSelected = oEvt.getSource().getText() == sShowSelected;
-							this._filterList(this._bShowSelected, this._sSearch);
-							oEvt.getSource().setText(this._bShowSelected ? sShowAll : sShowSelected);
-						}.bind(this),
-						text: sShowSelected
-					})
+					this._oShowSelectedButton
 				]
 			}));
 		}
@@ -248,10 +284,17 @@ sap.ui.define([
 		return this;
 	};
 
+	SelectionPanel.prototype._updateShowSelectedButton = function() {
+		const sShowSelected = this._getResourceText("p13n.SHOW_SELECTED");
+		const sShowAll = this._getResourceText("p13n.SHOW_ALL");
+
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._bShowSelected ? sShowAll : sShowSelected);
+	};
+
 	SelectionPanel.prototype.getSelectedFields = function() {
-		var aSelectedItems = [];
-		this._loopItems(this._oListControl, function(oItem, sKey){
-			if (oItem.getSelected()){
+		const aSelectedItems = [];
+		this._loopItems(this._oListControl, (oItem, sKey) => {
+			if (oItem.getSelected()) {
 				aSelectedItems.push(sKey);
 			}
 		});
@@ -260,7 +303,8 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._filterList = function(bShowSelected, sSarch) {
-		var oSearchFilter = [], oSelectedFilter = [];
+		let oSearchFilter = [],
+			oSelectedFilter = [];
 		if (bShowSelected) {
 			oSelectedFilter = new Filter(this.PRESENCE_ATTRIBUTE, "EQ", true);
 		}
@@ -279,24 +323,26 @@ sap.ui.define([
 		//remove move buttons if unselected item is hovered (not covered by updateStarted)
 		this._removeMoveButtons();
 		//Check if the prior hovered item had a visible icon and renable it if required
-		if (this._oHoveredItem && !this._oHoveredItem.bIsDestroyed && this._oHoveredItem.getBindingContextPath()){
-			var bVisible = !!this._getP13nModel().getProperty(this._oHoveredItem.getBindingContextPath()).active;
-			var oOldIcon = this._oHoveredItem.getCells()[1].getItems()[0];
+		if (this._oHoveredItem && !this._oHoveredItem.bIsDestroyed && this._oHoveredItem.getBindingContextPath()) {
+			const bVisible = !!this._getP13nModel().getProperty(this._oHoveredItem.getBindingContextPath()).active;
+			const oOldIcon = this._oHoveredItem.getCells()[1].getItems()[0];
 			oOldIcon.setVisible(bVisible);
 		}
 		//Store (new) hovered item and set its icon to visible: false + add move buttons to it
-		var oIcon = oHoveredItem.getCells()[1].getItems()[0];
+		const oIcon = oHoveredItem.getCells()[1].getItems()[0];
 		if (oHoveredItem.getSelected()) {
 			oIcon.setVisible(false);
 		}
 		this._oHoveredItem = oHoveredItem;
-		this._updateEnableOfMoveButtons(oHoveredItem, false);
-		this._addMoveButtons(oHoveredItem);
+		if (!(oHoveredItem.getMultiSelectControl()?.getEnabled() == false)) {
+			this._updateEnableOfMoveButtons(oHoveredItem, false);
+			this._addMoveButtons(oHoveredItem);
+		}
 	};
 
 	SelectionPanel.prototype._removeMoveButtons = function() {
-		var oMoveButtonBox = this._getMoveButtonContainer();
-		if (oMoveButtonBox){
+		const oMoveButtonBox = this._getMoveButtonContainer();
+		if (oMoveButtonBox) {
 			oMoveButtonBox.removeItem(this._getMoveTopButton());
 			oMoveButtonBox.removeItem(this._getMoveUpButton());
 			oMoveButtonBox.removeItem(this._getMoveDownButton());
@@ -308,7 +354,7 @@ sap.ui.define([
 		if (this._oMoveBottomButton &&
 			this._oMoveBottomButton.getParent() &&
 			this._oMoveBottomButton.getParent().isA("sap.m.FlexBox")
-		){
+		) {
 			return this._oMoveBottomButton.getParent();
 		}
 	};
@@ -317,11 +363,11 @@ sap.ui.define([
 		this._bShowFactory = bShow;
 		this._displayColumns();
 
-		this._oListControl.getItems().forEach(function(oItem){
+		this._oListControl.getItems().forEach((oItem) => {
 			oItem.setType(bShow ? "Inactive" : "Active");
 		});
 
-		if (bShow){
+		if (bShow) {
 			this.removeStyleClass("SelectionPanelHover");
 			this._oListControl.setKeyboardMode(ListKeyboardMode.Edit); //--> tab through editable fields (fields shown)
 			this._addFactoryControl();
@@ -333,13 +379,13 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._loopItems = function(oList, fnItemCallback) {
-		oList.getItems().forEach(function(oItem){
+		oList.getItems().forEach((oItem) => {
 
-			var sPath = oItem.getBindingContextPath();
-			var sKey = this._getP13nModel().getProperty(sPath).name;
+			const sPath = oItem.getBindingContextPath();
+			const sKey = this._getP13nModel().getProperty(sPath).name;
 
 			fnItemCallback.call(this, oItem, sKey);
-		}.bind(this));
+		});
 	};
 
 	/**
@@ -361,8 +407,14 @@ sap.ui.define([
 		//remove the reorder buttons from their current location and hence reset the hover logic
 		this._removeMoveButtons();
 		this._oSelectedItem = null;
-
 		return this;
+	};
+
+	SelectionPanel.prototype.onReset = function() {
+		BasePanel.prototype.onReset.apply(this, arguments);
+		this._sSearch = "";
+		this._bShowSelected = false;
+		this._updateShowSelectedButton();
 	};
 
 	SelectionPanel.prototype._updateCount = function() {
@@ -375,9 +427,9 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._removeFactoryControl = function() {
-		this._oListControl.getItems().forEach(function(oItem){
-			var oFirstCell = oItem.getCells()[0];
-			if (oFirstCell.getItems().length > 1){
+		this._oListControl.getItems().forEach((oItem) => {
+			const oFirstCell = oItem.getCells()[0];
+			if (oFirstCell.getItems().length > 1) {
 				oFirstCell.removeItem(oFirstCell.getItems()[1]);
 			}
 		});
@@ -386,7 +438,7 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._moveSelectedItem = function(){
-		this._oSelectedItem = this._getMoveButtonContainer().getParent();
+		this._oSelectedItem = this._getMoveButtonContainer()?.getParent();
 		BasePanel.prototype._moveSelectedItem.apply(this, arguments);
 	};
 
@@ -400,10 +452,10 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._displayColumns = function() {
-		var aColumns = [
+		const aColumns = [
 			this.getFieldColumn()
 		];
-		var bShowActiveColumn = this.getEnableReorder() || this.getActiveColumn();
+		const bShowActiveColumn = this.getEnableReorder() || this.getActiveColumn();
 		if (!this._bShowFactory && bShowActiveColumn) {
 			aColumns.push(new Column({
 				width: "30%",
@@ -419,23 +471,21 @@ sap.ui.define([
 
 	SelectionPanel.prototype._setPanelColumns = function(aColumns) {
 		this._sText = aColumns[0];
-		var bEnableCount = this.getEnableCount();
+		const bEnableCount = this.getEnableCount();
 		if (bEnableCount) {
-			var oColumn = new Column({
+			const oColumn = new Column({
 				header: new Text({
 					text: {
-						parts: [
-							{
-								path: this.P13N_MODEL + '>/selectedItems'
-							}, {
-								path: this.P13N_MODEL + '>/items'
-							}
-						],
-						formatter: function(iSelected, aAll) {
+						parts: [{
+							path: this.P13N_MODEL + '>/selectedItems'
+						}, {
+							path: this.P13N_MODEL + '>/items'
+						}],
+						formatter: (iSelected, aAll) => {
 							return this._sText + " " + this._getResourceText('p13n.HEADER_COUNT', [
 								iSelected, aAll instanceof Array ? aAll.length : 0
 							]);
-						}.bind(this)
+						}
 					}
 				})
 			});
@@ -445,57 +495,76 @@ sap.ui.define([
 	};
 
 	SelectionPanel.prototype._addFactoryControl = function(oList) {
-		this._oListControl.getItems().forEach(function(oItem){
-			var oContext = oItem.getBindingContext(this.P13N_MODEL);
-			var oField = this.getItemFactory().call(this, oContext);
+		this._oListControl.getItems().forEach((oItem) => {
+			const oContext = oItem.getBindingContext(this.P13N_MODEL);
+			const oField = this.getItemFactory().call(this, oContext);
 
 			//set 'labelFor'
-			var oFirstCell = oItem.getCells()[0];
-			var oLabel = oFirstCell.getItems()[0];
+			const oFirstCell = oItem.getCells()[0];
+			const oLabel = oFirstCell.getItems()[0];
 			if (oLabel) {
 				oLabel.setLabelFor(oField);
 			}
 
 			oFirstCell.addItem(oField);
-		}.bind(this));
+		});
 		this.addStyleClass("sapUiMDCAFLabelMarkingList");
 	};
 
 	SelectionPanel.prototype._createInnerListControl = function() {
-		return new Table(this.getId() + "-innerSelectionPanelTable", Object.assign({
+		const oTable = new Table(this.getId() + "-innerSelectionPanelTable", Object.assign({
 			growing: false,
 			growingThreshold: 25,
 			growingScrollToLoad: true,
-			updateStarted: function() {
+			updateStarted: () => {
 				this._removeMoveButtons();
 				this._removeFactoryControl();
-			}.bind(this),
-			updateFinished: function() {
+			},
+			updateFinished: () => {
 				if (this._getShowFactory()) {
 					this._addFactoryControl();
 				}
-			}.bind(this)
+			}
 		}, this._getListControlConfig()));
+
+		// this is required to update the reorder buttons very early. Otherwise a screenreader might not announce the correct cell content.
+		const orgFocusIn = oTable.onItemFocusIn;
+		oTable.onItemFocusIn = function(oItem, oFocusedControl) {
+			if (this.getEnableReorder()) {
+				this._handleActivated(oItem);
+			}
+
+			orgFocusIn.apply(oTable, arguments);
+		}.bind(this);
+
+		return oTable;
 	};
 
 	SelectionPanel.prototype.filterContent = function(aFilter) {
-		if (this._oListControl.getBinding("items")){
+		if (this._oListControl.getBinding("items")) {
 			this._oListControl.getBinding("items").filter(aFilter, true);
 		}
 	};
 
 	SelectionPanel.prototype._addMoveButtons = function(oItem) {
-		var oTableItem = oItem;
-		if (!oTableItem){
+		const oTableItem = oItem;
+		if (!oTableItem) {
 			return;
 		}
-		var bItemSelected = this._getP13nModel().getProperty(oTableItem.getBindingContextPath())[this.PRESENCE_ATTRIBUTE];
-		if (bItemSelected){
+		const bItemSelected = this._getP13nModel().getProperty(oTableItem.getBindingContextPath())[this.PRESENCE_ATTRIBUTE];
+		if (bItemSelected) {
 			oTableItem.getCells()[1].addItem(this._getMoveTopButton());
 			oTableItem.getCells()[1].addItem(this._getMoveUpButton());
 			oTableItem.getCells()[1].addItem(this._getMoveDownButton());
 			oTableItem.getCells()[1].addItem(this._getMoveBottomButton());
 		}
+	};
+
+	SelectionPanel.prototype._updateLocalizationTexts = function() {
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showSelectedText", this._getResourceText("p13n.SHOW_SELECTED"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/showAllText", this._getResourceText("p13n.SHOW_ALL"));
+		this.getModel(this.LOCALIZATION_MODEL).setProperty("/fieldColumn", this._getResourceText("p13n.DEFAULT_DESCRIPTION"));
+		this._updateShowSelectedButton();
 	};
 
 	SelectionPanel.prototype.exit = function() {

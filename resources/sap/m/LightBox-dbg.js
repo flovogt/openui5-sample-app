@@ -7,8 +7,8 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/Popup",
-	"sap/ui/core/Core",
 	"sap/m/IllustratedMessage",
 	"sap/m/IllustratedMessageType",
 	"sap/m/IllustratedMessageSize",
@@ -25,8 +25,8 @@ sap.ui.define([
 ], function (
 	library,
 	Control,
+	Library,
 	Popup,
-	Core,
 	IllustratedMessage,
 	IllustratedMessageType,
 	IllustratedMessageSize,
@@ -96,7 +96,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -168,7 +168,7 @@ sap.ui.define([
 		this._iResizeListenerId = null;
 		this._$lightBox = null;
 
-		this._oRB = Core.getLibraryResourceBundle("sap.m");
+		this._oRB = Library.getResourceBundleFor("sap.m");
 
 		// create an ARIA announcement for enlarged image
 		this.setAggregation("_invisiblePopupText", new InvisibleText());
@@ -184,6 +184,8 @@ sap.ui.define([
 			oNativeImage = oImageContent._getNativeImage(),
 			sImageSrc = oImageContent.getImageSrc(),
 			sState = oImageContent._getImageState(),
+			sErrorMessageTitle = this._oRB.getText("LIGHTBOX_IMAGE_ERROR"),
+			sErrorMessageSubtitle = this._oRB.getText("LIGHTBOX_IMAGE_ERROR_DETAILS"),
 			sInvisiblePopupText = this._oRB.getText("LIGHTBOX_ARIA_ENLARGED", [oImageContent.getTitle(), oImageContent.getSubtitle()]);
 
 		this._createErrorControls();
@@ -215,6 +217,7 @@ sap.ui.define([
 			case LightBoxLoadingStates.Error:
 			case LightBoxLoadingStates.TimeOutError:
 				clearTimeout(this._iTimeoutId);
+				sInvisiblePopupText += ". " + sErrorMessageTitle + " " + sErrorMessageSubtitle;
 				break;
 			default:
 				break;
@@ -236,10 +239,17 @@ sap.ui.define([
 		this._isRendering = false;
 		this._$lightBox = this.$();
 
+		// when we have error message on desktop, but the viewport is small or we have big zoom (for example 200%)
+		const isLightBoxIsHigherThanTheViewPort = this.getDomRef().scrollHeight > window.innerHeight;
+
 		if (!this._iResizeListenerId) {
 			this._fnResizeListener = this._onResize.bind(this);
 			Device.resize.attachHandler(this._fnResizeListener);
 			this._iResizeListenerId = ResizeHandler.register(this, this._fnResizeListener);
+		}
+
+		if (isLightBoxIsHigherThanTheViewPort) {
+			this.getAggregation("_errorMessage").setIllustrationSize(IllustratedMessageSize.Auto);
 		}
 	};
 

@@ -65,9 +65,24 @@ sap.ui.define([
 			rm.attr('title', oForm.getTooltip_AsString());
 		}
 
-		const sTitleID = oLayout?.getRenderer().getTitleId(oForm) || oForm._sSuggestedTitleId;
-		if (sTitleID) {
-			mAriaProps["labelledby"] = {value: sTitleID, append: true};
+		var oTitle = oForm.getTitle();
+		var oToolbar = oForm.getToolbar();
+		if (oToolbar) {
+			if (!oForm.getAriaLabelledBy() || oForm.getAriaLabelledBy().length == 0) {
+				// no aria-label -> use Title of Toolbar
+				var sToolbarTitleID = FormHelper.getToolbarTitle(oToolbar); // FormHelper must already be initialized by Form
+				mAriaProps["labelledby"] = sToolbarTitleID;
+			}
+		} else if (oTitle) {
+			var sId = "";
+			if (typeof oTitle == "string") {
+				sId = oForm.getId() + "--title";
+			} else {
+				sId = oTitle.getId();
+			}
+			mAriaProps["labelledby"] = {value: sId, append: true};
+		} else if (oForm._sSuggestedTitleId) {
+			mAriaProps["labelledby"] = {value: oForm._sSuggestedTitleId, append: true};
 		}
 
 		rm.accessibilityState(oForm, mAriaProps);

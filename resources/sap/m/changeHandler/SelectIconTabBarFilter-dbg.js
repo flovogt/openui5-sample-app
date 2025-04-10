@@ -14,8 +14,9 @@ sap.ui.define([
 	 *
 	 * @alias sap.m.changeHandler.SelectIconTabBarFilter
 	 * @author SAP SE
-	 * @version 1.120.28
-	 * @experimental Since 1.96
+	 * @version 1.134.0
+	 * @since 1.96
+	 * @private
 	 */
 	var SelectIconTabBarFilter = {};
 

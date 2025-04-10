@@ -5,9 +5,11 @@
  */
 
 sap.ui.define([
+	"sap/ui/core/Element",
 	"sap/ui/core/util/reflection/JsControlTreeModifier",
 	"sap/base/Log"
 ], function(
+	Element,
 	JsControlTreeModifier,
 	Log
 ) {
@@ -17,8 +19,7 @@ sap.ui.define([
 	 * Change handler for hiding of a control.
 	 * @alias sap.ui.fl.changeHandler.HideControl
 	 * @author SAP SE
-	 * @version 1.120.28
-	 * @experimental Since 1.27.0
+	 * @version 1.134.0
 	 */
 	var HideForm = { };
 
@@ -199,7 +200,7 @@ sap.ui.define([
 	 */
 	HideForm.completeChangeContent = function(oChangeWrapper, oSpecificChangeInfo, mPropertyBag) {
 		if (oSpecificChangeInfo.removedElement && oSpecificChangeInfo.removedElement.id) {
-			var oStableElement = this._getStableElement(sap.ui.getCore().byId(oSpecificChangeInfo.removedElement.id));
+			var oStableElement = this._getStableElement(Element.getElementById(oSpecificChangeInfo.removedElement.id));
 			oChangeWrapper.setContent({
 				elementSelector: JsControlTreeModifier.getSelector(oStableElement, mPropertyBag.appComponent)
 			});
@@ -275,14 +276,28 @@ sap.ui.define([
 	};
 
 	HideForm.getChangeVisualizationInfo = function(oChange, oAppComponent) {
-		var oSelector = oChange.getContent().elementSelector;
-		var oElement = JsControlTreeModifier.bySelector(oSelector, oAppComponent);
-		var oDisplaySelector = oChange.getChangeType() === "removeSimpleFormGroup"
-			? oElement.getParent().getId()
-			: oElement.getParent().getParent().getId();
+		const oElementSelector = oChange.getContent().elementSelector;
+		const oFormSelector = oChange.getSelector();
+		const oForm = JsControlTreeModifier.bySelector(oFormSelector, oAppComponent);
+		const oElement = JsControlTreeModifier.bySelector(oElementSelector, oAppComponent);
+		const oElementParent = oElement.getParent();
+
+		// If a Group is being hidden, always show on the form since groups can't be revealed
+		let sDisplayElementId = oForm.getId();
+
+		// FormElement is being hidden
+		if (oElementParent.isA("sap.ui.layout.form.FormElement")) {
+			// If the Label is currently visible, the indicator should be on the form element (e.g. after the element is revealed)
+			// Otherwise we show it on the form, since the group element could have been in a group that got removed, leading to
+			// inconsistencies in the visualization
+			if (oElement.getVisible()) {
+				sDisplayElementId = oElementParent.getId();
+			}
+		}
+
 		return {
-			affectedControls: [oSelector],
-			displayControls: [oDisplaySelector],
+			affectedControls: [oElement.getId()],
+			displayControls: [sDisplayElementId],
 			updateRequired: true
 		};
 	};

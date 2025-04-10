@@ -6,6 +6,7 @@
 
 // Provides control sap.ui.layout.form.FormLayout.
 sap.ui.define([
+	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
 	'sap/ui/core/Element',
 	'sap/ui/layout/library',
@@ -13,10 +14,9 @@ sap.ui.define([
 	'./FormHelper',
 	'sap/ui/core/theming/Parameters',
 	'sap/ui/thirdparty/jquery',
-	"sap/ui/core/Configuration",
 	// jQuery custom selectors ":sapFocusable"
 	'sap/ui/dom/jquery/Selectors'
-], function(Control, Element, library, FormLayoutRenderer, FormHelper, Parameters, jQuery, Configuration) {
+], function(Localization, Control, Element, library, FormLayoutRenderer, FormHelper, Parameters, jQuery) {
 	"use strict";
 
 	// shortcut for sap.ui.layout.BackgroundDesign
@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -153,7 +153,7 @@ sap.ui.define([
 	FormLayout.prototype.onsapright = function(oEvent){
 
 		if (FormHelper.isArrowKeySupported()) { // no async call needed here
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 
 			if (!bRtl) {
 				this.navigateForward(oEvent);
@@ -167,7 +167,7 @@ sap.ui.define([
 	FormLayout.prototype.onsapleft = function(oEvent){
 
 		if (FormHelper.isArrowKeySupported()) { // no async call needed here
-			var bRtl = Configuration.getRTL();
+			var bRtl = Localization.getRTL();
 
 			if (!bRtl) {
 				this.navigateBack(oEvent);
@@ -1032,7 +1032,7 @@ sap.ui.define([
 	 * @param {sap.ui.layout.form.Form} oForm Form
 	 * @return {boolean} <code>true</code> if there is a container with own label
 	 * @private
-	 * @since 1.120.28
+	 * @since: 1.126.0
 	 */
 	FormLayout.prototype.hasLabelledContainers = function(oForm) {
 
@@ -1056,26 +1056,13 @@ sap.ui.define([
 	 * This is used to determine the role for screenreader support
 	 *
 	 * @param {sap.ui.layout.form.FormContainer} oContainer FormContainer
-	 * @return {boolean} <code>true</code> if the <code>FormContainer</code> is labelled
+	 * @return {boolean} <code>true</code> if the  <code>FormContainer</code> is labelled
 	 * @private
-	 * @since 1.120.28
+	 * @since: 1.126.0
 	 */
 	FormLayout.prototype.isContainerLabelled = function(oContainer) {
 
 		return !!oContainer.getTitle() || !!oContainer.getToolbar() || oContainer.getAriaLabelledBy().length > 0 || oContainer.getExpandable();
-
-	};
-
-	/**
-	 * Defines if the rendering of the layout depends on the <code>editable</code> property.
-	 *
-	 * @return {boolean} <code>true</code> if the switching <code>editable</code> must trigger re-rendering
-	 * @private
-	 * @since 1.120.28
-	 */
-	FormLayout.prototype.invalidateEditableChange = function() {
-
-		return false;
 
 	};
 

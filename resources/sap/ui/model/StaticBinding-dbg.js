@@ -66,11 +66,11 @@ sap.ui.define([
 	};
 
 	StaticBinding.prototype.attachChange = function(fnFunction, oListener) {
-		this.attachEvent("change", fnFunction, oListener);
+		return this.attachEvent("change", fnFunction, oListener);
 	};
 
 	StaticBinding.prototype.detachChange = function(fnFunction, oListener) {
-		this.detachEvent("change", fnFunction, oListener);
+		return this.detachEvent("change", fnFunction, oListener);
 	};
 
 	return StaticBinding;

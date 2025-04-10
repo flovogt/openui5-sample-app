@@ -10,13 +10,13 @@ sap.ui.define([
 	"sap/ui/core/Control",
 	"./IllustrationRenderer",
 	"./IllustrationPool",
-	"sap/ui/core/Core"
+	"sap/ui/core/Theming"
 ], function(
 	Log,
 	Control,
 	IllustrationRenderer,
 	IllustrationPool,
-	Core
+	Theming
 ) {
 	"use strict";
 
@@ -41,7 +41,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -78,7 +78,12 @@ sap.ui.define([
 				 * Association to controls / IDs which label those controls (see WAI-ARIA attribute aria-labelledBy).
 	 			 * @since 1.106.0
 				 */
-				ariaLabelledBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"}
+				ariaLabelledBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"},
+				/**
+				 * Association to controls / IDs which label those controls (see WAI-ARIA attribute aria-describedBy).
+	 			 * @since 1.133.0
+				 */
+				ariaDescribedBy: {type : "sap.ui.core.Control", multiple : true, singularName : "ariaDescribedBy"}
 			},
 			dnd: { draggable: true, droppable: false }
 		},
@@ -149,7 +154,7 @@ sap.ui.define([
 		var sMappedType = sType,
 			sPrefix = "",
 			oMetadata = IllustrationPool.getIllustrationSetMetadata(sSet),
-			sCurrentTheme = Core.getConfiguration().getTheme(),
+			sCurrentTheme = Theming.getTheme(),
 			sCollectionPath = oCollectionMap[sCurrentTheme];
 
 		if (

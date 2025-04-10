@@ -3,7 +3,7 @@
  * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component) {
+sap.ui.define(["sap/base/future", "sap/ui/core/Component"], function(future, Component) {
 	"use strict";
 
 	// contains all external ExtensionProvider instances, mapped by their class-name
@@ -61,6 +61,7 @@ sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component
 	 *
 	 * @private
 	 * @ui5-restricted sap.ui.core.mvc.Controller
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	ControllerExtensionProvider.getControllerExtensions = function(sControllerName, sComponentId, sViewId, bAsync) {
 		var mControllerExtensions = {
@@ -104,7 +105,7 @@ sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component
 						// add provider-extensions
 						mControllerExtensions.providerControllers = aExternalExtensions;
 					} else {
-						Log.error("[FUTURE FATAL] Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
+						future.errorThrows("Controller Extension Provider: Error in ExtensionProvider.getControllerExtensions: " + ControllerExtensionProvider._sExtensionProvider +
 								" - no valid extensions returned. Return value must be an array of ControllerExtensions.");
 					}
 				}
@@ -164,6 +165,7 @@ sap.ui.define(["sap/base/Log", "sap/ui/core/Component"], function(Log, Component
 	 * @param {boolean} bAsync Load async or not
 	 * @return {ExtensionProvider|Promise|undefined} ExtensionProvider <code>Promise</code> in case of asynchronous loading
 	 *           or the <code>ExtensionProvider</code> in case of synchronous loading or undefined in case no provider exists
+	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function loadExtensionProvider(bAsync) {
 		var sProviderName = ControllerExtensionProvider._sExtensionProvider.replace(/\./g, "/"),

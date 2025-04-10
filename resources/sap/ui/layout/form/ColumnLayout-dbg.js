@@ -27,7 +27,7 @@ sap.ui.define([
 	 * @class
 	 * The <code>ColumnLayout</code> control renders a {@link sap.ui.layout.form.Form Form} control in a column-based responsive way.
 	 * Depending on its size, the {@link sap.ui.layout.form.Form Form} control is divided into one or more columns.
-	 * (XL - max. 4 columns, L - max. 3 columns, M -  max. 2 columns and S - 1 column.)
+	 * (XL - max. 6 columns, L - max. 4 columns, M -  max. 3 columns and S - 1 column.)
 	 *
 	 * The {@link sap.ui.layout.form.FormContainer FormContainer} elements are spread out to the columns depending on the number of {@link sap.ui.layout.form.FormContainer FormContainer}
 	 * elements and their size. For example, if there are 4 columns and 2 {@link sap.ui.layout.form.FormContainer FormContainer} elements,
@@ -60,7 +60,7 @@ sap.ui.define([
 	 * This control cannot be used stand-alone, it just renders a {@link sap.ui.layout.form.Form Form} control,
 	 * so it must be assigned to a {@link sap.ui.layout.form.Form Form} control using the <code>layout</code> aggregation.
 	 * @extends sap.ui.layout.form.FormLayout
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -694,12 +694,6 @@ sap.ui.define([
 		// Let Form render role="region" also if FormContainer has no title.
 		// If only one FormContainer exist and it has no title let Form render role "form".
 		return aContainers.length !== 1 || this.isContainerLabelled(aContainers[0]);
-
-	};
-
-	ColumnLayout.prototype.invalidateEditableChange = function() {
-
-		return true; // display-mode renders <dl>
 
 	};
 

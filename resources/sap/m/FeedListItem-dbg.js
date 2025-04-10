@@ -16,9 +16,11 @@ sap.ui.define([
 	"sap/m/Avatar",
 	"sap/m/AvatarShape",
 	"sap/m/AvatarSize",
+	"sap/ui/core/Theming",
 	"sap/ui/util/openWindow",
-	"sap/ui/core/Configuration",
-	"sap/ui/core/Lib"
+	"sap/ui/core/Lib",
+	"sap/ui/core/InvisibleText",
+	"sap/ui/core/Element"
 ],
 function(
 	ListItemBase,
@@ -32,9 +34,11 @@ function(
 	Avatar,
 	AvatarShape,
 	AvatarSize,
+	Theming,
 	openWindow,
-	Configuration,
-	CoreLib
+	CoreLib,
+	InvisibleText,
+	Element
 	) {
 	"use strict";
 
@@ -60,7 +64,7 @@ function(
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -178,12 +182,7 @@ function(
 				/**
 				 * The expand and collapse feature is set by default and uses 300 characters on mobile devices and 500 characters on desktops as limits. Based on these values, the text of the FeedListItem is collapsed once text reaches these limits. In this case, only the specified number of characters is displayed. By clicking on the text link More, the entire text can be displayed. The text link Less collapses the text. The application is able to set the value to its needs.
 				 */
-				maxCharacters: {type: "int", group: "Behavior", defaultValue: null},
-
-				/**
-				 * Disables rendering of the <code>style</code> attribute in the <code>FormattedText</code>.
-				 */
-				disableStyleAttribute : {type : "boolean", group : "Appearance", defaultValue : false}
+				maxCharacters: {type: "int", group: "Behavior", defaultValue: null}
 			},
 			defaultAggregation: "actions",
 			aggregations: {
@@ -270,6 +269,7 @@ function(
 	 */
 	FeedListItem._sTextShowMore = FeedListItem._oRb.getText("TEXT_SHOW_MORE");
 	FeedListItem._sTextShowLess = FeedListItem._oRb.getText("TEXT_SHOW_LESS");
+	FeedListItem._sTextListItem = FeedListItem._oRb.getText("LIST_ITEM");
 
 	FeedListItem.prototype.init = function() {
 		ListItemBase.prototype.init.apply(this);
@@ -280,6 +280,10 @@ function(
 			icon: "sap-icon://overflow",
 			press: [ this._onActionButtonPress, this ]
 		}), true);
+		//Setting invisible text
+		this._oInvisibleText = new InvisibleText();
+		this._oInvisibleText.toStatic();
+		this._oInvisibleText.setText(FeedListItem._sTextListItem);
 	};
 
 	/**
@@ -337,7 +341,7 @@ function(
 			return;
 		}
 
-		sTheme = Configuration.getTheme();
+		sTheme = Theming.getTheme();
 		oActionSheetPopover = event.getSource().getParent();
 		oActionSheetPopover.removeStyleClass("sapContrast sapContrastPlus");
 
@@ -361,10 +365,10 @@ function(
 	};
 
 	FeedListItem.prototype.onBeforeRendering = function() {
+		this.addAssociation("ariaLabelledBy", this._oInvisibleText, true);
 		this.$("realtext").find('a[target="_blank"]').off("click");
 
 		var oFormattedText = this.getAggregation("_text");
-		oFormattedText.setProperty("disableStyleAttribute", this.getDisableStyleAttribute(), true);
 		oFormattedText.setProperty("convertLinksToAnchorTags", this.getConvertLinksToAnchorTags(), true);
 		oFormattedText.setProperty("convertedLinksDefaultTarget", this.getConvertedLinksDefaultTarget(), true);
 		if (this.getConvertLinksToAnchorTags() === LinkConversion.None) {
@@ -401,6 +405,9 @@ function(
 		// destroy link control if initialized
 		if (this._oLinkControl) {
 			this._oLinkControl.destroy();
+		}
+		if (this._oInvisibleText){
+			this._oInvisibleText.destroy();
 		}
 		if (this.oAvatar) {
 			this.oAvatar.destroy();
@@ -453,7 +460,7 @@ function(
         if ( oItem instanceof FeedListItem ) {
             oItemDomRef.setAttribute("aria-posinset", mPosition.posInset);
             oItemDomRef.setAttribute("aria-setsize", mPosition.setSize);
-        }
+		}
 	};
 
 	/**
@@ -473,8 +480,7 @@ function(
 		src: sIconSrc,
 		displayShape: this.getIconDisplayShape(),
 		initials: this.getIconInitials(),
-		displaySize: this.getIconSize(),
-		ariaLabelledBy: this.getSender()
+		displaySize: this.getIconSize()
 		});
 
 		var that = this;

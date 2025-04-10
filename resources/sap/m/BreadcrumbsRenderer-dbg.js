@@ -55,7 +55,7 @@ sap.ui.define(["sap/m/Text"], function (Text) {
 		}
 
 		aControls.forEach(function (oChildControl, iIndex) {
-			this._renderControlInListItem(oRm, oChildControl, sSeparator, oChildControl instanceof Text, undefined, iIndex, aControls.length);
+			this._renderControlInListItem(oRm, oChildControl, sSeparator, oChildControl.hasStyleClass("sapMBreadcrumbsCurrentLocation"), undefined, iIndex, aControls.length);
 		}, this);
 
 		oRm.close("ol");
@@ -67,9 +67,9 @@ sap.ui.define(["sap/m/Text"], function (Text) {
 		oRm.class("sapMBreadcrumbsItem");
 		oRm.class(sAdditionalItemClass);
 		oRm.openEnd();
-		oRm.renderControl(oControl);
+		oRm.renderControl(oControl.addStyleClass("sapMBreadcrumbsLink"));
 		if (!bSkipSeparator) {
-			oRm.openStart("span").class("sapMBreadcrumbsSeparator").openEnd().text(sSeparator).close("span");
+			oRm.openStart("span").class("sapMBreadcrumbsSeparator").attr("aria-hidden", true).openEnd().text(sSeparator).close("span");
 		}
 		oRm.close("li");
 	};

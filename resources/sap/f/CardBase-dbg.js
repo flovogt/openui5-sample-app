@@ -5,25 +5,25 @@
  */
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/f/library",
-	"sap/m/library",
 	"sap/ui/core/InvisibleText",
-	"sap/ui/core/Core",
-	"sap/m/BadgeEnabler",
-	"sap/f/CardRenderer"
+	"sap/f/CardRenderer",
+	"sap/ui/core/Lib",
+	"sap/f/cards/util/CardBadgeEnabler",
+	"sap/f/library",
+	"sap/base/Log"
 ], function (
 	Control,
-	library,
-	mLibrary,
 	InvisibleText,
-	Core,
-	BadgeEnabler,
-	CardRenderer
+	CardRenderer,
+	Library,
+	CardBadgeEnabler,
+	library,
+	Log
 ) {
 	"use strict";
 
-	var BadgeState = mLibrary.BadgeState;
-	var BADGE_AUTOHIDE_TIME = 3000;
+	var BADGE_AUTOHIDE_TIME = 3000,
+		SemanticRole = library.cards.SemanticRole;
 
 	/**
 	 * Constructor for a new <code>CardBase</code>.
@@ -37,7 +37,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -48,7 +48,8 @@ sap.ui.define([
 			library: "sap.f",
 			interfaces: [
 				"sap.f.ICard",
-				"sap.m.IBadge"
+				"sap.m.IBadge",
+				"sap.f.IGridContainerItem"
 			],
 			properties: {
 
@@ -60,14 +61,53 @@ sap.ui.define([
 				/**
 				 * Defines the height of the card.
 				 */
-				height: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: "auto"}
+				height: {type: "sap.ui.core.CSSSize", group: "Appearance", defaultValue: "auto"},
+
+				/**
+				 * Defines the accessibility role of the control.
+				 *
+				 * **Note:** When the control is placed inside a <code>sap.f.GridContainer</code>,
+				 * its accessibility role is overridden by the accessibility role specified by the <code>sap.f.GridContainer</code>.
+				 *
+				 * @experimental since 1.131
+				 */
+				semanticRole: { type: "sap.f.cards.SemanticRole", defaultValue: SemanticRole.Region}
 			},
-			aggregations: {}
+			aggregations: {
+
+				/**
+				 * Defines the internally used <code>sap.m.ObjectStatus</code>.
+				 */
+				_cardBadges: {
+					type: "sap.m.ObjectStatus",
+					multiple: true,
+					visibility: "hidden"
+				},
+
+				/**
+				 * Holds the text used for announcing the card badges to the screen reader.
+				 */
+				_oInvisibleCardBadgeText: {
+					type: "sap.ui.core.InvisibleText",
+					multiple: false,
+					visibility: "hidden"
+				}
+			},
+			events: {
+				/**
+				 * Fired when action is added on card level.
+				 *
+				 * **Note**: Can be used only if <code>semanticRole</code> is <code>sap.f.cards.SemanticRole.ListItem</code>
+				 * or the control is placed inside a <code>sap.f.GridContainer</code>.
+				 * @experimental since 1.131
+				 */
+				press: {}
+			}
 		},
 		renderer: CardRenderer
 	});
 
-	BadgeEnabler.call(CardBase.prototype);
+	CardBadgeEnabler.call(CardBase.prototype);
 
 	/**
 	 * Initialization hook.
@@ -76,7 +116,7 @@ sap.ui.define([
 	 * @private
 	 */
 	CardBase.prototype.init = function () {
-		this._oRb = Core.getLibraryResourceBundle("sap.f");
+		this._oRb = Library.getResourceBundleFor("sap.f");
 
 		this._ariaContentText = new InvisibleText({id: this.getId() + "-ariaContentText"});
 		this._ariaContentText.setText(this._oRb.getText("ARIA_LABEL_CARD_CONTENT"));
@@ -84,7 +124,9 @@ sap.ui.define([
 		this._ariaText = new InvisibleText({id: this.getId() + "-ariaText"});
 		this._ariaText.setText(this._oRb.getText("ARIA_ROLEDESCRIPTION_CARD"));
 
-		this.initBadgeEnablement();
+		this._sGridItemRole = null;
+
+		this.initCardBadgeEnablement();
 	};
 
 	CardBase.prototype.exit = function () {
@@ -100,6 +142,8 @@ sap.ui.define([
 			this._ariaText.destroy();
 			this._ariaText = null;
 		}
+
+		this.destroyCardBadgeEnablement();
 	};
 
 	CardBase.prototype.setAggregation = function (sAggregationName, oObject) {
@@ -169,7 +213,19 @@ sap.ui.define([
 	 * @protected
 	 */
 	CardBase.prototype.getFocusDomRef = function () {
+		if (this.isRoleListItem()) {
+			return this.getDomRef();
+		}
+
 		return this.getCardHeader() ? this.getCardHeader().getFocusDomRef() : this.getDomRef();
+	};
+
+	/**
+	 * @private
+	 * @returns {sap.f.cards.IHeader} The header of the card.
+	 */
+	CardBase.prototype._getHeaderAggregation = function () {
+		return this.getCardHeader();
 	};
 
 	CardBase.prototype.onmousedown = function () {
@@ -193,47 +249,13 @@ sap.ui.define([
 	};
 
 	CardBase.prototype._hideBadge = function () {
+		const oCardBadgeCustomData = this._getCardBadgeCustomData();
 
-		var oBadgeCustomData = this.getBadgeCustomData();
-		if (oBadgeCustomData) {
-			oBadgeCustomData.setVisible(false);
+		if (oCardBadgeCustomData?.length > 0) {
+			this._hideBadges();
 		}
 
 		this._iHideBadgeTimeout = null;
-	};
-
-	CardBase.prototype.onBadgeUpdate = function (sValue, sState, sBadgeId) {
-
-		var oHeader = this.getCardHeader(),
-			oDomRef,
-			sAriaLabelledBy;
-
-		if (oHeader) {
-			oDomRef = oHeader.getFocusDomRef();
-		} else {
-			oDomRef = this.getDomRef("contentSection");
-		}
-
-		if (!oDomRef) {
-			return;
-		}
-
-		sAriaLabelledBy = oDomRef.getAttribute("aria-labelledby") || "";
-
-		switch (sState) {
-			case BadgeState.Appear:
-				sAriaLabelledBy = sBadgeId + " " + sAriaLabelledBy;
-				oDomRef.setAttribute("aria-labelledby", sAriaLabelledBy);
-				break;
-			case BadgeState.Disappear:
-				sAriaLabelledBy = sAriaLabelledBy.replace(sBadgeId, "").trim();
-				oDomRef.setAttribute("aria-labelledby", sAriaLabelledBy);
-				break;
-		}
-	};
-
-	CardBase.prototype.getAriaLabelBadgeText = function () {
-		return this.getBadgeCustomData().getValue();
 	};
 
 	/**
@@ -244,13 +266,13 @@ sap.ui.define([
 	 */
 	CardBase.prototype._getAriaLabelledIds = function () {
 		var oHeader = this.getCardHeader();
+		const sBlockingMessageAriaLabelsIds = this._getBlockingMessageAriaLabelledByIds();
 
 		if (oHeader) {
-			if (this._isInsideGridContainer()) {
-				return oHeader._getAriaLabelledBy();
-			}
-
 			if (oHeader._getTitle && oHeader._getTitle()) {
+				if (sBlockingMessageAriaLabelsIds) {
+					return oHeader._getTitle().getId() + " " + sBlockingMessageAriaLabelsIds;
+				}
 				return oHeader._getTitle().getId();
 			}
 		}
@@ -259,13 +281,66 @@ sap.ui.define([
 	};
 
 	/**
-	 * Returns if the control is inside a sap.f.GridContainer
+	 * Gets the ids of the elements in the illustrated message that have to be labelled.
 	 *
+	 * @return {string} sAriaLabelledBy ids of elements that have to be labelled
 	 * @private
 	 */
-	CardBase.prototype._isInsideGridContainer = function() {
-		var oParent = this.getParent();
-		return oParent && oParent.isA("sap.f.GridContainer");
+	CardBase.prototype._getBlockingMessageAriaLabelledByIds = function () {
+		if (!this.getCardContent()?.getAggregation("_blockingMessage")) {
+			return "";
+		}
+		const oIllustration = this.getCardContent().getAggregation("_blockingMessage")._getIllustratedMessage();
+		const sTitleId = oIllustration._getTitle().sId;
+		const sDescriptionId = oIllustration._getDescription()?.sId;
+
+		if (oIllustration._getDescription().getText()) {
+			return sTitleId + " " + sDescriptionId;
+		}
+		return sTitleId;
+	};
+
+	/**
+	 * Listens for ontap event
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype.ontap = function (oEvent) {
+		if (this.isMouseInteractionDisabled()) {
+			return;
+		}
+		this._handleTapOrSelect(oEvent);
+	};
+
+	/**
+	 * Listens for onsapselect event
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype.onsapselect = function (oEvent) {
+		this._handleTapOrSelect(oEvent);
+	};
+
+	/**
+	 * Handles interaction logic
+	 *
+	 * @param {object} oEvent event
+	 */
+	CardBase.prototype._handleTapOrSelect = function (oEvent) {
+		if (!this.isInteractive() ||
+			oEvent.isMarked() ||
+			!this.isRoleListItem()) {
+			return;
+		}
+
+		if (this.getFocusDomRef()?.matches(":has(:focus-within)")) {
+			return;
+		}
+
+		this.firePress({
+			originalEvent: oEvent
+		});
+		oEvent.preventDefault();
 	};
 
 	/**
@@ -279,6 +354,59 @@ sap.ui.define([
 		}
 
 		return null;
+	};
+
+	/**
+	 * Checks if the card is interactive.
+	 * @private
+	 * @ui5-restricted sap.f.CardRenderer
+	 * @returns {boolean} Whether the card is interactive.
+	 */
+	CardBase.prototype.isInteractive = function() {
+		const bIsInteractive = this.hasListeners("press");
+
+		if (bIsInteractive && !this.isRoleListItem()) {
+			Log.error("The full card cannot be interactive if the 'semanticRole' is not 'ListItem' or the control is not placed inside a sap.f.GridContainer", this);
+		}
+		return bIsInteractive;
+	};
+
+	/**
+	 * Checks if the card should be fully interactive with the mouse.
+	 * @private
+	 * @ui5-restricted sap.f.CardRenderer
+	 * @returns {boolean} False if the card should not be fully interactive with the mouse.
+	 */
+	CardBase.prototype.isMouseInteractionDisabled = function() {
+		return false;
+	};
+
+	/**
+	 * Sets the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * **Note:** This method is automatically called by the <code>sap.f.GridContainer</code> control.
+	 *
+	 * @param {string} sRole The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @private
+	 * @ui5-restricted sap.f.GridContainer
+	 *
+	 */
+	CardBase.prototype.setGridItemRole = function (sRole) {
+		this._sGridItemRole = sRole;
+	};
+
+	/**
+	 * Returns the accessibility role for the <code>sap.f.GridContainer</code> item.
+	 *
+	 * @returns {string} The accessibility role for the <code>sap.f.GridContainer</code> item
+	 * @public
+	 */
+	CardBase.prototype.getGridItemRole = function () {
+		return this._sGridItemRole;
+	};
+
+	CardBase.prototype.isRoleListItem = function () {
+		return (this.getSemanticRole() === SemanticRole.ListItem) || this.getGridItemRole();
 	};
 
 	return CardBase;

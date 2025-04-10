@@ -9,8 +9,8 @@ sap.ui.define([
 	'sap/ui/layout/library',
 	'sap/ui/layout/form/Form',
 	'./FormHelper',
-	'sap/ui/core/IconPool' // as RenderManager.icon needs it
-	], function(coreLibrary, library, Form, FormHelper, IconPool) {
+	'sap/ui/core/IconPool' // side effect: as RenderManager.icon needs it
+	], function(coreLibrary, library, Form, FormHelper, _IconPool) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TitleLevel
@@ -110,7 +110,7 @@ sap.ui.define([
 			rm.attr('title', oContainer.getTooltip_AsString());
 		}
 
-		this.writeAccessibilityStateContainer(rm, oContainer, oLayout.isContainerLabelled(oContainer) ? "form" : "");
+		this.writeAccessibilityStateContainer(rm, oContainer, !oLayout.isContainerLabelled(oContainer));
 
 		rm.openEnd();
 
@@ -197,7 +197,18 @@ sap.ui.define([
 				sLevel = "H5";
 			}
 
-			// just reuse TextView class because there font size & co. is already defined
+			const bRenderExpander = bExpander && oExpandButton;
+
+			if (bRenderExpander) {
+				// if expander is renders put a DIV around expander an d title. (If expander inside title the screenreader announcement is somehow strange.)
+				rm.openStart("div", sContentId + "--head");
+				rm.class("sapUiFormTitle");
+				// rm.class("sapUiFormTitle" + sLevel);
+				rm.class("sapUiFormTitleExpandable");
+				rm.openEnd();
+				rm.renderControl(oExpandButton);
+			}
+
 			if ( typeof oTitle !== "string" ) {
 				rm.openStart(sLevel.toLowerCase(), oTitle);
 				if (oTitle.getTooltip_AsString()) {
@@ -209,16 +220,12 @@ sap.ui.define([
 			} else {
 				rm.openStart(sLevel.toLowerCase(), sContentId + "--title");
 			}
-			rm.class("sapUiFormTitle");
-			rm.class("sapUiFormTitle" + sLevel);
-			if (bExpander && oExpandButton) {
-				rm.class("sapUiFormTitleExpandable");
+			if (!bRenderExpander) {
+				rm.class("sapUiFormTitle");
 			}
+			rm.class("sapUiFormTitle" + sLevel);
 			rm.openEnd();
 
-			if (bExpander && oExpandButton) {
-				rm.renderControl(oExpandButton);
-			}
 			if (typeof oTitle === "string") {
 				// Title is just a string
 				oTitle.split(/\n/).forEach(function(sLine, iIndex) {
@@ -249,6 +256,9 @@ sap.ui.define([
 			}
 
 			rm.close(sLevel.toLowerCase());
+			if (bRenderExpander) {
+				rm.close("div");
+			}
 		}
 
 	};
@@ -276,52 +286,38 @@ sap.ui.define([
 
 	};
 
-	/**
+	/*
 	 * Writes the accessibility attributes for FormContainers.
-	 * @param {sap.ui.core.RenderManager} rm the RenderManager that can be used for writing to the Render-Output-Buffer
-	 * @param {sap.ui.layout.form.FormContainer} oContainer <code>FormContainer</code> to write accessibility attributes
-	 * @param {string} sRole if set the given role is rendered, if no role given the DOM node needs no role (e.g. Container has no title)
+	 * @param {sap.ui.core.RenderManager} rm
+	 * @param {sap.ui.layout.form.FormContainer} oContainer
+	 * @param {boolean} bNoRole if set the DOM node needs no role (e.g. Container has no title)
 	 */
-	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer, sRole){
+	FormLayoutRenderer.writeAccessibilityStateContainer = function(rm, oContainer, bNoRole){
 
-		const mAriaProps = {};
-		const sTitleID = this.getTitleId(oContainer);
-		if (sTitleID) {
-			mAriaProps["labelledby"] = {value: sTitleID, append: true};
-		}
-
-		if (sRole) {
-			mAriaProps["role"] = sRole;
-		}
-
-		rm.accessibilityState(oContainer, mAriaProps);
-
-	};
-
-	/**
-	 * Determines the ID if the title of Form or Container used for aria-labelledby
-	 * @param {sap.ui.layout.form.Form|sap.ui.layout.form.FormContainer} oContainer <code>Form</code> or <code>FormContainer</code> to determine the ID of it's title
-	 * @returns {string} title ID
-	 */
-	FormLayoutRenderer.getTitleId = function(oContainer){
-
-		const oTitle = oContainer.getTitle();
-		const oToolbar = oContainer.getToolbar();
-		let sID = "";
+		var mAriaProps = {};
+		var oTitle = oContainer.getTitle();
+		var oToolbar = oContainer.getToolbar();
 		if (oToolbar) {
 			if (!oContainer.getAriaLabelledBy() || oContainer.getAriaLabelledBy().length == 0) {
 				// no aria-label -> use Title of Toolbar
-				sID = FormHelper.getToolbarTitle(oToolbar); // FormHelper must already be initialized by FormLayout
+				var sToolbarTitleID = FormHelper.getToolbarTitle(oToolbar); // FormHelper must already be initialized by FormLayout
+				mAriaProps["labelledby"] = {value: sToolbarTitleID, append: true};
 			}
 		} else if (oTitle) {
+			var sId = "";
 			if (typeof oTitle == "string") {
-				sID = oContainer.getId() + "--title";
+				sId = oContainer.getId() + "--title";
 			} else {
-				sID = oTitle.getId();
+				sId = oTitle.getId();
 			}
+			mAriaProps["labelledby"] = {value: sId, append: true};
 		}
 
-		return sID;
+		if (!bNoRole) {
+			mAriaProps["role"] = "form";
+		}
+
+		rm.accessibilityState(oContainer, mAriaProps);
 
 	};
 

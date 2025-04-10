@@ -31,12 +31,17 @@ sap.ui.define([
 	 * @param {sap.f.Card} oCard an object representation of the control that should be rendered
 	 */
 	CardRenderer.render = function (oRm, oCard) {
-		var oHeader = oCard.getCardHeader(),
-			bHeaderTop = oHeader && oCard.getCardHeaderPosition() === HeaderPosition.Top;
+		var oHeader = oCard._getHeaderAggregation(),
+			bHeaderTop = oHeader && oCard.getCardHeaderPosition() === HeaderPosition.Top,
+			bHasCardBadgeCustomData = oCard._getCardBadgeCustomData().length > 0;
 
 		oRm.openStart("div", oCard);
 		this.renderContainerAttributes(oRm, oCard);
 		oRm.openEnd();
+
+		if (bHasCardBadgeCustomData) {
+			this.renderCardBadge(oRm, oCard);
+		}
 
 		// header at the top
 		if (bHeaderTop) {
@@ -56,6 +61,9 @@ sap.ui.define([
 
 		oRm.renderControl(oCard._ariaText);
 		oRm.renderControl(oCard._ariaContentText);
+		if (bHasCardBadgeCustomData) {
+			oRm.renderControl(oCard._getInvisibleCardBadgeText());
+		}
 
 		oRm.close("div");
 	};
@@ -66,13 +74,17 @@ sap.ui.define([
 	 * @param {sap.f.Card} oCard An object representation of the control that should be rendered.
 	 */
 	CardRenderer.renderContainerAttributes = function (oRm, oCard) {
+		const bIsInteractive = oCard.isInteractive();
+
 		var sHeight = oCard.getHeight(),
 			oHeader = oCard.getCardHeader(),
 			oContent = oCard.getCardContent(),
 			bHasHeader = !!(oHeader && oHeader.getVisible()),
 			bHasContent = !!oContent,
 			bCardHeaderBottom = bHasHeader && oCard.getCardHeaderPosition() === HeaderPosition.Bottom,
-			sTooltip = oCard.getTooltip_AsString();
+			sTooltip = oCard.getTooltip_AsString(),
+			bHasCardBadgeCustomData = oCard._getCardBadgeCustomData().length > 0,
+			sAriaRole = oCard.getGridItemRole() || oCard.getSemanticRole().toLowerCase();
 
 		oRm.class("sapFCard")
 			.style("width", oCard.getWidth());
@@ -90,6 +102,19 @@ sap.ui.define([
 			oRm.class("sapFCardSectionInteractive");
 		}
 
+		if (oCard.isRoleListItem()) {
+			oRm.class("sapFCardFocus");
+			oRm.attr("tabindex", "0");
+
+			if (bIsInteractive) {
+				oRm.class("sapFCardInteractive");
+
+				if (oCard.isMouseInteractionDisabled()) {
+					oRm.class("sapFCardDisableMouseInteraction");
+				}
+			}
+		}
+
 		if (bCardHeaderBottom) {
 			oRm.class("sapFCardBottomHeader");
 		}
@@ -104,8 +129,10 @@ sap.ui.define([
 
 		//Accessibility state
 		oRm.accessibilityState(oCard, {
-			role: "region",
-			labelledby: { value: oCard._getAriaLabelledIds(), append: true }
+			// TODO if role is not only used with accessibility values, this should be changed
+			role: sAriaRole,
+			labelledby: { value: oCard._getAriaLabelledIds(), append: true },
+			describedby: {value: bHasCardBadgeCustomData ? oCard._getInvisibleCardBadgeText().getId() : undefined}
 		});
 	};
 
@@ -145,6 +172,23 @@ sap.ui.define([
 	 */
 	CardRenderer.renderFooterSection = function (oRm, oCard) {
 
+	};
+
+	/**
+	 * Render card badge section.
+	 *
+	 * @protected
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+	 * @param {sap.f.Card} oCard An object representation of the control that should be rendered.
+	 */
+	CardRenderer.renderCardBadge = function (oRm, oCard) {
+		oRm.openStart("div", oCard.getId() + "-cardBadgeSection")
+			.class("sapFCardBadgePlaceholder")
+			.openEnd();
+				oCard._getCardBadges()?.forEach((oCardBadge) => {
+					oRm.renderControl(oCardBadge);
+				});
+		oRm.close("div");
 	};
 
 	return CardRenderer;

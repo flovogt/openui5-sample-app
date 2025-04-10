@@ -15,10 +15,9 @@ sap.ui.define(['./Event', './Object', "sap/base/assert", "sap/base/Log"],
 	 *
 	 * @class Provides eventing capabilities for objects like attaching or detaching event handlers for events which are notified when events are fired.
 	 *
-	 * @abstract
 	 * @extends sap.ui.base.Object
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 * @public
 	 * @alias sap.ui.base.EventProvider
 	 */

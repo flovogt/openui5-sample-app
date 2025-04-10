@@ -63,8 +63,6 @@ sap.ui.define([
 		var oToolbar = oContainer.getToolbar();
 		var oTitle = oContainer.getTitle();
 		var oOptions = oLayout._getContainerSize(oContainer);
-		const bEditable = oContainer.getProperty("_editable");
-		const sContentNode = bEditable ? "div" : "dl";
 
 		oContainer._checkProperties();
 
@@ -111,31 +109,17 @@ sap.ui.define([
 			oRm.attr('title', oContainer.getTooltip_AsString());
 		}
 
-		if (bEditable || bExpandable || oToolbar) {
-			// in display mode render accessibility attributes on content-node. If expandable or toolbar in disply mode, role "region" is needed to annonce region if focus goes to button or inside toolbar
-			const oForm = oContainer.getParent();
-			let sRole = "form";
-
-			if (bEditable && !oLayout.isContainerLabelled(oContainer) && oForm.getFormContainers().length === 1) {
-				sRole = ""; // Container has no title and is only one container, no role needed as set on Form-level
-			} else if (!bEditable && (bExpandable || oToolbar)) {
-				sRole = "region"; // to announce region if Expander is focused or focus moves inside Toolbar
-			}
-
-			// In edit mode let every container render role, even without title (expect there is only one container). So screenreader also announces forms structure. (Was not possible for some older layouts.)
-			this.writeAccessibilityStateContainer(oRm, oContainer, sRole);
-		}
+		const oForm = oContainer.getParent();
+		// let every container render role, even without title (expect there is only one container). So screenreader also anounces forms structure. (Was not possible for some older layouts.)
+		this.writeAccessibilityStateContainer(oRm, oContainer, !oLayout.isContainerLabelled(oContainer) && oForm.getFormContainers().length === 1);
 
 		oRm.openEnd();
 
 		this.renderHeader(oRm, oToolbar, oTitle, oContainer._oExpandButton, bExpandable, oLayout._sFormSubTitleSize, oContainer.getId());
 
-		oRm.openStart(sContentNode, oContainer.getId() + "-content")
-			.class("sapUiFormCLContainerCont");
-		if (!bEditable && !bExpandable && !oToolbar) {
-			this.writeAccessibilityStateContainer(oRm, oContainer, ""); // no role needed on <dl>
-		}
-		oRm.openEnd();
+		oRm.openStart("div", oContainer.getId() + "-content")
+			.class("sapUiFormCLContainerCont")
+			.openEnd();
 
 		var aElements = oContainer.getVisibleFormElements();
 		for (var i = 0; i < aElements.length; i++) {
@@ -154,8 +138,8 @@ sap.ui.define([
 			}
 		}
 
-		oRm.close(sContentNode); // Container content
-		oRm.close("div"); // Container
+		oRm.close("div");
+		oRm.close("div");
 
 	};
 
@@ -163,8 +147,6 @@ sap.ui.define([
 
 		var oLabel = oElement.getLabelControl();
 		var oOptions;
-		const bEditable = oElement.getProperty("_editable");
-		const sFieldsNode = bEditable ? "div" : "dd";
 
 		oRm.openStart("div", oElement);
 		oRm.class("sapUiFormCLElement");
@@ -175,7 +157,7 @@ sap.ui.define([
 
 		if (oLabel) {
 			oOptions = oLayout._getFieldSize(oLabel);
-			_renderLabel(oRm, oElement, oLabel, oOptions);
+			_renderLabel(oRm, oLabel, oOptions);
 		}
 
 		var aFields = oElement.getFieldsForRendering();
@@ -186,7 +168,7 @@ sap.ui.define([
 					throw new Error(oField + " is not a valid Form content! Only use valid content in " + oLayout);
 				}
 				oOptions = oLayout._getFieldSize(oField);
-				oRm.openStart(sFieldsNode);
+				oRm.openStart("div");
 				oRm.class("sapUiFormCLCellsS" + oOptions.S.Size);
 				oRm.class("sapUiFormCLCellsL" + oOptions.L.Size);
 				if (oOptions.S.Break) {
@@ -205,7 +187,7 @@ sap.ui.define([
 
 				oRm.renderControl(oField);
 
-				oRm.close(sFieldsNode);
+				oRm.close("div");
 			}
 		}
 		oRm.close("div");
@@ -219,8 +201,6 @@ sap.ui.define([
 		var iColumns = 12;
 		var iSizeS = iColumns;
 		var iSizeL = iColumns;
-		const bEditable = oElement.getProperty("_editable");
-		const sFieldsNode = bEditable ? "div" : "dd";
 
 		oRm.openStart("div", oElement);
 		oRm.class("sapUiFormCLElement").class("sapUiFormCLSemanticElement");
@@ -231,7 +211,7 @@ sap.ui.define([
 
 		if (oLabel) {
 			oOptions = oLayout._getFieldSize(oLabel);
-			_renderLabel(oRm, oElement, oLabel, oOptions);
+			_renderLabel(oRm, oLabel, oOptions);
 			if (oOptions.S.Size < iSizeS) {
 				iSizeS = iSizeS - oOptions.S.Size;
 			}
@@ -240,7 +220,7 @@ sap.ui.define([
 			}
 		}
 
-		oRm.openStart(sFieldsNode);
+		oRm.openStart("div");
 		oRm.class("sapUiFormCLCellsS" + iSizeS);
 		oRm.class("sapUiFormCLCellsL" + iSizeL);
 		oRm.openEnd();
@@ -256,17 +236,14 @@ sap.ui.define([
 			}
 		}
 
-		oRm.close(sFieldsNode);
+		oRm.close("div");
 		oRm.close("div");
 
 	};
 
-	function _renderLabel(oRm, oElement, oLabel, oOptions) {
+	function _renderLabel(oRm, oLabel, oOptions) {
 
-		const bEditable = oElement.getProperty("_editable");
-		const sLabelNode = bEditable ? "div" : "dt";
-
-		oRm.openStart(sLabelNode)
+		oRm.openStart("div")
 			.class("sapUiFormElementLbl")
 			.class("sapUiFormCLCellsS" + oOptions.S.Size)
 			.class("sapUiFormCLCellsL" + oOptions.L.Size)
@@ -274,7 +251,7 @@ sap.ui.define([
 
 		oRm.renderControl(oLabel);
 
-		oRm.close(sLabelNode);
+		oRm.close("div");
 
 	}
 

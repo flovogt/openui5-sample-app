@@ -24,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.odata.type.Int
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @alias sap.ui.model.odata.type.SByte
 	 * @param {object} [oFormatOptions]
@@ -38,6 +38,7 @@ sap.ui.define([
 	 *   error if any constraint is violated
 	 * @param {boolean|string} [oConstraints.nullable=true]
 	 *   if <code>true</code>, the value <code>null</code> is accepted
+	 * @throws {Error} If the <code>oFormatOptions.decimalPadding</code> format option is provided
 	 * @public
 	 * @since 1.27.0
 	 */

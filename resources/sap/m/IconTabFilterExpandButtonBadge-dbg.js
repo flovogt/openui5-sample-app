@@ -7,8 +7,8 @@
 sap.ui.define([
 	"./BadgeEnabler",
 	"sap/ui/core/Control",
-	"sap/ui/core/Core"
-], function (BadgeEnabler, Control, Core) {
+	"sap/ui/core/Lib"
+], function (BadgeEnabler, Control, Library) {
 	"use strict";
 
 	/**
@@ -16,7 +16,7 @@ sap.ui.define([
 	 *
 	 * @type {module:sap/base/i18n/ResourceBundle}
 	 */
-	var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
+	var oResourceBundle = Library.getResourceBundleFor("sap.m");
 
 	/**
 	 * Constructor for a new IconTabFilterExpandButtonBadge.
@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @private

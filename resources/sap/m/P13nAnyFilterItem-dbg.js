@@ -17,11 +17,12 @@ sap.ui.define([
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class Type for <code>filterItems</code> aggregation in P13nFilterPanel control.
 	 * @extends sap.m.P13nFilterItem
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 * @constructor
 	 * @private
 	 * @since 1.56.0
 	 * @alias sap.m.P13nAnyFilterItem
+	 * @deprecated As of version 1.124, replaced by the artifacts in {@link sap.m.p13n}.
 	 */
 	var P13nAnyFilterItem = P13nFilterItem.extend("sap.m.P13nAnyFilterItem", /** @lends sap.m.P13nAnyFilterItem.prototype */
 	{

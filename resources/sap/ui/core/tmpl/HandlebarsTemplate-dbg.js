@@ -7,16 +7,19 @@
 sap.ui.define([
 	'./Template',
 	'./TemplateControl',
+	"sap/ui/core/RenderManager",
 	'sap/ui/thirdparty/handlebars',
 	'sap/ui/base/ManagedObject',
 	'sap/base/util/ObjectPath',
 	"sap/base/security/encodeXML",
 	"sap/base/util/isEmptyObject",
-	'sap/ui/core/Core' // provides sap.ui.getCore()
+	// provides sap.ui.getCore()
+	'sap/ui/core/Core'
 ],
 	function(
 		Template,
 		TemplateControl,
+		RenderManager,
 		Handlebars,
 		ManagedObject,
 		ObjectPath,
@@ -46,7 +49,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.tmpl.Template
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 * @alias sap.ui.core.tmpl.HandlebarsTemplate
 	 * @since 1.15
 	 * @deprecated as of version 1.56. Use an {@link sap.ui.core.mvc.XMLView XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead.
@@ -116,7 +119,7 @@ sap.ui.define([
 			fnWith = Handlebars.helpers["with"],
 			fnIf = Handlebars.helpers["if"],
 			fnUnless = Handlebars.helpers["unless"],
-			oRenderManager = sap.ui.getCore().createRenderManager();
+			oRenderManager = new RenderManager().getInterface();
 
 		// this special RenderManager is used to write the controlData, classes
 		// and styles into the buffer and extract it later on via getHTML!

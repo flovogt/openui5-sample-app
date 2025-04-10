@@ -17,7 +17,7 @@ sap.ui.define([
 
 	// shortcut for sap.ui.core.TextDirection
 	var TextDirection = coreLibrary.TextDirection;
-
+	var ContentSize = library.InputListItemContentSize;
 
 	/**
 	 * Constructor for a new InputListItem.
@@ -30,7 +30,7 @@ sap.ui.define([
 	 * @extends sap.m.ListItemBase
 	 *
 	 * @author SAP SE
-	 * @version 1.120.28
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -52,7 +52,13 @@ sap.ui.define([
 				 * This property specifies the label text directionality with enumerated options. By default, the label inherits text direction from the DOM.
 				 * @since 1.30.0
 				 */
-				labelTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit}
+				labelTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : TextDirection.Inherit},
+
+				/**
+				 * Determines how much space is allocated for the input control.
+				 * @since 1.130
+				 */
+				contentSize: {type : "sap.m.InputListItemContentSize", group : "Appearance", defaultValue : ContentSize.L}
 			},
 			defaultAggregation : "content",
 			aggregations : {
