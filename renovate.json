@@ -27,7 +27,7 @@
 	    },
 		{
 			"matchDepNames": ["openui5"],
-			"automerge": true,
+			"automerge": false,
 			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update"
 		}
