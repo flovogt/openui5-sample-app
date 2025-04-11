@@ -85,7 +85,7 @@ var sClassName = "sap.ui.model.odata.ODataMessageParser",
  * @extends sap.ui.core.message.MessageParser
  *
  * @author SAP SE
- * @version 1.120.20
+ * @version 1.120.11
  * @public
  * @alias sap.ui.model.odata.ODataMessageParser
  */

@@ -238,7 +238,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -1967,7 +1967,7 @@ sap.ui.define([
 			// lazy load the ODataUtils if systemParameter is given
 			var bAddOrigin = false;
 			var ODataUtils;
-			if (sSystemParameter && (bIsV1Model || bIsV2Model || bIsV4Model)) {
+			if (sSystemParameter && (bIsV1Model || bIsV2Model)) {
 				bAddOrigin = true;
 				ODataUtils = sap.ui.require("sap/ui/model/odata/ODataUtils");
 			}

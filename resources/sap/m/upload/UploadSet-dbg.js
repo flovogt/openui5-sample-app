@@ -55,7 +55,7 @@ sap.ui.define([
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 * @constructor
 	 * @public
 	 * @since 1.63
@@ -328,7 +328,7 @@ sap.ui.define([
 						 * Required for receiving a <code>readyState</code> is to set the property <code>sendXHR</code>
 						 * to true. This property is not supported by Internet Explorer 9.
 						 */
-						readyState : {type : "int"},
+						readyState : {type : "string"},
 
 						/**
 					 	* Status of the XHR request.
@@ -336,7 +336,7 @@ sap.ui.define([
 					 	* Required for receiving a <code>status</code> is to set the property <code>sendXHR</code> to true.
 					 	* This property is not supported by Internet Explorer 9.
 					 	*/
-						status : {type : "int"},
+						status : {type : "string"},
 						/**
 					 	* Http-Response which comes from the server.
 					 	*
@@ -433,12 +433,7 @@ sap.ui.define([
 						 * The file that fails to meet the file size restriction specified in the
 						 * <code>maxFileSize</code> property.
 						 */
-						item: {type: "sap.m.upload.UploadSetItem"},
-
-						/**
-						 * The size of a file in MB, that fails to meet the file size restriction specified in the <code>maxFileSize</code> property.
-						 */
-						fileSize: {type: "float"}
+						item: {type: "sap.m.upload.UploadSetItem"}
 					}
 				},
 				/**
@@ -1859,7 +1854,7 @@ sap.ui.define([
 	UploadSet.prototype._fireFileSizeExceed = function (oItem) {
 		var oSendItem = new UploadSetItem();
 		oSendItem.setFileName(oItem.getParameter('fileName'));
-		this.fireFileSizeExceeded({item: oSendItem, fileSize: oItem.getParameter("fileSize") });
+		this.fireFileSizeExceeded({item: oSendItem});
 	};
 
 	UploadSet.prototype._fireFilenameLengthExceed = function (oItem) {

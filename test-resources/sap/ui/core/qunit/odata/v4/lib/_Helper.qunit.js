@@ -16,8 +16,6 @@ sap.ui.define([
 
 	var sClassName = "sap.ui.model.odata.v4.lib._Helper";
 
-	function mustBeMocked() { throw new Error("Must be mocked"); }
-
 	/**
 	 * Checks the given cloned error according to the given expectations.
 	 *
@@ -27,8 +25,7 @@ sap.ui.define([
 	 * @param {object} oExpectedInnerError - The expected inner error
 	 * @param {string} sUrl - The expected request URL
 	 * @param {string} sResourcePath - The expected resource path
-	 * @param {boolean} [bStrictHandlingFailed] - Whether oClone.strictHandlingFailed is present and
-	 *   is set to <code>true</code>
+	 * @param {boolean} bStrictHandlingFailed - The expected value for oClone.strictHandlingFailed
 	 */
 	function checkClonedError(assert, oOriginal, oClone, oExpectedInnerError, sUrl, sResourcePath,
 			bStrictHandlingFailed) {
@@ -41,11 +38,7 @@ sap.ui.define([
 		assert.strictEqual(oClone.statusText, "Internal Server Error");
 		assert.notStrictEqual(oClone.error, oOriginal.error);
 		assert.deepEqual(oClone.error, oExpectedInnerError);
-		if (bStrictHandlingFailed) {
-			assert.strictEqual(oClone.strictHandlingFailed, true);
-		} else {
-			assert.notOk("strictHandlingFailed" in oClone);
-		}
+		assert.strictEqual(oClone.strictHandlingFailed, bStrictHandlingFailed);
 	}
 
 	/**
@@ -1472,16 +1465,12 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-[false, true].forEach((bUndefined) => {
-	QUnit.test("updateSelected: private annotations, undefined: " + bUndefined, function (assert) {
+	QUnit.test("updateSelected: private annotations", function (assert) {
 		var oBinding = {},
 			oContext = {oBinding : oBinding},
 			// oContext is recursive and must not be descended into
 			oOldValue = {"@$ui5._" : {context : oContext}};
 
-		if (bUndefined) {
-			oOldValue.foo = undefined; // MUST NOT make a difference
-		}
 		oBinding.oContext = oContext;
 		this.mock(_Helper).expects("fireChange").withExactArgs("~mChangeListener~", "foo",
 			undefined, true);
@@ -1491,30 +1480,18 @@ sap.ui.define([
 			{"@$ui5._" : {predicate : "(1)"}, bar : {}},
 			["foo", "bar/*"]);
 
-		assert.deepEqual(oOldValue, bUndefined ? {
-			"@$ui5._" : {context : oContext, predicate : "(1)"},
-			bar : {},
-			foo : undefined,
-			"foo@$ui5.noData" : true
-		} : {
-			"@$ui5._" : {context : oContext, predicate : "(1)"},
-			bar : {},
-			"foo@$ui5.noData" : true
-		});
+		assert.deepEqual(oOldValue,
+			{"@$ui5._" : {context : oContext, predicate : "(1)"}, bar : {},
+				"foo@$ui5.noData" : true});
 	});
-});
 
 	//*********************************************************************************************
-[false, true].forEach((bUndefined) => {
-	QUnit.test("updateSelected: create annotation, undefined: " + bUndefined, function (assert) {
+	QUnit.test("updateSelected: create annotation", function (assert) {
 		var oBinding = {},
 			oHelperMock = this.mock(_Helper),
 			oOldValue0 = {},
 			oOldValue1 = {};
 
-		if (bUndefined) {
-			oOldValue0.foo = undefined; // MUST NOT make a difference
-		}
 		oBinding.oContext = {oBinding : oBinding};
 		oHelperMock.expects("fireChange").withExactArgs("~mChangeListener~", "foo", undefined,
 			true);
@@ -1530,24 +1507,20 @@ sap.ui.define([
 		_Helper.updateSelected("~mChangeListener~", "", oOldValue0,
 			{baz : {bar : {}}}, ["foo", "bar", "baz/bar"]);
 
-		assert.deepEqual(oOldValue0, bUndefined ? {
+		assert.deepEqual(oOldValue0, {
+			"foo@$ui5.noData" : true,
 			"bar@$ui5.noData" : true,
-			baz : {bar : {}},
-			foo : undefined,
-			"foo@$ui5.noData" : true
-		} : {
-			"bar@$ui5.noData" : true,
-			baz : {bar : {}},
-			"foo@$ui5.noData" : true
+			baz : {bar : {}}
 		});
 
 		// code under test (do not create annotation)
 		_Helper.updateSelected("~mChangeListener~", "", oOldValue1,
 			{baz : {bar : {}}}, ["foo", "bar", "baz/bar"], undefined, /*bOkIfMissing*/ true);
 
-		assert.deepEqual(oOldValue1, {baz : {bar : {}}});
+		assert.deepEqual(oOldValue1, {
+			baz : {bar : {}}
+		});
 	});
-});
 
 	//*********************************************************************************************
 	QUnit.test("updateSelected: $postBodyCollection", function (assert) {
@@ -4150,7 +4123,7 @@ sap.ui.define([
 		oError.error = {message : "Top level message"};
 		oError.status = 500;
 		oError.statusText = "Internal Server Error";
-		oError.strictHandlingFailed = true;
+		oError.strictHandlingFailed = "~strictHandlingFailed~";
 
 		this.mock(_Helper).expects("getContentID").withExactArgs(sinon.match.same(oError.error))
 			.returns(undefined);
@@ -4169,11 +4142,11 @@ sap.ui.define([
 		assert.strictEqual(aErrors.length, 2);
 		checkClonedError(assert, oError, aErrors[0], {
 				message : "Top level message"
-			}, "~serviceURL~/~url0~", "~path0~", true);
+			}, "~serviceURL~/~url0~", "~path0~", "~strictHandlingFailed~");
 		checkClonedError(assert, oError, aErrors[1], {
 				message : "Top level message",
 				$ignoreTopLevel : true
-			}, "~serviceURL~/~url1~", "~path1~", true);
+			}, "~serviceURL~/~url1~", "~path1~", undefined);
 	});
 
 	//*********************************************************************************************
@@ -4273,7 +4246,7 @@ sap.ui.define([
 		};
 		oError.status = 500;
 		oError.statusText = "Internal Server Error";
-		oError.strictHandlingFailed = true;
+		oError.strictHandlingFailed = "~strictHandlingFailed~";
 		oHelperMock.expects("getContentID").withExactArgs(sinon.match.same(oError.error))
 			.callThrough();
 		oHelperMock.expects("getContentID").withExactArgs(oError.error.details[0])
@@ -4296,7 +4269,7 @@ sap.ui.define([
 				"@SAP__core.ContentID" : "1.0",
 				$ignoreTopLevel : true,
 				details : []
-			}, "~serviceURL~/~url0~", "~path0~", true);
+			}, "~serviceURL~/~url0~", "~path0~");
 		checkClonedError(assert, oError, aErrors[1], {
 				message : "Top level message",
 				"@SAP__core.ContentID" : "1.0",
@@ -4304,7 +4277,7 @@ sap.ui.define([
 					message : "A message",
 					"@SAP__core.ContentID" : "1.0"
 				}]
-			}, "~serviceURL~/~url1~", "~path1~", true);
+			}, "~serviceURL~/~url1~", "~path1~", "~strictHandlingFailed~");
 	});
 
 	//*********************************************************************************************
@@ -4506,32 +4479,18 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [true, false].forEach(function (bTargetIsValid) {
-	[true, false].forEach(function (bAnnotation) {
-	var sTitle = "adjustTargets: with additional targets, annotation: " + bAnnotation
-			+ ", target is valid: " + bTargetIsValid;
+	var sTitle = "adjustTargets: with additional targets, target is valid: " + bTargetIsValid;
 
 	QUnit.test(sTitle, function (assert) {
 		var oHelperMock = this.mock(_Helper),
-			oMessage;
-
-		if (bAnnotation) {
 			oMessage = {
 				target : "target",
 				"@foo.additionalTargets" : ["additional1", "foo", "additional2"]
 			};
 
-			oHelperMock.expects("getAnnotationKey")
-				.withExactArgs(sinon.match.same(oMessage), ".additionalTargets")
-				.returns("@foo.additionalTargets");
-		} else {
-			oMessage = {
-				target : "target",
-				additionalTargets : ["additional1", "foo", "additional2"],
-				"@foo.additionalTargets" : "n/a" // additionalTargets must win!
-			};
-
-			oHelperMock.expects("getAnnotationKey").never();
-		}
+		oHelperMock.expects("getAnnotationKey")
+			.withExactArgs(sinon.match.same(oMessage), ".additionalTargets")
+			.returns("@foo.additionalTargets");
 		oHelperMock.expects("getAdjustedTarget")
 			.withExactArgs("target", "oOperationMetadata", "sParameterContextPath", "sContextPath")
 			.returns(bTargetIsValid ? "~adjusted~" : undefined);
@@ -4552,21 +4511,18 @@ sap.ui.define([
 		_Helper.adjustTargets(oMessage, "oOperationMetadata", "sParameterContextPath",
 			"sContextPath");
 
-		const oExpectedMessage = {
-			target : bTargetIsValid ? "~adjusted~" : "~adjusted1~",
-			"@foo.additionalTargets" : "n/a"
-		};
-		const aAdditionalTargets
-			= bTargetIsValid ? ["~adjusted1~", "~adjusted2~"] : ["~adjusted2~"];
-
-		if (bAnnotation) {
-			oExpectedMessage["@foo.additionalTargets"] = aAdditionalTargets;
+		if (bTargetIsValid) {
+			assert.deepEqual(oMessage, {
+				target : "~adjusted~",
+				"@foo.additionalTargets" : ["~adjusted1~", "~adjusted2~"]
+			});
 		} else {
-			oExpectedMessage.additionalTargets = aAdditionalTargets;
+			assert.deepEqual(oMessage, {
+				target : "~adjusted1~",
+				"@foo.additionalTargets" : ["~adjusted2~"]
+			});
 		}
-		assert.deepEqual(oMessage, oExpectedMessage);
 	});
-});
 });
 
 	//*********************************************************************************************
@@ -4595,11 +4551,6 @@ sap.ui.define([
 			_Helper.getAdjustedTarget("$Parameter/foo/bar", oOperationMetadata,
 				"~parameterContextPath~"),
 			"~parameterContextPath~/foo/bar");
-
-		assert.strictEqual(
-			// code under test
-			_Helper.getAdjustedTarget("foo/bar", oOperationMetadata),
-			"foo/bar");
 	});
 
 	//*********************************************************************************************
@@ -5453,33 +5404,5 @@ sap.ui.define([
 					"City@$ui5.updating" : true
 				}
 			});
-	});
-
-	//*********************************************************************************************
-	QUnit.test("registerChangeListener", function () {
-		const oOwner = {
-			mChangeListeners : "~listeners1~"
-		};
-		const oListener = {
-			setDeregisterChangeListener : mustBeMocked
-		};
-
-		this.mock(_Helper).expects("addByPath")
-			.withExactArgs("~listeners1~", "~path~", sinon.match.same(oListener));
-		const oCallbackExpectation = this.mock(oListener).expects("setDeregisterChangeListener")
-			.withExactArgs(sinon.match.func);
-
-		// code under test
-		_Helper.registerChangeListener(oOwner, "~path~", oListener);
-
-		oOwner.mChangeListeners = "~listeners2~";
-		this.mock(_Helper).expects("removeByPath")
-			.withExactArgs("~listeners2~", "~path~", sinon.match.same(oListener));
-
-		// code under test
-		oCallbackExpectation.args[0][0]();
-
-		// code under test
-		_Helper.registerChangeListener(oOwner, "~path~");
 	});
 });

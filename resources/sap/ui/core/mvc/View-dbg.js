@@ -142,7 +142,7 @@ sap.ui.define([
 	 * The default implementation of this method returns <code>false</code>.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @public
 	 * @alias sap.ui.core.mvc.View
@@ -1320,6 +1320,7 @@ sap.ui.define([
 	 *
 	 * @since 1.30
 	 * @public
+	 * @deprecated since 1.66: Use {@link sap.ui.core.mvc.View.create View.create} instead
 	 * @return {Promise<sap.ui.core.mvc.View>} resolves with the complete view instance, rejects with any thrown error
 	 */
 	View.prototype.loaded = function() {

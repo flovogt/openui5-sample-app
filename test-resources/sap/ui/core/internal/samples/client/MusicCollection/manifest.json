@@ -3,7 +3,7 @@
 	"sap.app" : {
 		"ach" : "CA-UI5-COR-MOD",
 		"applicationVersion" : {
-			"version" : "1.120.20"
+			"version" : "1.120.11"
 		},
 		"description" : "Example of a ClientTreeBinding",
 		"dataSources" : {

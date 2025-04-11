@@ -41,7 +41,7 @@ sap.ui.define([
 	 *
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @extends sap.f.delegate.GridItemNavigation
 	 *

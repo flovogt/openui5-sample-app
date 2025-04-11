@@ -27,7 +27,6 @@ sap.ui.define([
 	"sap/ui/model/FilterType",
 	"sap/ui/model/Sorter",
 	"sap/ui/model/odata/OperationMode",
-	"sap/ui/model/odata/type/Decimal",
 	"sap/ui/model/odata/v4/AnnotationHelper",
 	"sap/ui/model/odata/v4/ODataListBinding",
 	"sap/ui/model/odata/v4/ODataMetaModel",
@@ -43,7 +42,7 @@ sap.ui.define([
 ], function (Log, uid, ColumnListItem, CustomListItem, FlexBox, _MessageStrip, Text,
 		Device, EventProvider, SyncPromise, Configuration, Messaging, Rendering, Supportability,
 		Message, Controller, View, ChangeReason, Filter, FilterOperator, FilterType, Sorter,
-		OperationMode, Decimal, AnnotationHelper, ODataListBinding, ODataMetaModel, ODataModel,
+		OperationMode, AnnotationHelper, ODataListBinding, ODataMetaModel, ODataModel,
 		ODataPropertyBinding, ValueListType, _Helper, Security, TestUtils, XMLHelper) {
 	/*eslint no-sparse-arrays: 0, "max-len": ["error", {"code": 100,
 		"ignorePattern": "/sap/opu/odata4/|\" :$|\" : \\{$|\\{meta>"}], */
@@ -2640,59 +2639,6 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	// Scenario: PATCH an entity with a key predicate consisting of a single key property of type
-	// Edm.DateTimeOffset. The PATCH failed and a UI5 message is created.
-	// SNOW: CS20240007200281
-	QUnit.test("CS20240007200281: key property is Edm.DateTimeOffset", async function (assert) {
-		const oModel = this.createSpecialCasesModel({autoExpandSelect : true});
-		const sView = `
-<Table id="table" items="{/Artists(ArtistID='42',IsActiveEntity=true)/_Event}">
-	<Input id="name" value="{Name}"/>
-</Table>`;
-
-		this.expectRequest("Artists(ArtistID='42',IsActiveEntity=true)/_Event"
-				+ "?$select=Name,TimeStamp&$skip=0&$top=100", {
-				value : [
-					{Name : "Taubertal Festival", TimeStamp : "08-08-2024T01:02:03Z"}
-				]
-			})
-			.expectChange("name", ["Taubertal Festival"]);
-
-		await this.createView(assert, sView, oModel);
-		const aTableRows = this.oView.byId("table").getItems();
-
-		this.expectChange("name", ["Woodstock"])
-			.expectRequest({
-				method : "PATCH",
-				url : "Artists(ArtistID='42',IsActiveEntity=true)"
-					+ "/_Event(08-08-2024T01%3A02%3A03Z)",
-				payload : {Name : "Woodstock"}
-			}, createErrorInsideBatch({target : "Name"}))
-			.expectMessages([{
-				code : "CODE",
-				message : "Request intentionally failed",
-				persistent : true,
-				target : "/Artists(ArtistID='42',IsActiveEntity=true)"
-					+ "/_Event(08-08-2024T01%3A02%3A03Z)/Name",
-				technical : true,
-				type : "Error"
-			}]);
-
-		this.oLogMock.expects("error")
-			.withArgs("Failed to update path /Artists(ArtistID='42',IsActiveEntity=true)"
-				+ "/_Event(08-08-2024T01%3A02%3A03Z)/Name");
-
-		const oInput = aTableRows[0].getCells()[0];
-		// code under test
-		oInput.getBinding("value").setValue("Woodstock");
-
-		await this.waitForChanges(assert);
-
-		await this.checkValueState(assert, oInput, "Error",
-			"Request intentionally failed");
-	});
-
-	//*********************************************************************************************
 	// Scenario: Minimal test for an absolute ODataPropertyBinding. This scenario is comparable with
 	// "FavoriteProduct" in the SalesOrders application.
 	testViewStart("Absolute ODPB",
@@ -5055,6 +5001,10 @@ sap.ui.define([
 			var oListBindingWithoutUI = oModel.bindList("/SalesOrderList"),
 				oCreatedPromise = oListBindingWithoutUI.create({}, true).created();
 
+			that.oLogMock.expects("error")
+				.withArgs(sinon.match("Failed to drill-down into ($uid="),
+					sSalesOrderService + "SalesOrderList", "sap.ui.model.odata.v4.lib._Cache");
+
 			assert.ok(oModel.hasPendingChanges());
 			assert.ok(oListBindingWithoutUI.hasPendingChanges());
 			assert.strictEqual(oListBindingWithoutUI.getLength(), 1 + 10/*length is not final*/);
@@ -5214,6 +5164,8 @@ sap.ui.define([
 	//
 	// Additionally ODLB#getDownloadUrl is tested
 	// JIRA: CPOUI5ODATAV4-12
+	//
+	// "Select all" is reset by #filter (JIRA: CPOUI5ODATAV4-1943).
 	QUnit.test("Relative ODLB inherits parent ODCB's query options on filter", function (assert) {
 		var oBinding,
 			oModel,
@@ -5256,6 +5208,8 @@ sap.ui.define([
 			var sResourceUrl = "EMPLOYEES('42')/EMPLOYEE_2_EQUIPMENTS?$orderby=ID&$select=Name&c1=a"
 					+ "&c2=b&$filter=EQUIPMENT_2_PRODUCT/SupplierIdentifier%20eq%202";
 
+			oBinding.getHeaderContext().setSelected(true); // "select all"
+
 			that.expectRequest(sResourceUrl + "&$skip=0&$top=100", {
 					value : [
 						{Name : "Monitor Basic 24"},
@@ -5267,6 +5221,8 @@ sap.ui.define([
 			// code under test - filter becomes async because product metadata has to be loaded
 			oBinding.filter(
 				new Filter("EQUIPMENT_2_PRODUCT/SupplierIdentifier", FilterOperator.EQ, 2));
+
+			assert.notOk(oBinding.getHeaderContext().isSelected(), "JIRA: CPOUI5ODATAV4-1943");
 
 			assert.throws(function () {
 				oBinding.getDownloadUrl();
@@ -5603,24 +5559,8 @@ sap.ui.define([
 	// refreshSingle is able to calculate the key predicates in its response and a subsequent PATCH
 	// is possible.
 	// BCP: 2070137560
-	//
-	// A header message is returned in the response. The targets of the message are pointing to the
-	// binding parameter. The UI5 message contains the adjusted targets. (SNOW: DINC0122620)
-	//
-	// The header message contains the property "longtextUrl", which points one level up. See that
-	// the UI5 message contains the resolved "descriptionUrl". (SNOW: DINC0197984)
 	QUnit.test("Context.refresh() in a list relative to a return value context", function (assert) {
-		var oMessage = {
-				additionalTargets : [
-					"$Parameter/SalesOrder/SO_2_SOITEM(ProductID='HT-1000')/ProductID"
-				],
-				code : "foo-42",
-				longtextUrl : "../LongText('0815')",
-				message : "text",
-				numericSeverity : 1,
-				target : "$Parameter/SalesOrder/SO_2_SOITEM(ProductID='HT-1000')/Name"
-			},
-			oTable,
+		var oTable,
 			sView = '\
 <FlexBox binding="{/SalesOrderList(\'1\')}">\
 	<Text id="id" text="{SalesOrderID}"/>\
@@ -5657,23 +5597,7 @@ sap.ui.define([
 							ProductID : "HT-1000"
 						}
 					}]
-				}, {
-					"sap-messages" : JSON.stringify([oMessage])
-				})
-				.expectMessages([{
-					code : "foo-42",
-					descriptionUrl : sSalesOrderService + "LongText('0815')",
-					message : "text",
-					persistent : true,
-					targets : [
-						"/SalesOrderList('1')/SO_2_SOITEM(ProductID='HT-1000')/Name",
-						"/SalesOrderList('1')/SO_2_SOITEM(ProductID='HT-1000')/ProductID"
-					],
-					technicalDetails : {
-						originalMessage : oMessage
-					},
-					type : "Success"
-				}]);
+			});
 
 			return Promise.all([
 				that.oView.byId("action").getObjectBinding().execute(),
@@ -7138,6 +7062,8 @@ sap.ui.define([
 	//
 	// Also check that unchanged $expand/$select is tolerated by #changeParameters
 	// JIRA: CPOUI5ODATAV4-1098
+	//
+	// "Select all" is reset by #changeParameters (JIRA: CPOUI5ODATAV4-1943).
 	QUnit.test("ODLB: $count and changeParameters()", function (assert) {
 		var oModel = this.createSalesOrdersModel({autoExpandSelect : true}),
 			oTable,
@@ -7170,6 +7096,8 @@ sap.ui.define([
 
 			return that.waitForChanges(assert);
 		}).then(function () {
+			oTableBinding.getHeaderContext().setSelected(true); // "select all"
+
 			that.expectRequest("SalesOrderList?$expand=SO_2_BP&$select=SalesOrderID"
 					+ "&$filter=SalesOrderID gt '0500000001'&$skip=0&$top=100",
 					{value : [{SalesOrderID : "0500000002", SO_2_BP : null}]}
@@ -7183,6 +7111,8 @@ sap.ui.define([
 				$filter : "SalesOrderID gt '0500000001'",
 				$select : "SalesOrderID"
 			});
+
+			assert.notOk(oTableBinding.getHeaderContext().isSelected(), "JIRA: CPOUI5ODATAV4-1943");
 
 			return that.waitForChanges(assert);
 		});
@@ -8212,59 +8142,6 @@ sap.ui.define([
 				that.waitForChanges(assert)
 			]);
 		});
-	});
-
-	//*********************************************************************************************
-	// Scenario: Table gets a binding context for which data was already loaded and then a refresh
-	// is performed synchronously.
-	// SNOW: CS20240007657519
-	QUnit.test("CS20240007657519", async function (assert) {
-		const oModel = this.createSalesOrdersModel({autoExpandSelect : true});
-		const sView = `
-<FlexBox binding="{/SalesOrderList('1')}" id="form">
-	<Table id="table" items="{path : 'SO_2_SOITEM', parameters : {$$ownRequest : true}}">
-		<Text id="position" text="{ItemPosition}"/>
-	</Table>
-</FlexBox>`;
-
-		this.expectRequest("SalesOrderList('1')/SO_2_SOITEM"
-				+ "?$select=ItemPosition,SalesOrderID&$skip=0&$top=100", {
-				value : [ // implicitly sorted descending
-					{SalesOrderID : "1", ItemPosition : "0020"},
-					{SalesOrderID : "1", ItemPosition : "0010"}
-				]
-			})
-			.expectChange("position", ["0020", "0010"]);
-
-		await this.createView(assert, sView, oModel);
-
-		const oTable = this.oView.byId("table");
-		const oFormContext = this.oView.byId("form").getBindingContext();
-
-		oTable.setBindingContext(null);
-
-		await this.waitForChanges(assert);
-
-		oTable.setBindingContext(oFormContext);
-
-		this.expectCanceledError("Failed to get contexts for " + sSalesOrderService
-					+ "SalesOrderList('1')/SO_2_SOITEM with start index 0 and length 100",
-				sODLB + ": /SalesOrderList('1')|SO_2_SOITEM"
-					+ " is ignoring response from inactive cache: " + sSalesOrderService
-					+ "SalesOrderList('1')/SO_2_SOITEM?$select=ItemPosition,SalesOrderID")
-			.expectRequest("SalesOrderList('1')/SO_2_SOITEM"
-				+ "?$select=ItemPosition,SalesOrderID&$skip=0&$top=100", {
-				value : [
-					{SalesOrderID : "1", ItemPosition : "0030"}, // a new one!
-					{SalesOrderID : "1", ItemPosition : "0020"},
-					{SalesOrderID : "1", ItemPosition : "0010"}
-				]
-			})
-			.expectChange("position", ["0030", "0020", "0010"]);
-
-		oFormContext.refresh();
-
-		await this.waitForChanges(assert);
 	});
 
 	//*********************************************************************************************
@@ -12171,7 +12048,7 @@ sap.ui.define([
 	// ContentID on root level, but missing for one message in details. Check the value state for
 	// the related input controls.
 	// JIRA: CPOUI5ODATAV4-729
-	QUnit.test("CPOUI5ODATAV4-729: @Core.ContentID", function (assert) {
+	QUnit.test("CPOUI5ODATAV4-729: @Core.ContentId", function (assert) {
 		var aItems,
 			oModel = this.createSalesOrdersModel({autoExpandSelect : true}),
 			sView = '\
@@ -15221,79 +15098,6 @@ sap.ui.define([
 			]);
 		});
 	});
-
-	//*********************************************************************************************
-	// Scenario: We simulate parts of a file upload here. Initially, the Edm.Stream property is
-	// missing from the response (of course) and a late property request is sent leading to
-	// "Picture@$ui5.noData : true" being set. File upload happens outside the model and only a file
-	// name would be PATCHed, this is omitted here. Removal of the file requires the model to PATCH
-	// a null value, which ruins the URL. Thus the property is reset to undefined on the client side
-	// only. This must not prevent a side effect from setting "Picture@$ui5.noData : true" again!
-	// Thus upload and removal can be repeated (endlessly) while a URL is implicitly available for
-	// up- and download at all times.
-	// SNOW: DINC0088146
-	QUnit.test("DINC0088146", async function (assert) {
-		const oModel = this.createSpecialCasesModel({autoExpandSelect : true});
-		const sView = `
-<Table id="list" items="{/Artists}">
-	<Text id="id" text="{ArtistID}"/>
-</Table>
-<FlexBox id="detail">
-	<Text id="link" text="{Picture}"/>
-</FlexBox>`;
-		const sLink = "/special/cases/Artists(ArtistID='42',IsActiveEntity=true)/Picture";
-
-		this.expectRequest("Artists?$select=ArtistID,IsActiveEntity&$skip=0&$top=100", {
-				value : [{
-					ArtistID : "42",
-					IsActiveEntity : true
-				}]
-			})
-			.expectChange("link");
-
-		await this.createView(assert, sView, oModel);
-
-		this.expectRequest("Artists(ArtistID='42',IsActiveEntity=true)?$select=Picture", {
-				ArtistID : "42",
-				// Picture (Edm.Stream) missing here
-				"Picture@odata.mediaContentType" : null
-			})
-			.expectChange("link", sLink);
-
-		const oContext = this.oView.byId("list").getItems()[0].getBindingContext();
-		this.oView.byId("detail").setBindingContext(oContext);
-
-		await this.waitForChanges(assert, "detail");
-
-		for (let i = 0; i < 3; i += 1) {
-			this.expectChange("link", null)
-				.expectChange("link", sLink)
-				.expectRequest({
-					method : "PATCH",
-					url : "Artists(ArtistID='42',IsActiveEntity=true)",
-					payload : {Picture : null}
-				})
-				.expectRequest("Artists?$select=ArtistID,IsActiveEntity,Picture"
-					+ "&$filter=ArtistID eq '42' and IsActiveEntity eq true", {
-					value : [{
-						ArtistID : "42",
-						IsActiveEntity : true,
-						// Picture (Edm.Stream) missing here
-						"Picture@odata.mediaContentType" : null
-					}]
-				})
-				.expectChange("link", sLink); // due to "Picture@$ui5.noData : true" being set
-
-			// eslint-disable-next-line no-await-in-loop
-			await Promise.all([
-				oContext.setProperty("Picture", null),
-				oContext.requestSideEffects(["Picture"]),
-				oContext.setProperty("Picture", undefined, /*sGroupId*/null),
-				this.waitForChanges(assert, "remove #" + i)
-			]);
-		}
-	});
-
 	//*********************************************************************************************
 	// Scenario: Writing instance annotations via create and update.
 	// 1. POST: Initial payload containing instance annotations
@@ -18841,18 +18645,8 @@ sap.ui.define([
 	// result.
 	// JIRA: CPOUI5UISERVICESV3-965
 	// BCP: 2070134549
-	//
-	// A header message is returned in the response. The target of the message is pointing to the
-	// binding parameter. The UI5 message contains the adjusted target. (SNOW: DINC0122620)
 	QUnit.test("Rel. bound function, auto-$expand/$select (BCP 2070134549)", function (assert) {
-		var oMessage = {
-				// additional targets are missing intentionally
-				code : "foo-42",
-				message : "text",
-				numericSeverity : 1,
-				target : "$Parameter/_it/Name"
-			},
-			sFunctionName = "com.sap.gateway.default.iwbep.tea_busi.v0001"
+		var sFunctionName = "com.sap.gateway.default.iwbep.tea_busi.v0001"
 				+ ".__FAKE__FuGetEmployeesByManager",
 			oModel = this.createTeaBusiModel({autoExpandSelect : true}),
 			sView = '\
@@ -18878,21 +18672,7 @@ sap.ui.define([
 					ID : "6",
 					Name : "Susan Bay"
 				}]
-			}, {
-				"sap-messages" : JSON.stringify([oMessage])
 			})
-			.expectMessages([{
-				code : "foo-42",
-				message : "text",
-				persistent : true,
-				targets : [
-					"/MANAGERS('1')/Name"
-				],
-				technicalDetails : {
-					originalMessage : oMessage
-				},
-				type : "Success"
-			}])
 			.expectChange("TEAM_ID", "TEAM_03")
 			.expectChange("id", ["3", "6"])
 			.expectChange("name", ["Jonathan Smith", "Susan Bay"]);
@@ -23283,6 +23063,12 @@ sap.ui.define([
 			oTable.getRows()[1].getBindingContext().collapse();
 
 			assert.strictEqual(oTable.getBinding("rows").getContexts().length, 2);
+
+			that.oLogMock.expects("error").withExactArgs("Failed to drill-down into"
+				+ " (Country='UK',Region='Z')/Region, invalid segment: (Country='UK',Region='Z')",
+				"/aggregation/BusinessPartners"
+				+ "?$apply=groupby((Country,Region),aggregate(SalesAmount))",
+				"sap.ui.model.odata.v4.lib._Cache");
 
 			// code under test
 			assert.strictEqual(oThirdRow.getProperty("Region"), undefined,
@@ -40727,9 +40513,6 @@ make root = ${bMakeRoot}`;
 	// No own test as unit value list is cached in a private cache
 	// JIRA: CPOUI5MODELS-302
 	// Transport sap-language (BCP: 2270119565)
-	// Show that the amount scale is used instead of the unit decimal places. Change the type of the
-	// binding part for the amount to see that this is also considered in the output format.
-	// JIRA: CPOUI5MODELS-1606
 	QUnit.test("OData Unit type considering unit customizing", function (assert) {
 		var oControl,
 			oModel = this.createModel(sSalesOrderService + "?sap-client=123", {
@@ -40786,9 +40569,9 @@ make root = ${bMakeRoot}`;
 				}]
 			})
 			.expectChange("weightMeasure", "12.340") // Scale=3 in property metadata => 3 decimals
-			.expectChange("weight", "12.340 KG")
-			.expectChange("weight0", "12.340")
-			.expectChange("weight1", "12.340");
+			.expectChange("weight", "12.34000 KG")
+			.expectChange("weight0", "12.34000")
+			.expectChange("weight1", "12.34000");
 
 		return this.createView(assert, sView, oModel).then(function () {
 			that.expectMessages([{
@@ -40823,11 +40606,9 @@ make root = ${bMakeRoot}`;
 			// remove model messages again
 			oModel.reportStateMessages("ProductList", {});
 		}).then(function () {
-			oControl = that.oView.byId("weight");
-
-			that.expectChange("weight", "23.400 KG")
-				.expectChange("weight0", "23.400")
-				.expectChange("weight1", "23.400")
+			that.expectChange("weight", "23.40000 KG")
+				.expectChange("weight0", "23.40000")
+				.expectChange("weight1", "23.40000")
 				.expectChange("weightMeasure", "23.400")
 				.expectRequest({
 					method : "PATCH",
@@ -40836,42 +40617,13 @@ make root = ${bMakeRoot}`;
 					payload : {WeightMeasure : "23.4", WeightUnit : "KG"}
 				});
 
-			oControl.getBinding("value").setRawValue(["23.4", "KG"]);
+			that.oView.byId("weight").getBinding("value").setRawValue(["23.4", "KG"]);
 
 			return that.waitForChanges(assert);
 		}).then(function () {
-			// this change happens twice because PropertyBinding#setType fires change via
-			// fnTypeChangedCallback and v4.ODataPropertyBinding#setType itself fires changes also.
-			// This is ok because the usecase for changing a binding part's type of a composite
-			// binding is very rare.
-			that.expectChange("weight", "23.40 KG")
-				.expectChange("weight", "23.40 KG");
-
-			// code under test: change scale of amount part from 3 to 2
-			oControl.getBinding("value").getBindings()[0].setType(
-				new Decimal(undefined, {precision : 13, scale : 2}));
-
-			return that.waitForChanges(assert, "JIRA: CPOUI5MODELS-1606");
-		}).then(function () {
-			that.expectChange("weight", "34.51 KG")
-				.expectChange("weightMeasure", "34.510")
-				.expectChange("weight0", "34.510")
-				.expectChange("weight1", "34.510")
-				.expectRequest({
-					method : "PATCH",
-					url : "ProductList('HT-1000')?sap-client=123",
-					headers : {"If-Match" : "ETag"},
-					payload : {WeightMeasure : "34.51", WeightUnit : "KG"}
-				});
-
-			// code under test: for amount change the event for "weight" happens only once
-			oControl.getBinding("value").setRawValue(["34.51", "KG"]);
-
-			return that.waitForChanges(assert, "JIRA: CPOUI5MODELS-1606");
-		}).then(function () {
 			that.expectChange("weightMeasure", "0.000")
-				.expectChange("weight0", "0.000")
-				.expectChange("weight1", "0.000")
+				.expectChange("weight0", "0.00000")
+				.expectChange("weight1", "0.00000")
 				.expectRequest({
 					method : "PATCH",
 					url : "ProductList('HT-1000')?sap-client=123",
@@ -40879,6 +40631,7 @@ make root = ${bMakeRoot}`;
 					payload : {WeightMeasure : "0", WeightUnit : "KG"}
 				});
 
+			oControl = that.oView.byId("weight");
 			// remove the formatter so that we can call setValue at the control
 			oControl.getBinding("value").setFormatter(null);
 
@@ -40888,7 +40641,7 @@ make root = ${bMakeRoot}`;
 			return that.waitForChanges(assert);
 		}).then(function () {
 			// Check that the previous setValue led to the correct result
-			assert.strictEqual(oControl.getValue(), "0.00 KG");
+			assert.strictEqual(oControl.getValue(), "0.00000 KG");
 
 			that.expectMessages([{
 					message : "EnterNumberFraction 5",
@@ -41347,7 +41100,8 @@ make root = ${bMakeRoot}`;
 		return this.createView(assert, sView).then(function () {
 			that.expectCanceledError("Failed to get contexts for " + sTeaBusi
 						+ "EMPLOYEES with start index 0 and length 100",
-					"Binding already destroyed");
+					sODLB + ": /EMPLOYEES is ignoring response from inactive cache: " + sTeaBusi
+						+ "EMPLOYEES");
 
 			that.oView.destroy();
 			delete that.oView;
@@ -46324,29 +46078,15 @@ make root = ${bMakeRoot}`;
 	//
 	// JIRA: CPOUI5ODATAV4-943
 	// BCP: 2280172148 more than one action in change set + check that the right callback is called
-	//
-	// Execute three actions in a changeset, each with a fnOnStrictHandlingFailed handler. The batch
-	// fails due to strict-handling and the response contains error messages for the first and
-	// second request or only for the first. No error message for the third request. See that each
-	// handler is called with the correct (or none) errors.
-	// SNOW: DINC0032238
 [true, false].forEach(function (bConfirm) {
-	[true, false].forEach(function (bDifferentContentIDs) {
-		const sTitle = "CPOUI5ODATAV4-943: handling=strict, confirm=" + bConfirm
-			+ ", different content IDs=" + bDifferentContentIDs;
-	QUnit.test(sTitle, function (assert) {
-		var sAction = "com.sap.gateway.default.zui5_epm_sample.v0002.SalesOrder_Confirm",
+	QUnit.test("CPOUI5ODATAV4-943: handling=strict, confirm=" + bConfirm, function (assert) {
+		var sAction0 = "com.sap.gateway.default.zui5_epm_sample.v0002.SalesOrder_Confirm",
+			sAction1 = "com.sap.gateway.default.zui5_epm_sample.v0002.SalesOrder_Cancel",
 			oAction0Promise,
-			oAction1Promise,
-			oAction2Promise,
-			oErrorObject = {
+			oError = createErrorInsideBatch({
+				code : "STRICT",
+				"@SAP__core.ContentID" : "0.0",
 				details : [{
-					"@Common.numericSeverity" : 3,
-					code : "CODE1",
-					"@SAP__core.ContentID" : "0.0",
-					message : "Note is empty",
-					target : "SalesOrder/Note"
-				}, {
 					"@Common.numericSeverity" : 3,
 					code : "CODE1",
 					"@SAP__core.ContentID" : "0.0",
@@ -46357,96 +46097,51 @@ make root = ${bMakeRoot}`;
 					code : "CODE2",
 					"@SAP__core.ContentID" : "0.0",
 					message : "Some unbound info"
-				}]
-			},
-			oError,
+				}],
+				message : "Strict Handling"
+			}, 412),
 			oModel = this.createSalesOrdersModel({autoExpandSelect : true}),
-			fnResolve0,
-			fnResolve1,
-			fnResolve2,
+			fnResolve,
 			sView = '\
-<Table id="table" items="{/SalesOrderList}">\
+<FlexBox id="form" binding="{/SalesOrderList(\'1\')}">\
 	<Text id="status" text="{LifecycleStatus}"/>\
-</Table>',
+	<FlexBox id="action" binding="{' + sAction0 + '(...)}"/>\
+</FlexBox>',
 			that = this;
 
-		function onStrictHandlingFailed0(aMessages) {
+		function onStrictHandlingFailed(aMessages) {
+			assert.strictEqual(aMessages.length, 2);
 			assert.strictEqual(aMessages[0].getMessage(), "Note is empty");
 			assert.strictEqual(aMessages[0].getCode(), "CODE1");
-			assert.strictEqual(aMessages[0].getTargets()[0], "/SalesOrderList('0')/Note");
+			assert.strictEqual(aMessages[0].getTargets()[0], "/SalesOrderList('1')/Note");
 			assert.strictEqual(aMessages[0].getType(), "Warning");
-			if (bDifferentContentIDs) {
-				assert.strictEqual(aMessages.length, 1);
-			} else {
-				assert.strictEqual(aMessages.length, 3);
-				assert.strictEqual(aMessages[1].getMessage(), "Note is empty");
-				assert.strictEqual(aMessages[1].getCode(), "CODE1");
-				assert.strictEqual(aMessages[1].getTargets()[0], "/SalesOrderList('0')/Note");
-				assert.strictEqual(aMessages[1].getType(), "Warning");
-				assert.strictEqual(aMessages[2].getMessage(), "Some unbound info");
-				assert.strictEqual(aMessages[2].getCode(), "CODE2");
-				assert.strictEqual(aMessages[2].getTargets()[0], "");
-				assert.strictEqual(aMessages[2].getType(), "Information");
-			}
+			assert.strictEqual(aMessages[1].getMessage(), "Some unbound info");
+			assert.strictEqual(aMessages[1].getCode(), "CODE2");
+			assert.strictEqual(aMessages[1].getTargets()[0], "");
+			assert.strictEqual(aMessages[1].getType(), "Information");
+
 			return new Promise(function (resolve) {
-				fnResolve0 = resolve;
+				fnResolve = resolve;
 			});
 		}
 
-		function onStrictHandlingFailed1(aMessages) {
-			if (bDifferentContentIDs) {
-				assert.strictEqual(aMessages.length, 2);
-				assert.strictEqual(aMessages[0].getMessage(), "Note is empty");
-				assert.strictEqual(aMessages[0].getCode(), "CODE1");
-				assert.strictEqual(aMessages[0].getTargets()[0], "/SalesOrderList('1')/Note");
-				assert.strictEqual(aMessages[0].getType(), "Warning");
-				assert.strictEqual(aMessages[1].getMessage(), "Some unbound info");
-				assert.strictEqual(aMessages[1].getCode(), "CODE2");
-				assert.strictEqual(aMessages[1].getTargets()[0], "");
-				assert.strictEqual(aMessages[1].getType(), "Information");
-			} else {
-				assert.strictEqual(aMessages.length, 0);
-			}
-			return new Promise(function (resolve) {
-				fnResolve1 = resolve;
-			});
-		}
-
-		function onStrictHandlingFailed2(aMessages) {
-			assert.strictEqual(aMessages.length, 0);
-			return new Promise(function (resolve) {
-				fnResolve2 = resolve;
-			});
-		}
-
-		// change detail ContentID from 0.0 to 1.0 for the second and third message
-		if (bDifferentContentIDs) {
-			oErrorObject.details[1]["@SAP__core.ContentID"] = "1.0";
-			oErrorObject.details[2]["@SAP__core.ContentID"] = "1.0";
-		}
-		oError = createErrorInsideBatch(oErrorObject, 412);
-
-		this.expectRequest("SalesOrderList?$select=LifecycleStatus,SalesOrderID&$skip=0&$top=100", {
-				value : [{
-						LifecycleStatus : "N0",
-						SalesOrderID : "0"
-					}, {
-						LifecycleStatus : "N1",
-						SalesOrderID : "1"
-					}, {
-						LifecycleStatus : "N2",
-						SalesOrderID : "2"
-				}]
+		this.expectRequest("SalesOrderList('1')?$select=LifecycleStatus,SalesOrderID", {
+				LifecycleStatus : "N",
+				SalesOrderID : "1"
 			})
-			.expectChange("status", ["N0", "N1", "N2"]);
+			.expectChange("status", "N");
 
 		return this.createView(assert, sView, oModel).then(function () {
+			that.oLogMock.expects("error")
+				.withExactArgs("Failed to execute /SalesOrderList('2')/" + sAction1 + "(...)",
+					sinon.match("Strict Handling"), sODCB);
+
 			that.expectRequest({
 					headers : {
 						Prefer : "handling=strict"
 					},
 					method : "POST",
-					url : "SalesOrderList('0')/" + sAction,
+					url : "SalesOrderList('1')/" + sAction0,
 					payload : {}
 				}, oError, {
 					"Preference-Applied" : "handling=strict"
@@ -46456,70 +46151,39 @@ make root = ${bMakeRoot}`;
 						Prefer : "handling=strict"
 					},
 					method : "POST",
-					url : "SalesOrderList('1')/" + sAction,
-					payload : {}
-				}/*response does not matter*/)
-				.expectRequest({
-					headers : {
-						Prefer : "handling=strict"
-					},
-					method : "POST",
-					url : "SalesOrderList('2')/" + sAction,
+					url : "SalesOrderList('2')/" + sAction1,
 					payload : {}
 				}/*response does not matter*/);
 
-			const oListBinding = that.oView.byId("table").getBinding("items");
-			const aContexts = oListBinding.getCurrentContexts();
+			oAction0Promise = that.oView.byId("action").getObjectBinding()
+				.execute("$auto", false, onStrictHandlingFailed);
 
-			// code under test
-			oAction0Promise = that.oModel.bindContext(sAction + "(...)", aContexts[0])
-				.execute("$auto", false, onStrictHandlingFailed0);
-			oAction1Promise = that.oModel.bindContext(sAction + "(...)", aContexts[1])
-				.execute("$auto", false, onStrictHandlingFailed1);
-			oAction2Promise = that.oModel.bindContext(sAction + "(...)", aContexts[2])
-				.execute("$auto", false, onStrictHandlingFailed2);
+			that.oModel.bindContext("/SalesOrderList('2')/" + sAction1 + "(...)")
+				.execute("$auto", false, "~mustNotBeCalled~")
+				.then(mustFail(assert), function (oError) {
+					assert.strictEqual(oError.message, "Strict Handling");
+					assert.notOk(oError.strictHandlingFailed);
+				});
 
 			return that.waitForChanges(assert);
 		}).then(function () {
 			if (bConfirm) {
 				that.expectRequest({
 						method : "POST",
-						url : "SalesOrderList('0')/" + sAction,
+						url : "SalesOrderList('1')/" + sAction0,
 						payload : {}
 					}, {
-						LifecycleStatus : "C0",
-						SalesOrderID : "0"
-					})
-					.expectRequest({
-						method : "POST",
-						url : "SalesOrderList('1')/" + sAction,
-						payload : {}
-					}, {
-						LifecycleStatus : "C1",
+						LifecycleStatus : "C",
 						SalesOrderID : "1"
 					})
-					.expectRequest({
-						method : "POST",
-						url : "SalesOrderList('2')/" + sAction,
-						payload : {}
-					}, {
-						LifecycleStatus : "C2",
-						SalesOrderID : "2"
-					})
-					.expectChange("status", ["C0", "C1", "C2"]);
+					.expectChange("status", "C");
 			} else {
-				that.expectCanceledError("Failed to execute /SalesOrderList('0')/" + sAction
-						+ "(...)", "Action canceled due to strict handling");
-				that.expectCanceledError("Failed to execute /SalesOrderList('1')/" + sAction
-						+ "(...)", "Action canceled due to strict handling");
-				that.expectCanceledError("Failed to execute /SalesOrderList('2')/" + sAction
+				that.expectCanceledError("Failed to execute /SalesOrderList('1')/" + sAction0
 						+ "(...)", "Action canceled due to strict handling");
 			}
 
-			// code under test - resolve call ensures that the handler is actually called
-			fnResolve0(bConfirm);
-			fnResolve1(bConfirm);
-			fnResolve2(bConfirm);
+			// code under test
+			fnResolve(bConfirm);
 
 			return Promise.all([
 				oAction0Promise.then(function () {
@@ -46529,24 +46193,9 @@ make root = ${bMakeRoot}`;
 					assert.strictEqual(oError.message, "Action canceled due to strict handling");
 					assert.strictEqual(oError.canceled, true);
 				}),
-				oAction1Promise.then(function () {
-					assert.ok(bConfirm);
-				}, function (oError) {
-					assert.notOk(bConfirm);
-					assert.strictEqual(oError.message, "Action canceled due to strict handling");
-					assert.strictEqual(oError.canceled, true);
-				}),
-				oAction2Promise.then(function () {
-					assert.ok(bConfirm);
-				}, function (oError) {
-					assert.notOk(bConfirm);
-					assert.strictEqual(oError.message, "Action canceled due to strict handling");
-					assert.strictEqual(oError.canceled, true);
-				}),
 				that.waitForChanges(assert)
 			]);
 		});
-	});
 	});
 });
 
@@ -59510,139 +59159,6 @@ make root = ${bMakeRoot}`;
 	});
 
 	//*********************************************************************************************
-	// Scenario: With binding parameter $$clearSelectionOnFilter set, setting a filter or changing
-	// $filter or $search parameters resets the selection state of all contexts of a list binding.
-	// SNOW: CS20240007001494
-[
-	{method : "filter", value : FilterType.Application, query : "GrossAmount ge 0"},
-	{method : "filter", value : FilterType.Control, query : "GrossAmount ge 0"},
-	{method : "changeParameters", value : "$filter", query : "GrossAmount ge 0"},
-	{method : "changeParameters", value : "$search", query : "0"}
-].forEach((oFixture) => {
-	[false, true].forEach((bSuspend) => {
-	const sTitle = `Reset selection on ${oFixture.value}, suspend=${bSuspend}`;
-	QUnit.test(sTitle, async function (assert) {
-		const oModel = this.createSalesOrdersModel({autoExpandSelect : true});
-		const sView = `
-<Table id="table" items="{parameters: {$$clearSelectionOnFilter: true}, path:'/SalesOrderList'}">
-	<Text id="id" text="{SalesOrderID}"/>
-	<Text id="grossAmount" text="{GrossAmount}"/>
-</Table>`;
-
-		this.expectRequest("SalesOrderList?$select=GrossAmount,SalesOrderID&$skip=0&$top=100", {
-				value : [
-					{SalesOrderID : "1", GrossAmount : "1000"},
-					{SalesOrderID : "2", GrossAmount : "2000"},
-					{SalesOrderID : "3", GrossAmount : "3000"}
-				]
-			})
-			.expectChange("id", ["1", "2", "3"])
-			.expectChange("grossAmount", ["1,000.00", "2,000.00", "3,000.00"]);
-
-		await this.createView(assert, sView, oModel);
-
-		const oTable = this.oView.byId("table");
-		const oListBinding = oTable.getBinding("items");
-		const oHeaderContext = oListBinding.getHeaderContext();
-		const [oItem0, oItem1] = oListBinding.getCurrentContexts();
-
-		oHeaderContext.setSelected(true);
-		oItem0.setSelected(true);
-		oItem1.setSelected(true);
-
-		this.expectRequest("SalesOrderList?$select=GrossAmount,SalesOrderID&"
-				+ (oFixture.method === "filter" ? "$filter" : oFixture.value) + "=" + oFixture.query
-				+ "&$skip=0&$top=100", {
-				value : [
-					{SalesOrderID : "1", GrossAmount : "1000"},
-					{SalesOrderID : "2", GrossAmount : "2000"},
-					{SalesOrderID : "3", GrossAmount : "3000"}
-				]
-			});
-
-		if (bSuspend) {
-			oListBinding.suspend();
-		}
-		if (oFixture.method === "filter") {
-			// code under test
-			oListBinding.filter(new Filter("GrossAmount", FilterOperator.GE, 0), oFixture.value);
-		} else {
-			// code under test
-			oListBinding.changeParameters({[oFixture.value] : oFixture.query});
-		}
-		if (bSuspend) {
-			oListBinding.resume();
-		}
-
-		assert.strictEqual(oHeaderContext.isSelected(), false);
-		assert.strictEqual(oItem0.isSelected(), false);
-		assert.strictEqual(oItem1.isSelected(), false);
-
-		await this.waitForChanges(assert);
-	});
-	});
-});
-
-	//*********************************************************************************************
-	// Scenario: With binding parameter $$clearSelectionOnFilter set, the selection state of a
-	// hierarchy is reset on changing "$$aggregation.search" parameter.
-	//
-	// SNOW: CS20240007001494
-	QUnit.test("Reset selection on new $$aggregation.search", async function (assert) {
-		const oModel = this.createTeaBusiModel({autoExpandSelect : true});
-		const sView = `
-<t:Table id="table" rows="{path : '/EMPLOYEES',
-		parameters : {
-			$$aggregation : {
-				hierarchyQualifier : 'OrgChart'
-			}, $$clearSelectionOnFilter: true
-		}}" threshold="0" visibleRowCount="3">
-	<Text text="{= %{@$ui5.node.isExpanded} }"/>
-	<Text text="{= %{@$ui5.node.level} }"/>
-	<Text text="{ID}"/>
-</t:Table>`;
-		const sUrl = "EMPLOYEES?$apply=com.sap.vocabularies.Hierarchy.v1.TopLevels("
-			+ "HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart',NodeProperty='ID',"
-			+ "Levels=1)"
-			+ "&$select=DrillState,ID&$count=true&$skip=0&$top=3";
-		const oResponse = {
-			"@odata.count" : "2",
-			value : [{
-				ID : "0",
-				DrillState : "leaf"
-			}, {
-				ID : "1",
-				DrillState : "leaf"
-			}]
-		};
-
-		this.expectRequest(sUrl, oResponse);
-
-		await this.createView(assert, sView, oModel);
-
-		const oTable = this.oView.byId("table");
-		const oListBinding = oTable.getBinding("rows");
-		const [oNode0, oNode1] = oListBinding.getCurrentContexts();
-
-		oNode0.setSelected(true);
-
-		this.expectRequest("EMPLOYEES?$apply="
-				+ "ancestors($root/EMPLOYEES,OrgChart,ID,search(covfefe),keep start)"
-				+ "/com.sap.vocabularies.Hierarchy.v1.TopLevels("
-				+ "HierarchyNodes=$root/EMPLOYEES,HierarchyQualifier='OrgChart',NodeProperty='ID',"
-				+ "Levels=1)"
-				+ "&$select=DrillState,ID&$count=true&$skip=0&$top=3",
-				oResponse);
-
-		// code under test
-		oListBinding.setAggregation({...oListBinding.getAggregation(), search : "covfefe"});
-
-		await this.waitForChanges(assert, "set $$aggregation.search");
-
-		assert.strictEqual(oNode1.isSelected(), false);
-	});
-
-	//*********************************************************************************************
 	// Scenario: Dependent ContextBinding below a dependent ListBinding, below of an absolute
 	// ListBinding, all w/ own cache. Set a row context of the absolute ListBinding as parent
 	// context for the dependent ListBinding, and a row context of the dependent ListBinding as
@@ -59763,103 +59279,5 @@ make root = ${bMakeRoot}`;
 				that.waitForChanges(assert, "no patch request")
 			]);
 		});
-	});
-
-	//*********************************************************************************************
-	// Scenario: setBindingContext of a table w/o cache below a context binding w/o own properties.
-	// See that this context binding can refresh properly afterwards.
-	// SNOW: DINC0117588
-	QUnit.test("DINC0117588", async function (assert) {
-		const oModel = this.createTeaBusiModel({autoExpandSelect : true});
-		const sView = `
-<FlexBox id="root" binding="{/TEAMS('0')}">
-	<Table id="table" items="{TEAM_2_EMPLOYEES}">
-		<Text id="id" text="{ID}"/>
-	</Table>
-</FlexBox>`;
-
-		this.expectRequest("TEAMS('0')?$select=Team_Id&$expand=TEAM_2_EMPLOYEES($select=ID)", {
-				TeamId : "0",
-				TEAM_2_EMPLOYEES : [
-					{ID : "1"}
-				]
-			})
-			.expectChange("id", ["1"]);
-
-		await this.createView(assert, sView, oModel);
-
-		this.oView.byId("table").setBindingContext(null);
-
-		await this.waitForChanges(assert);
-
-		await this.oView.byId("root").getBindingContext().requestRefresh();
-	});
-
-	//*********************************************************************************************
-	// Scenario: A context binding with empty path has a hidden context binding to the draft as
-	// parent. Request a property and set a hidden context binding to the active entity as parent.
-	// Before the request finished, set the binding context to null. In the end, request side
-	// effects for the complete model to see that no change listeners remained in the hidden ODCB
-	// for the active entity. (The issue is that registering is delayed due to the pending
-	// request, but deregistering happens immediately when the binding loses its parent context. So
-	// it deregisters when there is no registration yet, and registers afterwards when there is no
-	// more deregistration to be expected.)
-	// SNOW: DINC0117588
-	QUnit.test("DINC0117588 #2", async function (assert) {
-		const oModel = this.createSpecialCasesModel({autoExpandSelect : true});
-		const sView = `
-<FlexBox id="root" binding="{}">
-	<Text id="id" text="{ArtistID}"/>
-	<Text id="active" text="{IsActiveEntity}"/>
-</FlexBox>`;
-
-		this.expectChange("id")
-			.expectChange("active");
-
-		await this.createView(assert, sView, oModel);
-
-		this.expectRequest("Artists(ArtistID='1',IsActiveEntity=false)"
-				+ "?$select=ArtistID,IsActiveEntity",
-				{ArtistID : "1", IsActiveEntity : false})
-			.expectChange("id", "1")
-			.expectChange("active", "No");
-
-		const oForm = this.oView.byId("root");
-		oForm.setBindingContext(
-			oModel.bindContext("/Artists(ArtistID='1',IsActiveEntity=false)").getBoundContext());
-
-		await this.waitForChanges(assert, "inactive entity");
-
-		let fnResolve;
-		this.expectRequest("Artists(ArtistID='1',IsActiveEntity=true)"
-				+ "?$select=ArtistID,IsActiveEntity",
-				new Promise((resolve) => {
-					fnResolve = resolve;
-				})
-			);
-
-		const oContext
-			= oModel.bindContext("/Artists(ArtistID='1',IsActiveEntity=true)").getBoundContext();
-		const oPropertyPromise = oContext.requestProperty("ArtistID");
-		oForm.setBindingContext(oContext);
-
-		await this.waitForChanges(assert, "active entity");
-
-		this.expectChange("id", null)
-			.expectChange("active", null);
-
-		oForm.setBindingContext(null);
-
-		fnResolve({ArtistID : "1", IsActiveEntity : true});
-
-		await Promise.all([
-			oPropertyPromise,
-			this.waitForChanges(assert, "no entity")
-		]);
-
-		await Promise.all([
-			oContext.requestSideEffects(["/special.cases.Container/Artists"]),
-			this.waitForChanges(assert, "request full side-effects refresh")
-		]);
 	});
 });

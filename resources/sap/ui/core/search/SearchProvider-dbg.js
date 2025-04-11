@@ -23,8 +23,8 @@ sap.ui.define(['sap/ui/core/Element', "sap/base/Log", 'sap/ui/core/library'],
 	 *
 	 * Do not create instances of this class, but use a concrete subclass instead.
 	 * @extends sap.ui.core.Element
-	 * @version 1.120.20
-	 * @deprecated since 1.120. There is no API replacement.
+	 * @version 1.120.11
+	 * @deprecated since 1.120
 	 *
 	 * @public
 	 * @alias sap.ui.core.search.SearchProvider

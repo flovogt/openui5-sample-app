@@ -111,7 +111,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.20
+		 * @version 1.120.11
 		 *
 		 * @constructor
 		 * @private
@@ -1264,6 +1264,15 @@ sap.ui.define([
 				this.removeAllSelectedDates();
 			}
 			this._bMultiDateSelect = true;
+			this._fireSelectionEvent(oEvent);
+		};
+
+		/**
+		 * Handles the <code>tap</code> event on the grid.
+		 *
+		 * @param {jQuery.Event} oEvent The event object
+		 */
+		SinglePlanningCalendarGrid.prototype.ontap = function (oEvent) {
 			this._fireSelectionEvent(oEvent);
 		};
 

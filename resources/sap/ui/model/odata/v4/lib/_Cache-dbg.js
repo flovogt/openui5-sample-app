@@ -684,6 +684,23 @@ sap.ui.define([
 	};
 
 	/**
+	 * Deregisters the given change listener. Note: shared caches only have listeners for the empty
+	 * path.
+	 *
+	 * @param {string} sPath
+	 *   The path
+	 * @param {object} oListener
+	 *   The change listener
+	 *
+	 * @public
+	 */
+	_Cache.prototype.deregisterChangeListener = function (sPath, oListener) {
+		if (!(this.bSharedRequest && sPath)) {
+			_Helper.removeByPath(this.mChangeListeners, sPath, oListener);
+		}
+	};
+
+	/**
 	 * Drills down into the given object according to <code>sPath</code>. Logs an error if the path
 	 * leads into void. Paths may contain key predicates like "TEAM_2_EMPLOYEES('42')/Name". The
 	 * initial segment in a collection cache may even start with a key predicate, for example a path
@@ -713,8 +730,6 @@ sap.ui.define([
 			that = this;
 
 		function invalidSegment(sSegment, bAsInfo) {
-			// no error for a key predicate, it's most probably due to a deleted entity
-			bAsInfo ||= sSegment[0] === "(" && sSegment.at(-1) === ")";
 			Log[bAsInfo ? "info" : "error"]("Failed to drill-down into " + sPath
 				+ ", invalid segment: " + sSegment, that.toString(), sClassName);
 			return undefined;
@@ -1330,6 +1345,7 @@ sap.ui.define([
 	 *   Whether there are any registered change listeners
 	 *
 	 * @public
+	 * @see #deregisterChangeListener
 	 * @see #registerChangeListener
 	 */
 	_Cache.prototype.hasChangeListeners = function () {
@@ -1645,7 +1661,7 @@ sap.ui.define([
 	 */
 	_Cache.prototype.registerChangeListener = function (sPath, oListener) {
 		if (!(this.bSharedRequest && sPath)) {
-			_Helper.registerChangeListener(this, sPath, oListener);
+			_Helper.addByPath(this.mChangeListeners, sPath, oListener);
 		}
 	};
 
@@ -3992,7 +4008,6 @@ sap.ui.define([
 		var sResourcePath = this.sResourcePath + this.sQueryString,
 			that = this;
 
-		this.registerChangeListener(sPath, oListener);
 		if (this.oPromise) {
 			oGroupLock.unlock();
 		} else {
@@ -4015,6 +4030,7 @@ sap.ui.define([
 			if (oResult && oResult["$ui5.deleted"]) {
 				throw new Error("Cannot read a deleted entity");
 			}
+			that.registerChangeListener(sPath, oListener);
 			return that.drillDown(oResult, sPath, oGroupLock, bCreateOnDemand);
 		});
 	};

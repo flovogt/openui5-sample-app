@@ -46,7 +46,6 @@ sap.ui.define([
 		this.oCache = null;
 		this.oCachePromise = SyncPromise.resolve(null);
 		this.mCacheQueryOptions = undefined;
-		this.fnDeregisterChangeListener = undefined;
 		// used to create cache only for the latest call to #fetchCache
 		this.oFetchCacheCallToken = undefined;
 		// query options resulting from child bindings added when this binding already has data
@@ -124,6 +123,26 @@ sap.ui.define([
 	};
 
 	/**
+	 * Throws an error that the response is being ignored if the current cache is not the expected
+	 * one. The error has the property <code>canceled : true</code>
+	 *
+	 * @param {sap.ui.model.odata.v4.lib._Cache} oExpectedCache - The expected cache
+	 * @throws {Error} If the current cache is not the expected one
+	 *
+	 * @private
+	 */
+	ODataBinding.prototype.assertSameCache = function (oExpectedCache) {
+		var oError;
+
+		if (this.oCache !== oExpectedCache) {
+			oError = new Error(this + " is ignoring response from inactive cache: "
+				+ oExpectedCache);
+			oError.canceled = true;
+			throw oError;
+		}
+	};
+
+	/**
 	 * Checks binding-specific parameters from the given map. "Binding-specific" parameters are
 	 * those with a key starting with '$$', i.e. OData query options provided as binding parameters
 	 * are ignored. The following parameters are supported, if the parameter name is contained in
@@ -133,7 +152,6 @@ sap.ui.define([
 	 *     {@link sap.ui.model.odata.v4.ODataListBinding#updateAnalyticalInfo} (but without
 	 *     validation here)
 	 *   <li> '$$canonicalPath' with value <code>true</code>
-	 *   <li> '$$clearSelectionOnFilter' with value <code>true</code>
 	 *   <li> '$$groupId' with allowed values as specified in {@link #checkGroupId}
 	 *   <li> '$$updateGroupId' with allowed values as specified in {@link #checkGroupId}
 	 *   <li> '$$inheritExpandSelect' with allowed values <code>false</code> and <code>true</code>
@@ -215,7 +233,6 @@ sap.ui.define([
 						});
 					// falls through
 				case "$$canonicalPath":
-				case "$$clearSelectionOnFilter":
 				case "$$noPatch":
 				case "$$ownRequest":
 				case "$$patchWithoutSideEffects":
@@ -228,26 +245,6 @@ sap.ui.define([
 					throw new Error("Unknown binding-specific parameter: " + sKey);
 			}
 		});
-	};
-
-	/**
-	 * Throws an error that the response is being ignored if the current cache is not the expected
-	 * one. The error has the property <code>canceled : true</code>
-	 *
-	 * @param {sap.ui.model.odata.v4.lib._Cache} oExpectedCache - The expected cache
-	 * @throws {Error} If the current cache is not the expected one
-	 *
-	 * @private
-	 */
-	ODataBinding.prototype.checkSameCache = function (oExpectedCache) {
-		var oError;
-
-		if (this.oCache !== oExpectedCache) {
-			oError = new Error(this + " is ignoring response from inactive cache: "
-				+ oExpectedCache);
-			oError.canceled = true;
-			throw oError;
-		}
 	};
 
 	/**
@@ -371,7 +368,7 @@ sap.ui.define([
 				undefined, sGroupId, oOldCache);
 		}
 		if (oOldCache && oOldCache !== oCache) {
-			this.deregisterChangeListener();
+			oOldCache.deregisterChangeListener("", this);
 			oOldCache.setActive(false);
 		}
 		if (this.mLateQueryOptions) {
@@ -383,26 +380,20 @@ sap.ui.define([
 	};
 
 	/**
-	 * Deregisters the binding using the function it got via {@link #setDeregisterChangeListener}.
-	 *
-	 * @private
-	 */
-	ODataBinding.prototype.deregisterChangeListener = function () {
-		this.fnDeregisterChangeListener?.();
-		this.fnDeregisterChangeListener = undefined;
-	};
-
-	/**
 	 * Destroys the object. The object must not be used anymore after this function was called.
 	 *
 	 * @public
 	 * @since 1.66
 	 */
 	ODataBinding.prototype.destroy = function () {
+		var that = this;
+
 		this.mCacheByResourcePath = undefined;
-		this.deregisterChangeListener();
 		this.oCachePromise.then(function (oOldCache) {
-			oOldCache?.setActive(false);
+			if (oOldCache) {
+				oOldCache.deregisterChangeListener("", that);
+				oOldCache.setActive(false);
+			}
 		}, function () {});
 		this.oCache = null;
 		this.oCachePromise = SyncPromise.resolve(null); // be nice to #withCache
@@ -437,6 +428,31 @@ sap.ui.define([
 	 * @name sap.ui.model.odata.v4.ODataBinding#doCreateCache
 	 * @private
 	 */
+
+	/**
+	 * Deregisters the given change listener from the given path.
+	 *
+	 * @param {string} sPath
+	 *   The absolute path
+	 * @param {object} oListener
+	 *   The change listener
+	 *
+	 * @private
+	 */
+	ODataBinding.prototype.doDeregisterChangeListener = function (sPath, oListener) {
+		this.oCachePromise.then((oCache) => {
+			if (oCache) {
+				const sRelativePath = _Helper.getRelativePath(sPath, this.getResolvedPath());
+				if (sRelativePath !== undefined) {
+					oCache.deregisterChangeListener(sRelativePath, oListener);
+					return;
+				}
+			}
+			if (this.bRelative && this.oContext && this.oContext.getBinding) {
+				this.oContext.getBinding().doDeregisterChangeListener(sPath, oListener);
+			}
+		});
+	};
 
 	/**
 	 * @override
@@ -840,6 +856,10 @@ sap.ui.define([
 			if (sRelativePath === undefined && this.oReturnValueContext) {
 				sRelativePath = _Helper.getRelativePath(sPath, this.oReturnValueContext.getPath());
 			}
+			// Can only become undefined when a list binding's context has been parked and is
+			// destroyed later. Such a context does no longer have a subpath of the binding's
+			// path. The only caller in this case is ODataPropertyBinding#deregisterChangeListener
+			// which can safely be ignored.
 			return sRelativePath;
 		}
 		return sPath;
@@ -1453,19 +1473,6 @@ sap.ui.define([
 	ODataBinding.prototype.resetInvalidDataState = function () {};
 
 	/**
-	 * Sets the function to deregister the binding as change listener again. Called back when
-	 * registering it as a change listener.
-	 *
-	 * @param {function} fnDeregisterChangeListener - the function to deregister
-	 *
-	 * @private
-	 * @see #deregisterChangeListener
-	 */
-	ODataBinding.prototype.setDeregisterChangeListener = function (fnDeregisterChangeListener) {
-		this.fnDeregisterChangeListener = fnDeregisterChangeListener;
-	};
-
-	/**
 	 * Sets the change reason that {@link #resume} fires. If there are multiple changes, the
 	 * "strongest" change reason wins: Filter > Sort > Refresh > Change.
 	 *
@@ -1598,6 +1605,7 @@ sap.ui.define([
 	[
 		"adjustPredicate",
 		"destroy",
+		"doDeregisterChangeListener",
 		"hasPendingChangesForPath"
 	].forEach(function (sMethod) { // method not final, allow for "super" calls
 		asODataBinding.prototype[sMethod] = ODataBinding.prototype[sMethod];

@@ -80,7 +80,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @public
 	 * @since 1.110
@@ -573,15 +573,11 @@ sap.ui.define([
 	};
 
 	Menu.prototype._setItemVisibility = function (oItem, bVisible) {
-		if (!this._oItemsContainer) {
-			return;
-		}
-
 		var oList = this._oItemsContainer._getNavigationList().getItems();
 		var oListItem = oList.find(function (oListItem) {
 			return oListItem._key == oItem.getId();
 		});
-		oListItem?.setVisible(bVisible);
+		oListItem && oListItem.setVisible(bVisible);
 	};
 
 	Menu.prototype._initQuickActionContainer = function () {

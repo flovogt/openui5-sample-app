@@ -83,8 +83,6 @@ sap.ui.define([
 		assert.strictEqual(oBinding.oCachePromise.getResult(), null);
 		assert.ok(oBinding.hasOwnProperty("mCacheQueryOptions"));
 		assert.strictEqual(oBinding.mCacheQueryOptions, undefined);
-		assert.ok(oBinding.hasOwnProperty("fnDeregisterChangeListener"));
-		assert.strictEqual(oBinding.fnDeregisterChangeListener, undefined);
 		assert.ok(oBinding.hasOwnProperty("oFetchCacheCallToken"));
 		assert.strictEqual(oBinding.oFetchCacheCallToken, undefined);
 		assert.ok(oBinding.hasOwnProperty("mLateQueryOptions"));
@@ -99,6 +97,7 @@ sap.ui.define([
 	QUnit.test("destroy", function (assert) {
 		var oBinding = new ODataBinding(),
 			oCache = {
+				deregisterChangeListener : function () {},
 				setActive : function () {}
 			},
 			// we might become asynchronous due to auto $expand/$select reading $metadata
@@ -110,7 +109,8 @@ sap.ui.define([
 		oBinding.mCacheQueryOptions = {};
 		oBinding.oContext = {}; // @see sap.ui.model.Binding's c'tor
 		oBinding.oFetchCacheCallToken = {};
-		this.mock(oBinding).expects("deregisterChangeListener").withExactArgs();
+		this.mock(oCache).expects("deregisterChangeListener")
+			.withExactArgs("", sinon.match.same(oBinding));
 		this.mock(oCache).expects("setActive").withExactArgs(false);
 
 		// code under test
@@ -1699,6 +1699,7 @@ sap.ui.define([
 			},
 			mMergedQueryOptions = {},
 			oOldCache = {
+				deregisterChangeListener : function () {},
 				setActive : function () {},
 				setLateQueryOptions : function () {}
 			},
@@ -1713,8 +1714,8 @@ sap.ui.define([
 			.withExactArgs("/resource/path", sinon.match.same(mMergedQueryOptions), undefined,
 				undefined, "~sGroupId~", sinon.match.same(oOldCache))
 			.returns(oNewCache);
-		this.mock(oBinding).expects("deregisterChangeListener").exactly(bOldCacheIsReused ? 0 : 1)
-			.withExactArgs();
+		this.mock(oOldCache).expects("deregisterChangeListener").exactly(bOldCacheIsReused ? 0 : 1)
+			.withExactArgs("", sinon.match.same(oBinding));
 		this.mock(oOldCache).expects("setActive").exactly(bOldCacheIsReused ? 0 : 1)
 			.withExactArgs(false);
 		this.mock(oOldCache).expects("setLateQueryOptions")
@@ -1764,6 +1765,7 @@ sap.ui.define([
 			oContext = {},
 			mMergedQueryOptions = {},
 			oOldCache = {
+				deregisterChangeListener : function () {},
 				setActive : function () {}
 			},
 			mQueryOptions = {},
@@ -1794,7 +1796,8 @@ sap.ui.define([
 			.returns(oCache);
 		this.mock(oCache).expects("setLateQueryOptions").exactly(bHasLateQueryOptions ? 1 : 0)
 			.withExactArgs(sinon.match.same(mLateQueryOptions));
-		this.mock(oBinding).expects("deregisterChangeListener").withExactArgs();
+		this.mock(oOldCache).expects("deregisterChangeListener")
+			.withExactArgs("", sinon.match.same(oBinding));
 		this.mock(oOldCache).expects("setActive").withExactArgs(false);
 
 		assert.strictEqual(
@@ -1889,6 +1892,7 @@ sap.ui.define([
 			},
 			mMergedQueryOptions = {},
 			oOldCache = {
+				deregisterChangeListener : function () {},
 				setActive : function () {}
 			},
 			mQueryOptions = {};
@@ -1907,7 +1911,8 @@ sap.ui.define([
 				sinon.match.same(oContext), "deep/resource/path", "~sGroupId~",
 				sinon.match.same(oOldCache))
 			.returns(oCache1);
-		this.mock(oBinding).expects("deregisterChangeListener").withExactArgs();
+		this.mock(oOldCache).expects("deregisterChangeListener")
+			.withExactArgs("", sinon.match.same(oBinding));
 		this.mock(oOldCache).expects("setActive").withExactArgs(false);
 
 		assert.strictEqual(
@@ -2606,11 +2611,7 @@ sap.ui.define([
 
 	//*********************************************************************************************
 [
-	"$$canonicalPath",
-	"$$clearSelectionOnFilter",
-	"$$noPatch",
-	"$$ownRequest",
-	"$$patchWithoutSideEffects"
+	"$$canonicalPath", "$$noPatch", "$$ownRequest", "$$patchWithoutSideEffects"
 ].forEach(function (sName) {
 	QUnit.test("checkBindingParameters, " + sName, function (assert) {
 		var aAllowedParameters = [sName],
@@ -3049,23 +3050,70 @@ sap.ui.define([
 });
 
 	//*********************************************************************************************
-	QUnit.test("deregisterChangeListener", function (assert) {
+["", "relative/path"].forEach(function (sRelativePath) {
+	QUnit.test(`doDeregisterChangeListener: matching cache, path=${sRelativePath}`, function () {
+		const oCache = {
+			deregisterChangeListener : mustBeMocked
+		};
+		const oBinding = new ODataBinding({
+			oCachePromise : SyncPromise.resolve(oCache)
+		});
+
+		this.mock(oBinding).expects("getResolvedPath").withExactArgs().returns("/resolved/path");
+		this.mock(_Helper).expects("getRelativePath")
+			.withExactArgs("/absolute/path", "/resolved/path").returns(sRelativePath);
+		this.mock(oCache).expects("deregisterChangeListener")
+			.withExactArgs(sRelativePath, "~oListener~");
+
+		// code under test
+		oBinding.doDeregisterChangeListener("/absolute/path", "~oListener~");
+	});
+});
+
+	//*********************************************************************************************
+[false, true].forEach(function (bCache) {
+	QUnit.test(`doDeregisterChangeListener: no ${bCache ? "matching " : ""} cache`, function () {
+		const oBinding = new ODataBinding({
+			oCachePromise : SyncPromise.resolve(bCache ? {} : null),
+			oContext : {
+				getBinding : mustBeMocked
+			},
+			bRelative : true
+		});
+		const oParentBinding = {
+			doDeregisterChangeListener : mustBeMocked
+		};
+
+		this.mock(oBinding).expects("getResolvedPath").exactly(bCache ? 1 : 0)
+			.withExactArgs().returns("/resolved/path");
+		this.mock(_Helper).expects("getRelativePath").exactly(bCache ? 1 : 0)
+			.withExactArgs("/absolute/path", "/resolved/path").returns(undefined);
+		this.mock(oBinding.oContext).expects("getBinding").withExactArgs().returns(oParentBinding);
+		this.mock(oParentBinding).expects("doDeregisterChangeListener")
+			.withExactArgs("/absolute/path", "~oListener~");
+
+		// code under test
+		oBinding.doDeregisterChangeListener("/absolute/path", "~oListener~");
+	});
+});
+
+	//*********************************************************************************************
+	QUnit.test("doDeregisterChangeListener: no cache and no valid context", function () {
 		const oBinding = new ODataBinding();
-		const fnDeregisterChangeListener = sinon.spy();
 
-		// code under test
-		oBinding.setDeregisterChangeListener(fnDeregisterChangeListener);
+		// code under test - unresolved
+		oBinding.doDeregisterChangeListener();
 
-		assert.strictEqual(oBinding.fnDeregisterChangeListener, fnDeregisterChangeListener);
+		oBinding.oContext = {getBinding : "do not call"};
 
-		// code under test
-		oBinding.deregisterChangeListener();
+		// code under test - absolute with context
+		oBinding.doDeregisterChangeListener();
 
-		assert.ok(fnDeregisterChangeListener.calledOnceWithExactly());
-		assert.strictEqual(oBinding.fnDeregisterChangeListener, undefined);
+		oBinding.bRelative = true;
+		oBinding.oContext = {};
 
-		// code under test
-		oBinding.deregisterChangeListener();
+		// code under test - base context
+		oBinding.doDeregisterChangeListener();
 	});
 
 	//*********************************************************************************************
@@ -3075,6 +3123,7 @@ sap.ui.define([
 		[
 			"adjustPredicate",
 			"destroy",
+			"doDeregisterChangeListener",
 			"hasPendingChangesForPath"
 		].forEach(function (sMethod) {
 			assert.strictEqual(asODataBinding.prototype[sMethod], oBinding[sMethod]);
@@ -3082,7 +3131,7 @@ sap.ui.define([
 	});
 
 	//*********************************************************************************************
-	QUnit.test("checkSameCache", function (assert) {
+	QUnit.test("assertSameCache", function (assert) {
 		var oBinding = new ODataBinding({
 				oCache : {}
 			}),
@@ -3090,10 +3139,10 @@ sap.ui.define([
 				toString : function () { return "~"; }
 			};
 
-		oBinding.checkSameCache(oBinding.oCache);
+		oBinding.assertSameCache(oBinding.oCache);
 
 		try {
-			oBinding.checkSameCache(oCache);
+			oBinding.assertSameCache(oCache);
 			assert.ok(false);
 		} catch (oError) {
 			assert.strictEqual(oError.message,

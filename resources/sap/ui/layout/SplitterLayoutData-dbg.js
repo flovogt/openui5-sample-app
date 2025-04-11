@@ -22,7 +22,7 @@ sap.ui.define(['sap/ui/core/LayoutData', './library'],
 	 * Allowed size values are numeric values ending in "px", "rem", "%" and "auto".
 
 	 * @extends sap.ui.core.LayoutData
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public

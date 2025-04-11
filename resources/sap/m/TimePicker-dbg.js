@@ -176,7 +176,7 @@ function(
 		 * @extends sap.m.DateTimeField
 		 *
 		 * @author SAP SE
-		 * @version 1.120.20
+		 * @version 1.120.11
 		 *
 		 * @constructor
 		 * @public
@@ -621,18 +621,6 @@ function(
 				this.toggleNumericOpen(bOpen);
 			}
 			this._openByClick = true;
-		};
-
-		/**
-		 * Onmouseup handler assures moving of the cursor at the beginning of the input field
-		 * if there is mask set and there is no entry in the input field.
-		 *
-		 * @private
-		 */
-		TimePicker.prototype.onmouseup = function() {
-			if (this._isMaskEnabled() && this._isValueEmpty()) {
-				this._setCursorPosition(0);
-			}
 		};
 
 		/**

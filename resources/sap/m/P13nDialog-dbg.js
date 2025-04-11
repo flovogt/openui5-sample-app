@@ -60,7 +60,7 @@ sap.ui.define([
 	 *        tables.
 	 * @extends sap.m.Dialog
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 * @constructor
 	 * @deprecated as of version 1.98. Use the {@link sap.m.p13n.Popup} instead.
 	 * @public

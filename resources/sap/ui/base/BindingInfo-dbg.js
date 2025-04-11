@@ -19,29 +19,6 @@ sap.ui.define([
 	// Marker to not 'forget' ui5Objects
 	var sUI5ObjectMarker = Symbol("ui5object");
 
-	// Marker symbol for BindingInfos which already have extracted a
-	// named model from their path
-	const MODEL_NAME_EXTRACTED = Symbol("ModelNameExtracted");
-
-	/**
-	 * Checks if the "path" of the given BindingInfo/part contains
-	 * a model name and if so extracts it accordingly.
-	 * @param {sap.ui.base.BindingInfo} oPart the BindingInfo to check for a model name
-	 * @returns {sap.ui.base.BindingInfo} the modified BindingInfo
-	 */
-	function extractModelName(oPart) {
-		if (!oPart[MODEL_NAME_EXTRACTED]) {
-			// if a model separator is found in the path, extract model name and path
-			const iSeparatorPos = oPart.path.indexOf(">");
-			if (iSeparatorPos > 0) {
-				oPart.model = oPart.path.substr(0, iSeparatorPos);
-				oPart.path = oPart.path.substr(iSeparatorPos + 1);
-				oPart[MODEL_NAME_EXTRACTED] = true;
-			}
-		}
-		return oPart;
-	}
-
 	/**
 	 * This module is responsible for the following tasks:
 	 *   - extracting and parsing binding-info objects
@@ -63,6 +40,8 @@ sap.ui.define([
 		 * @ui5-restricted sap.ui.base, sap.ui.core
 		 */
 		createProperty: function(oBindingInfo) {
+			var iSeparatorPos;
+
 			// only one binding object with one binding specified
 			if (!oBindingInfo.parts) {
 				oBindingInfo.parts = [];
@@ -95,7 +74,11 @@ sap.ui.define([
 
 				// if a model separator is found in the path, extract model name and path
 				if (oPart.path !== undefined) {
-					extractModelName(oPart);
+					iSeparatorPos = oPart.path.indexOf(">");
+					if (iSeparatorPos > 0) {
+						oPart.model = oPart.path.substr(0, iSeparatorPos);
+						oPart.path = oPart.path.substr(iSeparatorPos + 1);
+					}
 				}
 				// if a formatter exists the binding mode can be one way or one time only
 				if (oBindingInfo.formatter &&
@@ -135,7 +118,11 @@ sap.ui.define([
 			}
 
 			// if a model separator is found in the path, extract model name and path
-			extractModelName(oBindingInfo);
+			var iSeparatorPos = oBindingInfo.path.indexOf(">");
+			if (iSeparatorPos > 0) {
+				oBindingInfo.model = oBindingInfo.path.substr(0, iSeparatorPos);
+				oBindingInfo.path = oBindingInfo.path.substr(iSeparatorPos + 1);
+			}
 			return oBindingInfo;
 		},
 
@@ -147,8 +134,14 @@ sap.ui.define([
 		 * @ui5-restricted sap.ui.base, sap.ui.core
 		 */
 		createObject: function(oBindingInfo) {
+			var iSeparatorPos;
+
 			// if a model separator is found in the path, extract model name and path
-			extractModelName(oBindingInfo);
+			iSeparatorPos = oBindingInfo.path.indexOf(">");
+			if (iSeparatorPos > 0) {
+				oBindingInfo.model = oBindingInfo.path.substr(0, iSeparatorPos);
+				oBindingInfo.path = oBindingInfo.path.substr(iSeparatorPos + 1);
+			}
 			return oBindingInfo;
 		},
 

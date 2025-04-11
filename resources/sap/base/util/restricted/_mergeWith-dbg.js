@@ -10,7 +10,7 @@
  * @alias module:sap/base/util/restricted/_mergeWith
  * @author SAP SE
  * @since 1.71
- * @version 1.120.20
+ * @version 1.120.11
  * @private
  * @ui5-restricted
 */

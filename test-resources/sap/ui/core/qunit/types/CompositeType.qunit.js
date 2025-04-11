@@ -72,10 +72,4 @@ sap.ui.define([
 		// code under test: method exists and does nothing
 		assert.strictEqual(CompositeType.prototype.processPartTypes(), undefined);
 	});
-
-	//*********************************************************************************************
-	QUnit.test("getPartsListeningToTypeChanges", function (assert) {
-		// code under test
-		assert.deepEqual(CompositeType.prototype.getPartsListeningToTypeChanges(), []);
-	});
 });

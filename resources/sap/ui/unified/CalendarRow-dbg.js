@@ -88,7 +88,7 @@ sap.ui.define([
 	 * @class
 	 * A calendar row with a header and appointments. The Appointments will be placed in the defined interval.
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -364,9 +364,8 @@ sap.ui.define([
 		this._bRTL  = Configuration.getRTL();
 		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 
-		var pattern = this._oRb.getText("APPOINTMENT_DATE_TIME_DESCRIPTION", [_getLocaleData.call(this).getDatePattern("long"), _getLocaleData.call(this).getTimePattern("medium")]);
 		this._oFormatAria = DateFormat.getDateTimeInstance({
-			pattern: "EEEE " + pattern
+			pattern: "EEEE dd/MM/YYYY 'at' " + _getLocaleData.call(this).getTimePattern("medium")
 		});
 
 		this._aVisibleAppointments = [];

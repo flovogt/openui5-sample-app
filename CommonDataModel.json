@@ -1,0 +1,95 @@
+{
+	"_version": "3.0.0",
+	"identification": {
+		"id": "test-test-test-test-test-test",
+		"entityType": "bundle"
+	},
+	"payload": {
+		"catalogs": [
+			{
+				"_version": "3.0.0",
+				"identification": {
+					"id": "defaultCatalogId",
+					"title": "{{title}}",
+					"entityType": "catalog",
+					"i18n": "i18n/defaultCatalogId.properties"
+				},
+				"payload": {
+					"viz": []
+				}
+			}
+		],
+		"groups": [
+			{
+				"_version": "3.0.0",
+				"identification": {
+					"id": "defaultGroupId",
+					"title": "{{title}}",
+					"entityType": "group",
+					"i18n": "i18n/defaultGroupId.properties"
+				},
+				"payload": {
+					"viz": [
+						{
+							"id": "ui5.app1.display",
+							"appId": "ui5.app1",
+							"vizId": "App1-display"
+						},
+						{
+							"id": "ui5.app2.display",
+							"appId": "ui5.app2",
+							"vizId": "App2-display"
+						}
+					]
+				}
+			}
+		],
+		"sites": [
+			{
+				"_version": "3.0.0",
+				"identification": {
+					"id": "test-test-test-test-test-test",
+					"entityType": "site",
+					"title": "Launchpad site",
+					"description": "Awesome Launchpad site"
+				},
+				"payload": {
+					"config": {
+						"ushellConfig": {
+							"renderers": {
+								"fiori2": {
+									"componentData": {
+										"config": {
+											"applications": {
+												"Shell-home": {}
+											},
+											"enableSearch": false,
+											"enablePersonalization": true,
+											"enableSetTheme": true,
+											"enableSetLanguage": true
+										}
+									}
+								}
+							}
+						}
+					},
+					"groupsOrder": [
+						"defaultGroupId"
+					],
+					"sap.cloud.portal": {
+						"config": {
+							"theme.id": "sap_fiori_3",
+							"theme.active": [
+								"sap_fiori_3",
+								"sap_fiori_3_dark",
+								"sap_belize_hcb",
+								"sap_belize_hcw"
+							],
+							"ui5VersionNumber": "1.120.11"
+						}
+					}
+				}
+			}
+		]
+	}
+}

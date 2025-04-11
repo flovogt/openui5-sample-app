@@ -621,7 +621,7 @@ sap.ui.define([
 			 */
 			if (arguments.length === 0) {
 				Log.warning(
-					"[FUTURE FATAL] Legacy variant usage of sap.ui.core.theming.Parameters.get API detected. Do not use the Parameters.get() API to retrieve ALL theming parameters, " +
+					"Legacy variant usage of sap.ui.core.theming.Parameters.get API detected. Do not use the Parameters.get() API to retrieve ALL theming parameters, " +
 					"as this will lead to unwanted synchronous requests. " +
 					"Use the asynchronous API variant instead and retrieve a fixed set of parameters.",
 					"LegacyParametersGet",
@@ -666,7 +666,7 @@ sap.ui.define([
 				}
 
 				Log.warning(
-					"[FUTURE FATAL] Legacy variant usage of sap.ui.core.theming.Parameters.get API detected for parameter(s): '" + aNames.join(", ") +
+					"Legacy variant usage of sap.ui.core.theming.Parameters.get API detected for parameter(s): '" + aNames.join(", ") +
 					"'. This could lead to bad performance and additional synchronous XHRs, as parameters might not be available yet. Use asynchronous variant instead.",
 					"LegacyParametersGet",
 					"sap.ui.support",
@@ -768,11 +768,7 @@ sap.ui.define([
 		 * the next time they are queried via the method <code>get</code>.
 		 *
 		 * @public
-		 * @deprecated As of version 1.92 without a replacement. Application code should
-		 *   not be able to interfere with the automated determination of theme parameters.
-		 *   Resetting the parameters unnecessarily could impact performance. Please use
-		 *   the (potentially async) API to get parameter values and rely on the framework
-		 *   to update parameter values when the theme changes.
+		 * @deprecated since 1.92
 		 */
 		Parameters.reset = function() {
 			this._reset.apply(this, arguments);

@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -2098,11 +2098,11 @@ function(
 	};
 
 	// this gets called when the focus is on the item or its content
-	ListBase.prototype.onItemFocusIn = function(oItem, oFocusedControl, oEvent) {
+	ListBase.prototype.onItemFocusIn = function(oItem, oFocusedControl) {
 		// focus and scroll handling for sticky elements
 		this._handleStickyItemFocus(oItem.getDomRef());
 
-		if (oItem !== oFocusedControl || oEvent.isMarked("contentAnnouncementGenerated") ||
+		if (oItem !== oFocusedControl ||
 			!ControlBehavior.isAccessibilityEnabled()) {
 			return;
 		}
@@ -2130,13 +2130,9 @@ function(
 	};
 
 	ListBase.prototype.onItemFocusOut = function(oItem) {
-		this.removeInvisibleTextAssociation(oItem.getDomRef());
-	};
-
-	ListBase.prototype.removeInvisibleTextAssociation = function(oDomRef) {
-		const oInvisibleText = ListBase.getInvisibleText(),
-			$FocusedItem = jQuery(oDomRef || document.activeElement);
-		$FocusedItem.removeAriaLabelledBy(oInvisibleText.getId());
+		var oInvisibleText = ListBase.getInvisibleText(),
+			$ItemDomRef = jQuery(oItem.getDomRef());
+		$ItemDomRef.removeAriaLabelledBy(oInvisibleText.getId());
 	};
 
 	ListBase.prototype.updateInvisibleText = function(sText, oItemDomRef, bPrepend) {

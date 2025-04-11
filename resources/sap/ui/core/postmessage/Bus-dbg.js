@@ -36,7 +36,7 @@ function (
 	 * @alias sap.ui.core.postmessage.Bus
 	 * @author SAP SE
 	 * @since 1.56.0
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 * @private
 	 * @ui5-restricted sap.ui.core.support, sap.ui.support, sap.ui.rta
 	 */

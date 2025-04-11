@@ -161,7 +161,7 @@ function(
 	 * @extends sap.m.InputBase
 	 * @implements sap.ui.core.IAccessKeySupport
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -619,8 +619,6 @@ function(
 		// even though there is no user input (check Input.prototype.onsapright).
 		this._setTypedInValue("");
 		this._bDoTypeAhead = false;
-		this._isValueInitial = false;
-		this._previousInputType = this.getType();
 
 		// indicates whether input is clicked (on mobile) or the clear button
 		// used for identifying whether dialog should be open.
@@ -700,10 +698,6 @@ function(
 
 		InputBase.prototype.onBeforeRendering.call(this);
 
-		if (!this.getDomRef() && this.getValue()) {
-			this._isValueInitial = true;
-		}
-
 		if (this.getShowClearIcon()) {
 			this._getClearIcon().setProperty("visible", bShowClearIcon);
 		} else if (this._oClearButton) {
@@ -756,17 +750,6 @@ function(
 			it's new, because the old is already switched to have the value state header as parent */
 			this._updateSuggestionsPopoverValueState();
 		}
-	};
-
-	Input.prototype.onAfterRendering = function() {
-		InputBase.prototype.onAfterRendering.call(this);
-
-		if ((this._isValueInitial || this.getType() !== this._previousInputType ) && this.getType() === InputType.Password ) {
-			this.getDomRef("inner").value = this.getProperty("value");
-			this._isValueInitial = false;
-		}
-
-		this._previousInputType = this.getType();
 	};
 
 	/**
@@ -1465,22 +1448,19 @@ function(
 	 * @param {jQuery.Event} oEvent Keyboard event.
 	 */
 	Input.prototype.onsapenter = function(oEvent) {
-		const bPopupOpened = this._isSuggestionsPopoverOpen();
-		const bFocusInPopup = !this.hasStyleClass("sapMFocus") && bPopupOpened;
-		const aItems = this._hasTabularSuggestions() ? this.getSuggestionRows() : this.getSuggestionItems();
-		const oSuggestionsPopover = this._getSuggestionsPopover();
-		const oSelectedItem = oSuggestionsPopover?.getItemsContainer()?.getSelectedItem();
-		const sText = oSelectedItem?.getTitle?.() || oSelectedItem?.getCells?.()[0]?.getText?.() || "";
-		const bPendingSuggest = !!this._iSuggestDelay && !sText.toLowerCase().includes(this._getTypedInValue().toLowerCase());
-		let bFireSubmit = this.getEnabled() && this.getEditable();
-		let iValueLength;
+		var bPopupOpened = this._isSuggestionsPopoverOpen(),
+			bFocusInPopup = !this.hasStyleClass("sapMFocus") && bPopupOpened,
+			aItems = this._hasTabularSuggestions() ? this.getSuggestionRows() : this.getSuggestionItems(),
+			bFireSubmit = this.getEnabled() && this.getEditable(),
+			iValueLength, oSelectedItem;
 
 		// when enter is pressed before the timeout of suggestion delay, suggest event is cancelled
 		this.cancelPendingSuggest();
 
 		bFocusInPopup && this.setSelectionUpdatedFromList(true);
 
-		if (this.getShowSuggestion() && this._bDoTypeAhead && bPopupOpened && !this.isComposingCharacter() && !bPendingSuggest) {
+		if (this.getShowSuggestion() && this._bDoTypeAhead && bPopupOpened) {
+			oSelectedItem = this._getSuggestionsPopover().getItemsContainer().getSelectedItem();
 			if (this._hasTabularSuggestions()) {
 				oSelectedItem && this.setSelectionRow(oSelectedItem, true);
 			} else {
@@ -3111,16 +3091,9 @@ function(
 		} else {
 			oPopover
 				.attachAfterClose(function() {
-					const oList = oSuggPopover.getItemsContainer();
-					const oSuggestionsPopover = this._getSuggestionsPopover();
-					const oSelectedItem = oSuggestionsPopover?.getItemsContainer()?.getSelectedItem();
-					const oDomRef = this.getDomRef();
-					const sText = oSelectedItem?.getTitle?.() || oSelectedItem?.getCells?.()[0]?.getText?.() || "";
-					const bPendingSuggest = !!this._iSuggestDelay && !sText.toLowerCase().includes(this.getValue().toLowerCase());
-
-					if (bPendingSuggest) {
-						return;
-					}
+					var oList = oSuggPopover.getItemsContainer();
+					var oSelectedItem = oList && oList.getSelectedItem();
+					var oDomRef = this.getDomRef();
 
 					if (this.getSelectionUpdatedFromList()) {
 						this.updateSelectionFromList(oSelectedItem);
@@ -3134,7 +3107,7 @@ function(
 
 					// only destroy items in simple suggestion mode
 					if (oList instanceof Table) {
-						oSelectedItem?.removeStyleClass("sapMLIBFocused");
+						oSelectedItem && oSelectedItem.removeStyleClass("sapMLIBFocused");
 						oList.removeSelections(true);
 					} else {
 						oList.destroyItems();

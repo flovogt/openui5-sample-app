@@ -12,7 +12,7 @@ sap.ui.define([], function() {
 	 *
 	 * @class Utility class for asyncHints
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @private
 	 * @ui5-restricted sap.ushell

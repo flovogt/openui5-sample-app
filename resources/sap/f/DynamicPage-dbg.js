@@ -112,7 +112,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -503,7 +503,7 @@ sap.ui.define([
 	};
 
 	DynamicPage.prototype.setShowFooter = function (bShowFooter) {
-		var vResult = this.setProperty("showFooter", bShowFooter, /* bSuppressInvalidate */ true);
+		var vResult = this.setProperty("showFooter", bShowFooter);
 
 		this._toggleFooter(bShowFooter);
 
@@ -621,7 +621,7 @@ sap.ui.define([
 		var vResult = this.setProperty("fitContent", bFitContent, true);
 
 		if (exists(this.$())) {
-			this._toggleScrollingStyles();
+			this._updateFitContainer();
 		}
 
 		return vResult;
@@ -1370,17 +1370,12 @@ sap.ui.define([
 
 		this.toggleStyleClass("sapFDynamicPageWithScroll", bScrollBarNeeded);
 
-		 // update styles for scrolling after a timeout of 0, in order to obtain the final state
-		 // e.g. after the ResizeHandler looped though *all* resized controls (to notify them) =>
-		 // so all of them completed their adjustments for the new size (notably any nested table adjusted its
-		 // visible rows count upon being notified by ResizeHandler for change of height of its container)
-		setTimeout(this._toggleScrollingStyles.bind(this), 0);
+		setTimeout(this._updateFitContainer.bind(this), 0);
 	};
 
-	DynamicPage.prototype._toggleScrollingStyles = function (bNeedsVerticalScrollBar) {
+	DynamicPage.prototype._updateFitContainer = function (bNeedsVerticalScrollBar) {
 		var bNoScrollBar = typeof bNeedsVerticalScrollBar !== 'undefined' ? !bNeedsVerticalScrollBar : !this._needsVerticalScrollBar();
 
-		this.toggleStyleClass("sapFDynamicPageWithScroll", !bNoScrollBar);
 		this.$contentFitContainer.toggleClass("sapFDynamicPageContentFitContainer", bNoScrollBar);
 	};
 
@@ -1859,7 +1854,7 @@ sap.ui.define([
 
 		// FitContainer needs to be updated, when height is changed and scroll bar appear, to enable calc of original height
 		if (bNeedsVerticalScrollBar) {
-			this._toggleScrollingStyles(bNeedsVerticalScrollBar);
+			this._updateFitContainer(bNeedsVerticalScrollBar);
 		}
 
 		this._adjustSnap();
@@ -2000,12 +1995,6 @@ sap.ui.define([
 	 */
 	DynamicPage.prototype._onTitlePress = function () {
 		if (this.getToggleHeaderOnTitleClick() && this._hasVisibleTitleAndHeader()) {
-			if (!this.getHeaderExpanded() && this._headerBiggerThanAllowedToBeExpandedInTitleArea() && !this._preserveHeaderStateOnScroll()) {
-				// if the header will expanded and it is bigger than the allowed height to be shown in the title area
-				// we explicitly move it to the content area unless the preserveHeaderStateOnScroll is set
-				// the header is then always displayed in the title are by definition as is always sticky
-				this._moveHeaderToContentArea(true);
-			}
 			this._titleExpandCollapseWhenAllowed(true /* user interaction */);
 			this.getTitle()._focus();
 		}

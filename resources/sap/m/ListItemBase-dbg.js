@@ -75,7 +75,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -530,7 +530,7 @@ function(
 			this._oDeleteControl, {
 				messageBundleKey: "LIST_ITEM_DELETE_SHORTCUT"
 			},
-		this._oDeleteControl);
+		this);
 
 		this._oDeleteControl.useEnabledPropagator(false);
 
@@ -571,7 +571,7 @@ function(
 			this._oDetailControl, {
 				messageBundleKey: Device.os.macintosh ? "LIST_ITEM_EDIT_SHORTCUT_MAC" : "LIST_ITEM_EDIT_SHORTCUT"
 			},
-		this._oDetailControl);
+		this);
 
 		this._oDetailControl.useEnabledPropagator(false);
 
@@ -1232,12 +1232,12 @@ function(
 
 	// handle propagated focus to make the item row focusable
 	ListItemBase.prototype.onfocusin = function(oEvent) {
-		const oList = this.getList();
+		var oList = this.getList();
 		if (!oList || oEvent.isMarked()) {
 			return;
 		}
 
-		this.informList("FocusIn", oEvent.srcControl, oEvent);
+		this.informList("FocusIn", oEvent.srcControl);
 		oEvent.setMarked();
 	};
 

@@ -126,7 +126,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -879,12 +879,6 @@ sap.ui.define([
 			return;
 		}
 
-		const sTargetTag = oEvent.target.tagName.toLowerCase();
-
-		if (["input", "textarea", "select"].indexOf(sTargetTag) > -1 || oEvent.target.isContentEditable) {
-			return;
-		}
-
 		if (this._isPageIndicatorArrow(oEvent.target)) {
 			// prevent upcoming focusin event on the arrow and focusout on the active page
 			oEvent.preventDefault();
@@ -942,6 +936,13 @@ sap.ui.define([
 		}
 
 		if (!this._bDragging || this._bDragCanceled || oEvent.isMarked("delayedMouseEvent")) {
+			return;
+		}
+
+		const sTargetTag = oEvent.target.tagName.toLowerCase();
+		const bIsEditable = oEvent.target.isContentEditable;
+
+		if (sTargetTag === "input" || sTargetTag === "textarea" || sTargetTag === "select" || bIsEditable) {
 			return;
 		}
 

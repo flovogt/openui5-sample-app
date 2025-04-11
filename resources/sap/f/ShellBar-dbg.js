@@ -14,7 +14,6 @@ sap.ui.define([
 	"sap/m/BarInPageEnabler",
 	"sap/m/BadgeCustomData",
 	"sap/m/Button",
-	"sap/ui/Device",
 	"sap/m/library",
 	"./ShellBarRenderer"
 ],
@@ -27,7 +26,6 @@ function(
 	BarInPageEnabler,
 	BadgeCustomData,
 	Button,
-	Device,
 	mobileLibrary,
 	ShellBarRenderer
 ) {
@@ -58,7 +56,7 @@ function(
 	 * @implements sap.f.IShellBar, sap.m.IBar, sap.tnt.IToolHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -199,13 +197,8 @@ function(
 					parameters: {
 						/**
 						 * Reference to the button that has been pressed
-						 * @deprecated Since version 1.120
 						 */
-						image : {type: "sap.m.Image"},
-						/**
-						 * Reference to the button that has been pressed
-						 */
-						button : {type: "sap.m.Button"}
+						image : {type: "sap.m.Image"}
 					}
 				},
 				/**
@@ -261,10 +254,6 @@ function(
 	// Enhance the prototype with additional content aggregation support
 	AdditionalContentSupport.apply(ShellBar.prototype);
 
-	var SHELBAR_RANGE_SET = "ShellBarRangeSet";
-
-	Device.media.initRangeSet(SHELBAR_RANGE_SET, [600, 1024, 1440, 1920], "px", ["Phone", "Tablet", "Desktop", "LargeDesktop", "ExtraLargeDesktop"], true);
-
 	// Lifecycle
 	ShellBar.prototype.init = function () {
 		this._oFactory = new Factory(this);
@@ -286,19 +275,10 @@ function(
 		this._oResponsiveHandler = new ResponsiveHandler(this);
 
 		this._oAcc = new Accessibility(this);
-
-		this._sRangeSet = SHELBAR_RANGE_SET;
 	};
 
 	ShellBar.prototype.onBeforeRendering = function () {
 		this._assignControls();
-	};
-
-	ShellBar.prototype.onAfterRendering = function () {
-		if (!this.sCurrentRange) {
-			this._assignSearch();
-			this.invalidate();
-		}
 	};
 
 	ShellBar.prototype.exit = function () {
@@ -431,36 +411,30 @@ function(
 		if (oConfig) {
 			if (!this._oManagedSearch) {
 				this._oManagedSearch = this._oFactory.getManagedSearch();
-				this.addStyleClass("sapFShellBarWithSearch", true);
 			}
 		} else {
 			this._oManagedSearch = null;
-			this.addStyleClass("sapFShellBarWithSearch", false);
 		}
 
 		this._bOTBUpdateNeeded = true;
-
 
 		return this;
 	};
 
 	ShellBar.prototype.setShowNotifications = function (bShow) {
-		var oShellbar = this,
-			oParent;
+		var oShellbar = this;
 
 		if (bShow) {
 			if (!this._oNotifications) {
-				oParent = this.getParent();
-
 				this._oNotifications = this._oFactory.getNotifications();
 				this._oNotifications._onBeforeEnterOverflow = function () {
-					var oOTBButtonBadgeData = oParent && oParent._getOverflowButton().getBadgeCustomData();
+					var oOTBButtonBadgeData = this.getParent()._getOverflowButton().getBadgeCustomData();
 					this._bInOverflow = true;
 					oOTBButtonBadgeData && oOTBButtonBadgeData.setVisible(this.getBadgeCustomData().getVisible());
 				};
 
 				this._oNotifications._onAfterExitOverflow = function () {
-					var oOTBButtonBadgeData = oParent && oParent._getOverflowButton().getBadgeCustomData();
+					var oOTBButtonBadgeData = this.getParent()._getOverflowButton().getBadgeCustomData();
 					this._bInOverflow = false;
 					oOTBButtonBadgeData && oOTBButtonBadgeData.setVisible(false);
 				};
@@ -630,10 +604,7 @@ function(
 
 	// Utility
 	ShellBar.prototype._assignControlsToOverflowToolbar = function () {
-		var aAdditionalContent,
-			sMediaRange = this._getCurrentMediaRange();
-
-		this.sCurrentRange = sMediaRange;
+		var aAdditionalContent;
 
 		if (!this._oOverflowToolbar) {return;}
 
@@ -641,14 +612,12 @@ function(
 
 		this.addControlToCollection(this._oToolbarSpacer, this._oOverflowToolbar);
 
-		this._assignSearch();
+		if (this._oManagedSearch) {
+			this.addControlToCollection(this._oManagedSearch, this._oOverflowToolbar);
+		}
 
 		if (this._oSearch) {
 			this.addControlToCollection(this._oSearch, this._oOverflowToolbar);
-		}
-
-		if (this._oCopilot) {
-			this.addControlToCollection(this._oCopilot, this._oOverflowToolbar);
 		}
 
 		if (this._oNotifications) {
@@ -668,25 +637,6 @@ function(
 		return this._oOverflowToolbar;
 	};
 
-	// Utility for assigning Search to the relevant container
-	ShellBar.prototype._assignSearch = function () {
-		var sMediaRange = this._getCurrentMediaRange();
-		this.sCurrentRange = sMediaRange;
-
-		if (this._oManagedSearch && this.sCurrentRange !== "ExtraLargeDesktop") {
-			this.addControlToCollection(this._oManagedSearch, this._oOverflowToolbar);
-			this._oManagedSearch._switchOpenStateOnSearch();
-		} else if (this._oManagedSearch && this.sCurrentRange === "ExtraLargeDesktop") {
-			this._oManagedSearch.setIsOpen(true);
-			this.removeControlFromCollection(this._oManagedSearch, this._oOverflowToolbar);
-		}
-	};
-
-	// Utility for getting current media range
-	ShellBar.prototype._getCurrentMediaRange = function () {
-		return this.$().length && Device.media.getCurrentRange(this._sRangeSet, this.$().outerWidth()).name;
-	};
-
 	//Utility method for preparing and adding control to proper collection
 	ShellBar.prototype.addControlToCollection = function(oControl, aEntity) {
 		var fnAction;
@@ -696,17 +646,6 @@ function(
 			fnAction = aEntity === this._oAdditionalBox ? "addItem" : "addContent";
 		}
 		this._addDataToControl(oControl);
-		aEntity[fnAction](oControl);
-	};
-
-
-	//Utility method for preparing and adding control to proper collection
-	ShellBar.prototype.removeControlFromCollection = function(oControl, aEntity) {
-		var fnAction;
-		if (!Array.isArray(aEntity)) {
-			fnAction = aEntity === this._oAdditionalBox ? "removeItem" : "removeContent";
-		}
-
 		aEntity[fnAction](oControl);
 	};
 

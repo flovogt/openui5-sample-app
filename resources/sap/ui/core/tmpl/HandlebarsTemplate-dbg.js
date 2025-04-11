@@ -46,10 +46,10 @@ sap.ui.define([
 	 * @extends sap.ui.core.tmpl.Template
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 * @alias sap.ui.core.tmpl.HandlebarsTemplate
 	 * @since 1.15
-	 * @deprecated as of version 1.56. Use an {@link sap.ui.core.mvc.XMLView XMLView} or a {@link topic:e6bb33d076dc4f23be50c082c271b9f0 Typed View} instead.
+	 * @deprecated since 1.56
 	 */
 	var HandlebarsTemplate = Template.extend("sap.ui.core.tmpl.HandlebarsTemplate", /** @lends sap.ui.core.tmpl.HandlebarsTemplate.prototype */
 	{

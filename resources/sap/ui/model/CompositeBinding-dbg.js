@@ -166,13 +166,7 @@ sap.ui.define([
 	 * @public
 	 */
 	CompositeBinding.prototype.setType = function(oType, sInternalType) {
-		const that = this;
-
-		function processPartTypes () {
-			that.oType?.processPartTypes(that.aBindings.map(function (oBinding) {
-				return oBinding.getType();
-			}));
-		}
+		var that = this;
 
 		if (oType && !(oType instanceof CompositeType)) {
 			throw new Error("Only CompositeType can be used as type for composite bindings!");
@@ -192,10 +186,9 @@ sap.ui.define([
 
 			this.bRawValues = this.oType.getUseRawValues();
 			this.bInternalValues = this.oType.getUseInternalValues();
-			processPartTypes();
-			oType.getPartsListeningToTypeChanges().forEach((iIndex) => {
-				this.aBindings[iIndex].registerTypeChanged(processPartTypes);
-			});
+			this.oType.processPartTypes(this.aBindings.map(function (oBinding) {
+				return oBinding.getType();
+			}));
 
 			if (this.bRawValues && this.bInternalValues) {
 				throw new Error(this.oType + " has both 'bUseRawValues' & 'bUseInternalValues' set to true. Only one of them is allowed to be true");

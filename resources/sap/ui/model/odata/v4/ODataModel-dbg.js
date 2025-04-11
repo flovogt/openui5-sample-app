@@ -234,7 +234,7 @@ sap.ui.define([
 		 * @extends sap.ui.model.Model
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.120.20
+		 * @version 1.120.11
 		 */
 		ODataModel = Model.extend("sap.ui.model.odata.v4.ODataModel",
 			/** @lends sap.ui.model.odata.v4.ODataModel.prototype */{
@@ -893,10 +893,6 @@ sap.ui.define([
 	 *   Whether a binding relative to an {@link sap.ui.model.odata.v4.Context} uses the canonical
 	 *   path computed from its context's path for data service requests; only the value
 	 *   <code>true</code> is allowed.
-	 * @param {boolean} [mParameters.$$clearSelectionOnFilter]
-	 *   Whether the selection state of the list binding is cleared when a filter is changed; this
-	 *   includes dynamic filters, '$filter', '$search', and <code>$$aggregation.search</code>.
-	 *   Supported since 1.120.13.
 	 * @param {boolean} [mParameters.$$getKeepAliveContext]
 	 *   Whether this binding is considered for a match when {@link #getKeepAliveContext} is called;
 	 *   only the value <code>true</code> is allowed. Must not be combined with <code>$apply</code>,
@@ -1450,16 +1446,13 @@ sap.ui.define([
 	 *   the longtext URL
 	 * @param {string} [sCachePath]
 	 *   The cache-relative path to the entity; used to resolve the targets
-	 * @param {object} [oOriginalMessage=oRawMessage]
-	 *   The original message object which is used to create the technical details
 	 * @returns {sap.ui.core.message.Message}
 	 *   The created UI5 message object
 	 *
 	 * @private
 	 */
 	// eslint-disable-next-line valid-jsdoc -- .@$ui5. is not understood properly
-	ODataModel.prototype.createUI5Message = function (oRawMessage, sResourcePath, sCachePath,
-			oOriginalMessage = oRawMessage) {
+	ODataModel.prototype.createUI5Message = function (oRawMessage, sResourcePath, sCachePath) {
 		var bIsBound = typeof oRawMessage.target === "string",
 			sMessageLongtextUrl = oRawMessage.longtextUrl,
 			aTargets,
@@ -1494,7 +1487,7 @@ sap.ui.define([
 			// Note: "" instead of undefined makes filtering easier (agreement with FE!)
 			target : bIsBound ? aTargets : "",
 			technical : oRawMessage.technical,
-			technicalDetails : _Helper.createTechnicalDetails(oOriginalMessage),
+			technicalDetails : _Helper.createTechnicalDetails(oRawMessage),
 			type : aMessageTypes[oRawMessage.numericSeverity] || MessageType.None
 		});
 	};
@@ -2438,49 +2431,24 @@ sap.ui.define([
 
 	/**
 	 * Reports the given OData transition messages by firing a <code>messageChange</code> event with
-	 * the new messages. Takes care of adjusting message targets for bound operations' binding
-	 * parameters.
+	 * the new messages.
 	 *
 	 * @param {object[]} aMessages
 	 *   An array of messages suitable for {@link #createUI5Message}
 	 * @param {string} [sResourcePath]
-	 *   The resource path of the cache that saw the messages; used to resolve the longtext URL and
-	 *   for adjusting a message target in case it is an operation parameter, except the binding
-	 *   parameter
+	 *   The resource path of the cache that saw the messages; used to resolve the longtext URL
 	 *
 	 * @private
 	 */
 	ODataModel.prototype.reportTransitionMessages = function (aMessages, sResourcePath) {
-		var sContextPath, oOperationMetadata;
+		var that = this;
 
-		if (!aMessages.length) {
-			return;
+		if (aMessages && aMessages.length) {
+			Messaging.updateMessages(undefined, aMessages.map(function (oMessage) {
+				oMessage.transition = true;
+				return that.createUI5Message(oMessage, sResourcePath);
+			}));
 		}
-
-		if (sResourcePath) {
-			const oMetaModel = this.getMetaModel();
-			sContextPath = "/" + sResourcePath.split("?")[0]; // remove query string
-			const sMetaPath = _Helper.getMetaPath(sContextPath);
-			const vMetadata = oMetaModel.getObject(sMetaPath);
-			if (Array.isArray(vMetadata)) {
-				// normally, ODCB#_invoke has already checked that there is exactly one overload;
-				// in rare case w/o #invoke, such a check is missing
-				oOperationMetadata = oMetaModel.getObject(sMetaPath + "/@$ui5.overload/0");
-				sContextPath = sContextPath.slice(0, sContextPath.lastIndexOf("/"));
-			}
-		}
-
-		Messaging.updateMessages(undefined, aMessages.map((oMessage) => {
-			const oOriginalMessage = oMessage;
-			if (oOperationMetadata) {
-				oMessage = _Helper.clone(oMessage);
-				// make targets absolute, will not be adjusted again in #createUI5Message
-				_Helper.adjustTargets(oMessage, oOperationMetadata, undefined, sContextPath);
-			}
-			oMessage.transition = true;
-
-			return this.createUI5Message(oMessage, sResourcePath, undefined, oOriginalMessage);
-		}));
 	};
 
 	/**

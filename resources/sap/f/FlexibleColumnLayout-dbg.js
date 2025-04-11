@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.20
+	 * @version 1.120.11
 	 *
 	 * @constructor
 	 * @public
@@ -1638,7 +1638,7 @@ sap.ui.define([
 	FlexibleColumnLayout.prototype._enterInteractiveResizeMode = function (bTouch) {
 		var oSeparatorPosition = this._oMoveInfo.separatorPosition;
 
-		this.toggleStyleClass("sapFFLActiveResize", true);
+		this._$overlay.css("display", "block");
 		this._$overlaySeparator.css(oSeparatorPosition.direction, oSeparatorPosition.x);
 		this._oMoveInfo.separator.style.visibility = "hidden";
 
@@ -1652,7 +1652,7 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._exitInteractiveResizeMode = function () {
-		this.toggleStyleClass("sapFFLActiveResize", false);
+		this._$overlay.css("display", "");
 		this._oMoveInfo.separator.style.visibility = "";
 		this._oMoveInfo.separator.focus();
 		this._ignoreMouse = false;
