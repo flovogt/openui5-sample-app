@@ -7,6 +7,7 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	"sap/ui/core/Element",
 	'sap/ui/core/EnabledPropagator',
 	'sap/ui/core/IconPool',
 	'./delegate/ValueStateMessage',
@@ -19,7 +20,7 @@ sap.ui.define([
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/core/Lib",
-    // jQuery Plugin "cursorPos"
+	// jQuery Plugin "cursorPos"
 	"sap/ui/dom/jquery/cursorPos",
 	// jQuery Plugin "getSelectedText"
 	"sap/ui/dom/jquery/getSelectedText",
@@ -29,6 +30,7 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	Element,
 	EnabledPropagator,
 	IconPool,
 	ValueStateMessage,
@@ -63,10 +65,16 @@ function(
 	 * The <code>sap.m.InputBase</code> control provides a basic functionality for input controls.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.ui.core.IFormContent
+	 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ILabelable
+	 *
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+	 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+	 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -76,7 +84,12 @@ function(
 	var InputBase = Control.extend("sap.m.InputBase", /** @lends sap.m.InputBase.prototype */ {
 		metadata: {
 
-			interfaces : ["sap.ui.core.IFormContent"],
+			interfaces : [
+				"sap.ui.core.IFormContent",
+				"sap.ui.core.ISemanticFormContent",
+				"sap.m.IToolbarInteractiveControl",
+				"sap.ui.core.ILabelable"
+			],
 			library: "sap.m",
 			properties: {
 
@@ -187,7 +200,6 @@ function(
 				 * Defines the formatted text that appears in the value state message pop-up.
 				 * It can include links. If both <code>valueStateText</code> and <code>formattedValueStateText</code>
 				 * are set - the latter is shown.
-				 * @experimental Since 1.78. This aggregation is experimental and provides only limited functionality. Also the API might be changed in future.
 				 * @since 1.78
 				 */
 				formattedValueStateText: { type: "sap.m.FormattedText", multiple: false },
@@ -195,7 +207,6 @@ function(
 				/**
 				 * Clone of the <code>formattedValueStateText</code> aggregation created for the accessibility elements used
 				 * by screen readers.
-				 * @experimental Since 1.84. This aggregation is experimental and provides only limited functionality. Also the API might be changed in future.
 				 * @since 1.84
 				 */
 				_invisibleFormattedValueStateText: { type: "sap.m.FormattedText", multiple: false, visibility: "hidden" },
@@ -305,6 +316,8 @@ function(
 		this.bRenderingPhase = false;
 
 		this._oValueStateMessage = new ValueStateMessage(this);
+		this._aValueStateLinks = [];
+
 		// handle composition events & validation of composition symbols
 		this._bIsComposingCharacter = false;
 
@@ -416,8 +429,6 @@ function(
 			sValueStateMessageHiddenText && this._oInvisibleMessage.announce(sValueStateMessageHiddenText.textContent);
 			this.setErrorMessageAnnouncementState(false);
 		}
-
-		this.$("message").text(this.getValueStateText());
 
 		// now dom value is up-to-date
 		this._bCheckDomValue = false;
@@ -536,6 +547,10 @@ function(
 	 * @private
 	 */
 	InputBase.prototype.ontap = function(oEvent) {
+		if (!this.isMobileDevice()) {
+			this.openValueStateMessage();
+		}
+
 		// in order to stay backward compatible - we need to implement the tap
 		return;
 	};
@@ -628,6 +643,16 @@ function(
 			// backwards compatibility
 			newValue: sValue
 		});
+	};
+
+	/**
+	 * Indicates whether the control should use <code>sap.m.Dialog</code> or not.
+	 *
+	 * @returns {boolean} Boolean.
+	 * @protected
+	 */
+	InputBase.prototype.isMobileDevice = function () {
+		return Device.system.phone;
 	};
 
 	/* ----------------------------------------------------------- */
@@ -846,7 +871,7 @@ function(
 		// if set to true, handle the user input and data
 		// model updates concurrency in order to not overwrite
 		// values coming from the user
-		if (this._bPreferUserInteraction) {
+		if (this._getPreferUserInteraction()) {
 			this.handleInputValueConcurrency(sValue);
 		} else {
 			oInnerDomRef.value = sValue;
@@ -855,20 +880,25 @@ function(
 		return this;
 	};
 
+	InputBase.prototype._setValueStateLinks = function(aLinks) {
+		if (this.getFormattedValueStateText() && this.getFormattedValueStateText().getHtmlText() && this.getFormattedValueStateText().getControls().length) {
+			this._aValueStateLinks = this.getFormattedValueStateText().getControls();
+			return;
+		}
+
+		this._aValueStateLinks = aLinks;
+	};
+
 	/**
 	 * If there is <code>sap.m.FormattedText</code> aggregation for value state message
 	 * return the links in it, if any.
 	 *
-	 * @returns {sap.m.Link[]} Links in a value state message containing <code>sap.m.FormattedText</code>
+	 * @returns {sap.m.Link[]|HTMLAnchorElement[]|Array} Links in a value state message containing <code>sap.m.FormattedText</code>
 	 * @private
 	 */
-	InputBase.prototype._aValueStateLinks = function() {
-		if (this.getFormattedValueStateText() && this.getFormattedValueStateText().getHtmlText() && this.getFormattedValueStateText().getControls().length) {
-			return this.getFormattedValueStateText().getControls();
-		} else {
-			return [];
-		}
-	};
+		InputBase.prototype._getValueStateLinks = function() {
+			return this._aValueStateLinks;
+		};
 
 	/**
 	 * @param {jQuery.Event} oEvent The event object.
@@ -876,11 +906,25 @@ function(
 	 * @private
 	 */
 	InputBase.prototype._bClickOnValueStateLink = function(oEvent) {
-		var aValueStateLinks = this._aValueStateLinks();
+		const aValueStateLinks = this._getValueStateLinks();
+		const oRelTarget = oEvent && oEvent.relatedTarget;
 
-		return aValueStateLinks.some(function(oLink) {
-			return oEvent.relatedTarget === oLink.getDomRef();
-		});
+		// if the links are declared as aggregation of the sap.m.FormattedText
+		if (aValueStateLinks.length) {
+			return aValueStateLinks.some(function(oLink) {
+				return !!oLink.getDomRef && oRelTarget === oLink.getDomRef();
+			});
+		}
+
+		// links can be passed directly to a sap.m.FormattedText control as part of a HTML message (not as an aggregation)
+		if (oRelTarget && oRelTarget.tagName === "A" && oRelTarget.parentElement.classList.contains("sapMFT")) {
+			this._setValueStateLinks([oRelTarget]);
+			this._attachValueStateLinkPress();
+
+			return true;
+		}
+
+		return false;
 	};
 
 	/**
@@ -890,16 +934,22 @@ function(
 	 * @private
 	 */
 	InputBase.prototype._attachValueStateLinkPress = function() {
-		this._aValueStateLinks().forEach(
+		this._getValueStateLinks().forEach(
 			function(oLink) {
-				oLink.attachPress(this.fnCloseValueStateOnClick, this);
+				if (oLink.attachPress) {
+					oLink.attachPress(this.fnCloseValueStateOnClick, this);
+				} else {
+					oLink.addEventListener("click", this.fnCloseValueStateOnClick.bind(this));
+				}
 			}, this);
 	};
 
 	InputBase.prototype._detachValueStateLinkPress = function() {
-		this._aValueStateLinks().forEach(
+		this._getValueStateLinks().forEach(
 			function(oLink) {
-				oLink.detachPress(this.fnCloseValueStateOnClick, this);
+				if (oLink.detachPress) {
+					oLink.detachPress(this.fnCloseValueStateOnClick, this);
+				}
 			}, this);
 	};
 
@@ -915,7 +965,7 @@ function(
 			sInputDOMValue = oInnerDomRef && this._getInputValue(),
 			sInputPropertyValue = this.getProperty("value"),
 			bInputFocused = document.activeElement === oInnerDomRef,
-			bBindingUpdate = this.isBound("value") && this.getBindingInfo("value").skipModelUpdate;
+			bBindingUpdate = this.isBound("value") && this.isPropertyBeingUpdated("value");
 
 		// if the user is currently in the field and he has typed a value,
 		// the changes from the model should not overwrite the user input
@@ -934,17 +984,41 @@ function(
 	};
 
 	/**
-	 * Sets the preferred user interaction. If set to true, overwriting the
-	 * user input with model updates will be prevented.
+	 * Sets the behavior of the control to prioritize user interaction over later model updates. When set to <code>true</code>, it prevents the model from overwriting user input.
+	 * Example:
+	 * Input's value property is bound to a model
+	 * The user starts typing and due to this action, the model receives update from the backend, thus forwarding it to the bound control property
+	 * Result when <code>false</code>: User input is overwritten by the incoming model update.
+	 * Result when <code>true</code>: User input is not overwritten by the incoming model update - the model update is skipped and the value remains unchanged.
 	 *
-	 * @param {boolean} bPrefer True, if the user interaction is prefered
+	 * @param {boolean} bPrefer True, if the user interaction is preferred
 	 *
+	 * @public
+	 */
+	InputBase.prototype.setPreferUserInteraction = function(bPrefer) {
+		this._setPreferUserInteraction(bPrefer);
+	};
+
+	/** This  method is left temporary for backward compatibility. The public setPreferUserInteraction() should be used.
+	 * @param {boolean} bPrefer True, if the user interaction is preferred
 	 * @private
-	 * @ui5-restricted sap.ui.mdc, sap.ui.comp.smartfield.SmartField
 	 */
 	InputBase.prototype._setPreferUserInteraction = function(bPrefer) {
 		this._bPreferUserInteraction = bPrefer;
 	};
+
+	/**
+	 * Gets the preferred interaction.
+	 *
+	 * @param {boolean} bPrefer True, if the user interaction is preferred
+	 *
+	 * @private
+	 */
+
+	InputBase.prototype._getPreferUserInteraction = function() {
+		return this._bPreferUserInteraction;
+	};
+
 
 	/**
 	 * Close value state message popup.
@@ -953,15 +1027,10 @@ function(
 	 * @protected
 	 */
 	InputBase.prototype.closeValueStateMessage = function() {
-		// To avoid execution of the opening logic after the closing one,
-		// when closing the suggestions dialog on mobile devices, due to race condition,
-		// the value state message should be closed with timeout because it's opened that way
-		setTimeout(function() {
-			if (this._oValueStateMessage) {
-				this._detachValueStateLinkPress();
-				this._oValueStateMessage.close();
-			}
-		}.bind(this), 0);
+		if (this._oValueStateMessage) {
+			this._detachValueStateLinkPress();
+			this._oValueStateMessage.close();
+		}
 	};
 
 	/**
@@ -1043,14 +1112,14 @@ function(
 	 */
 	InputBase.prototype.getLabels = function() {
 		var aLabelIDs = this.getAriaLabelledBy().map(function(sLabelID) {
-			return sap.ui.getCore().byId(sLabelID);
+			return Element.getElementById(sLabelID);
 		});
 
 		var oLabelEnablement = sap.ui.require("sap/ui/core/LabelEnablement");
 
 		if (oLabelEnablement) {
 			aLabelIDs = aLabelIDs.concat(oLabelEnablement.getReferencingLabels(this).map(function(sLabelID) {
-				return sap.ui.getCore().byId(sLabelID);
+				return Element.getElementById(sLabelID);
 			}));
 		}
 
@@ -1072,7 +1141,7 @@ function(
 			// in IE we should wait until the scroll ends
 			setTimeout(function () {
 				if (!this.bIsDestroyed) {
-					this._detachValueStateLinkPress();
+					this._setValueStateLinks([]);
 					this._attachValueStateLinkPress();
 					this._oValueStateMessage.open();
 				}
@@ -1150,6 +1219,16 @@ function(
 
 	InputBase.prototype.getIdForLabel = function() {
 		return this.getId() + "-inner";
+	};
+
+	/**
+	 * Returns if the control can be bound to a label
+	 *
+	 * @returns {boolean} <code>true</code> if the control can be bound to a label
+	 * @public
+	 */
+	InputBase.prototype.hasLabelableHTMLElement = function () {
+		return true;
 	};
 
 	/**
@@ -1259,6 +1338,36 @@ function(
 	 */
 	InputBase.prototype.getLastValue = function () {
 		return this._lastValue;
+	};
+
+	// support for SemanticFormElement
+	InputBase.prototype.getFormFormattedValue = function() {
+		return this.getValue();
+	};
+
+	InputBase.prototype.getFormValueProperty = function () {
+		return "value";
+	};
+
+	InputBase.prototype.getFormObservingProperties = function() {
+		return ["value"];
+	};
+
+	InputBase.prototype.getFormRenderAsControl = function () {
+		return false;
+	};
+
+	/**
+	 * Required by the {@link sap.m.IToolbarInteractiveControl} interface.
+	 * Determines if the Control is interactive.
+	 *
+	 * @returns {boolean} If it is an interactive Control
+	 *
+	 * @private
+	 * @ui5-restricted sap.m.OverflowToolBar, sap.m.Toolbar
+	 */
+	InputBase.prototype._getToolbarInteractive = function () {
+		return true;
 	};
 
 	return InputBase;

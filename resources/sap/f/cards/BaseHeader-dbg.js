@@ -5,29 +5,39 @@
  */
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
 	"sap/ui/core/IntervalTrigger",
+	"sap/ui/core/Lib",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/core/date/UniversalDate",
 	"sap/ui/core/library",
-	"sap/m/Text"
+	"sap/ui/events/KeyCodes",
+	"sap/m/library",
+	"sap/m/Text",
+	"sap/f/cards/util/addTooltipIfTruncated"
 ], function (
 	Control,
-	Core,
 	IntervalTrigger,
+	Library,
 	DateFormat,
 	UniversalDate,
 	coreLibrary,
-	Text
+	KeyCodes,
+	mLibrary,
+	Text,
+	addTooltipIfTruncated
 ) {
 	"use strict";
 
 	/**
 	 * @const int The refresh interval for dataTimestamp in ms.
 	 */
-	var DATA_TIMESTAMP_REFRESH_INTERVAL = 60000;
+	const DATA_TIMESTAMP_REFRESH_INTERVAL = 60000;
 
-	var TextAlign = coreLibrary.TextAlign;
+	const oResourceBundle = Library.getResourceBundleFor("sap.f");
+
+	const TextAlign = coreLibrary.TextAlign;
+
+	const WrappingType = mLibrary.WrappingType;
 
 	/**
 	 * Constructor for a new <code>BaseHeader</code>.
@@ -39,10 +49,11 @@ sap.ui.define([
 	 * Provides basic functionality for header controls that can be used in <code>sap.f.Card</code.
 	 *
 	 * @extends sap.ui.core.Control
+	 * @implements sap.m.IBar
 	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -52,6 +63,7 @@ sap.ui.define([
 	var BaseHeader = Control.extend("sap.f.cards.BaseHeader", {
 		metadata: {
 			library: "sap.f",
+			interfaces: ["sap.m.IBar"],
 			"abstract" : true,
 			properties: {
 				/**
@@ -87,7 +99,44 @@ sap.ui.define([
 				 * If the header should be rendered as a tile.
 				 * @private
 				 */
-				useTileLayout: { type: "boolean", group: "Appearance", visibility: "hidden" }
+				useTileLayout: { type: "boolean", group: "Appearance", visibility: "hidden" },
+
+				/**
+				 * Defines aria-level of the header.
+				 *
+				 * When header is in a dialog aria-level is 1
+				 * When header is not in a dialog(standard scenario) aria-level is 3
+				 *
+				 * @private
+				 */
+				headingLevel: { type: "string", visibility: "hidden", defaultValue: "3"},
+
+				/**
+				 * Defines the type of text wrapping to be used inside the header. This applies to title, subtitle and details texts of the header.
+				 * @public
+				 * @experimental Since 1.122 this feature is experimental and the API may change.
+				 */
+				wrappingType : {type: "sap.m.WrappingType", group : "Appearance", defaultValue : WrappingType.Normal},
+
+				/**
+				 * Defines if tooltips should be shown for truncated texts.
+				 * @private
+				 */
+				useTooltips: { type: "boolean", visibility: "hidden", defaultValue: false},
+
+				/**
+				 * Defines the href which the header should open. If set - the header will act and render as a link.
+				 *
+				 * @experimental Since 1.122. Do not use this feature outside of sap.ui.integration.widgets.Card.
+				 */
+				href: { type: "string" },
+
+				/**
+				 * Defines the target for the case when <code>href</code> is given.
+				 *
+				 * @experimental Since 1.122. Do not use this feature outside of sap.ui.integration.widgets.Card.
+				 */
+				target: { type: "string" }
 			},
 			aggregations: {
 				/**
@@ -113,16 +162,33 @@ sap.ui.define([
 				 * @since 1.118
 				 */
 				bannerLines: { type: "sap.m.Text", group: "Appearance", multiple: true  }
+			},
+			events: {
+				/**
+				 * Fires when the user presses the control.
+				 */
+				press: {}
 			}
 		}
 	});
 
+	BaseHeader.prototype._setRootAccessibilityRole = function () {
+		// Do nothing. The sap.f.BaseHeader has the heading role already.
+	};
+	BaseHeader.prototype._setRootAriaLevel = function () {
+		// Do nothing. The sap.f.BaseHeader has aria-level set by headingLevel already.
+	};
+	BaseHeader.prototype._applyContextClassFor = function () {
+		// Do nothing. The sap.f.BaseHeader does not differ based on context classes.
+	};
+
 	BaseHeader.prototype.init = function () {
-		this._oRb = Core.getLibraryResourceBundle("sap.f");
+		this._oRb = Library.getResourceBundleFor("sap.f");
 
 		this._oToolbarDelegate = {
 			onfocusin: this._onToolbarFocusin,
-			onfocusout: this._onToolbarFocusout
+			onfocusout: this._onToolbarFocusout,
+			onAfterRendering: this._addMarginToHeaderText
 		};
 	};
 
@@ -143,11 +209,14 @@ sap.ui.define([
 		if (oToolbar) {
 			oToolbar.addStyleClass("sapFCardHeaderToolbar");
 			oToolbar.removeEventDelegate(this._oToolbarDelegate, this);
+			if (oToolbar.updateVisibility) {
+				oToolbar.updateVisibility();
+			}
 		}
-
 		if (aBannerLines) {
 			aBannerLines.forEach((oText) => {
 				oText.setTextAlign(TextAlign.End);
+				oText.setWrapping(false);
 			});
 		}
 	};
@@ -158,22 +227,75 @@ sap.ui.define([
 		if (oToolbar) {
 			oToolbar.addEventDelegate(this._oToolbarDelegate, this);
 		}
+
+		this._addMarginToHeaderText();
+
+		this.getBannerLines()?.forEach((oText) => {
+			this._enhanceText(oText);
+		});
 	};
 
 	BaseHeader.prototype.getFocusDomRef = function () {
 		return this.getDomRef("focusable");
 	};
 
-	BaseHeader.prototype.ontap = function (oEvent) {
-		if (this.isInteractive() && !this._isInsideToolbar(oEvent.target)) {
-			this.firePress();
+	/**
+	 * Gets the id of the title element. Can be used for aria-labelledby.
+	 * @ui5-restricted sap.ui.integration
+	 * @returns {string} The id of the title element.
+	 */
+	BaseHeader.prototype.getTitleId = function () {
+		return null; // must override in Header and NumericHeader
+	};
+
+	/**
+	 * If the header must be rendered as <code>a</code> element.
+	 * @returns {boolean} True if the header must be rendered as <code>a</code> element.
+	 */
+	BaseHeader.prototype.isLink = function () {
+		return !!this.getHref();
+	};
+
+	BaseHeader.prototype.onkeydown = function (oEvent) {
+		if (oEvent.key !== "Enter" && oEvent.keyCode !== KeyCodes.ENTER) {
+			return;
+		}
+
+		if (!this._hasModifierKeys(oEvent)) {
+			this._handleTap(oEvent);
 		}
 	};
 
-	BaseHeader.prototype.onsapselect = function (oEvent) {
-		if (this.isInteractive() && !this._isInsideToolbar(oEvent.target)) {
-			this.firePress();
+	BaseHeader.prototype.onkeyup = function (oEvent) {
+		if (oEvent.key !== " " && oEvent.keyCode !== KeyCodes.SPACE) {
+			return;
 		}
+
+		if (!this._hasModifierKeys(oEvent)) {
+			this._handleTap(oEvent);
+		}
+	};
+
+	BaseHeader.prototype.ontap = function (oEvent) {
+		if (this.isLink() && oEvent.ctrlKey) {
+			// ctrl + click should open the link in a new tab
+			return;
+		}
+
+		this._handleTap(oEvent);
+	};
+
+	BaseHeader.prototype._handleTap = function (oEvent) {
+		if (!oEvent.target.closest(".sapFCardSectionClickable") || !this.isInteractive() || this._isInsideToolbar(oEvent.target)) {
+			return;
+		}
+
+		this.firePress({
+			originalEvent: oEvent
+		});
+
+		oEvent.preventDefault();
+		oEvent.stopPropagation();
 	};
 
 	/**
@@ -182,10 +304,7 @@ sap.ui.define([
 	 * @private
 	 */
 	BaseHeader.prototype._onToolbarFocusin = function () {
-		var oDomRef = this.getDomRef();
-		if (oDomRef) {
-			this.getDomRef().classList.add("sapFCardHeaderToolbarFocused");
-		}
+		this.addStyleClass("sapFCardHeaderToolbarFocused");
 	};
 
 	/**
@@ -193,13 +312,27 @@ sap.ui.define([
 	 * @private
 	 */
 	BaseHeader.prototype._onToolbarFocusout = function () {
-		var oDomRef = this.getDomRef();
-		if (oDomRef) {
-			this.getDomRef().classList.remove("sapFCardHeaderToolbarFocused");
-		}
+		this.removeStyleClass("sapFCardHeaderToolbarFocused");
 	};
 
 	/**
+	 * Adds margin to the header text, which ensures the text will be visible under the toolbar.
+	 * @private
+	 */
+	BaseHeader.prototype._addMarginToHeaderText = function () {
+		const oToolbar = this.getToolbar();
+		const oHeaderText = this.getDomRef().getElementsByClassName("sapFCardHeaderText")[0];
+
+		if (oHeaderText && oToolbar) {
+			if (oToolbar.getVisible()) {
+				oHeaderText.style.marginInlineEnd = oToolbar.getDomRef().offsetWidth + "px";
+			} else {
+				oHeaderText.style.marginInlineEnd = 0;
+			}
+		}
+	};
+
+	/*
 	 * @override
 	 */
 	BaseHeader.prototype.setDataTimestamp = function (sDataTimestamp) {
@@ -221,7 +354,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * @override
+	 * @private
 	 */
 	BaseHeader.prototype.setDataTimestampUpdating = function (bDataTimestampUpdating) {
 		var oTimestampText = this._createDataTimestamp();
@@ -247,6 +380,7 @@ sap.ui.define([
 
 		if (!oDataTimestamp) {
 			oDataTimestamp = new Text({
+				id: this.getId() + "-dataTimestamp",
 				wrapping: false,
 				textAlign: "End"
 			});
@@ -279,7 +413,7 @@ sap.ui.define([
 
 		// no less than "1 minute ago" should be shown, "30 seconds ago" should not be shown
 		if (oUniversalDate.getTime() + 59000 > Date.now()) {
-			sFormattedText = "now"; //@todo get formatted (translated text) for "now"
+			sFormattedText = oResourceBundle.getText("CARD_HEADER_DATETIMESTAMP_NOW");
 		}
 
 		oDataTimestamp.setText(sFormattedText);
@@ -335,6 +469,10 @@ sap.ui.define([
 	 * @ui5-restricted
 	 */
 	BaseHeader.prototype.getFocusableElementAriaRole = function () {
+		if (this.isLink()) {
+			return "link";
+		}
+
 		return this.hasListeners("press") ? "button" : "group";
 	};
 
@@ -342,7 +480,7 @@ sap.ui.define([
 	 * @ui5-restricted
 	 */
 	BaseHeader.prototype.getAriaHeadingLevel = function () {
-		return "3";
+		return this.getProperty("headingLevel");
 	};
 
 	/**
@@ -362,33 +500,43 @@ sap.ui.define([
 		}).join(" ");
 	};
 
-	/**
-	 * Returns if the control is inside a sap.f.GridContainer
-	 *
-	 * @private
-	 */
-	BaseHeader.prototype._isInsideGridContainer = function() {
-		var oParent = this.getParent();
-		if (!oParent) {
-			return false;
-		}
-
-		oParent = oParent.getParent();
-		if (!oParent) {
-			return false;
-		}
-
-		return oParent.isA("sap.f.GridContainer");
-	};
-
 	BaseHeader.prototype.isInteractive = function() {
 		return this.hasListeners("press");
+	};
+
+	BaseHeader.prototype.isFocusable = function() {
+		if (!this.getProperty("focusable")) {
+			return false;
+		}
+
+		const oParent = this.getParent();
+		if (oParent && oParent.isA("sap.f.CardBase") && oParent.isRoleListItem()) {
+			return this.isInteractive();
+		}
+
+		return true;
 	};
 
 	BaseHeader.prototype._isInsideToolbar = function(oElement) {
 		var oToolbar = this.getToolbar();
 
 		return oToolbar && oToolbar.getDomRef() && oToolbar.getDomRef().contains(oElement);
+	};
+
+	/**
+	 * When the option <code>useTooltips</code> is set to <code>true</code>,
+	 * a tooltip is added to the text in case it gets truncated.
+	 * @private
+	 * @param {sap.m.Text} oText The text control.
+	 */
+	BaseHeader.prototype._enhanceText = function (oText) {
+		if (this.getProperty("useTooltips")) {
+			addTooltipIfTruncated(oText);
+		}
+	};
+
+	BaseHeader.prototype._hasModifierKeys = function (oEvent) {
+		return oEvent.shiftKey || oEvent.altKey || oEvent.ctrlKey || oEvent.metaKey;
 	};
 
 	return BaseHeader;

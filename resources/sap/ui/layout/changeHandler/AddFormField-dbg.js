@@ -19,10 +19,7 @@ sap.ui.define([
 	 *
 	 * @author SAP SE
 	 *
-	 * @version 1.120.27
-	 *
-	 * @experimental Since 1.50.0 This class is experimental and provides only limited functionality. Also the API might be
-	 *               changed in future.
+	 * @version 1.134.0
 	 */
 	var AddFormField = BaseAddViaDelegate.createAddViaDelegateChangeHandler({
 		addProperty : function(mPropertyBag) {
@@ -81,8 +78,7 @@ sap.ui.define([
 		},
 		aggregationName: "formElements",
 		parentAlias: "parentFormContainer",
-		fieldSuffix: "-field",
-		supportsDefault: true
+		fieldSuffix: "-field"
 	});
 	return AddFormField;
 },

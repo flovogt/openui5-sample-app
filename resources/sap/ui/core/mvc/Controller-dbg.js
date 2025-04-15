@@ -15,6 +15,7 @@ sap.ui.define([
 	'sap/ui/core/mvc/ControllerExtensionProvider',
 	'sap/ui/core/mvc/OverrideExecution',
 	'sap/ui/util/_enforceNoReturnValue',
+	"sap/base/future",
 	"sap/base/Log"
 ], function(
 	ObjectPath,
@@ -26,6 +27,7 @@ sap.ui.define([
 	ControllerExtensionProvider,
 	OverrideExecution,
 	_enforceNoReturnValue,
+	future,
 	Log
 ) {
 	"use strict";
@@ -160,7 +162,7 @@ sap.ui.define([
 					if (!oOrigExtensionMetadata.isMethodFinal(sOverrideMember)) {
 						ControllerExtension.overrideMethod(sOverrideMember, oExtension, oStaticOverrides, oExtension, oOrigExtensionMetadata.getOverrideExecution(sOverrideMember));
 					}  else {
-						Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' of extension '" + sNamespace + "' is flagged final and cannot be overridden by calling 'override'");
+						future.errorThrows("Method '" + sOverrideMember + "' of extension '" + sNamespace + "' is flagged final and cannot be overridden by calling 'override'");
 					}
 				}
 				//handle 'normal' overrides
@@ -179,13 +181,13 @@ sap.ui.define([
 									if (!oOrigExtensionMetadata.isMethodFinal(sExtensionOverride)) {
 										ControllerExtension.overrideMethod(sExtensionOverride, fnOriginal, vMember, oExtension, oOrigExtensionMetadata.getOverrideExecution(sExtensionOverride));
 									}  else {
-										Log.error("[FUTURE FATAL] Method '" + sExtensionOverride + "' of extension '" + oOrigExtensionInfo.namespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+										future.errorThrows("Method '" + sExtensionOverride + "' of extension '" + oOrigExtensionInfo.namespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 									}
 								}
 							} else if (!oControllerMetadata.isMethodFinal(sOverrideMember)) {
 								ControllerExtension.overrideMethod(sOverrideMember, oController, oOverrides, oExtension, oControllerMetadata.getOverrideExecution(sOverrideMember));
 							} else {
-								Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' of controller '" + oController.getMetadata().getName() + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+								future.errorThrows("Method '" + sOverrideMember + "' of controller '" + oController.getMetadata().getName() + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 							}
 						} else if (sOverrideMember in mLifecycleConfig) {
 							//apply lifecycle hooks even if they don't exist on controller
@@ -196,7 +198,7 @@ sap.ui.define([
 						} else if (sOverrideMember.startsWith("extHook") && oController[sOverrideMember] === null) {
 							ControllerExtension.overrideMethod(sOverrideMember, oController, oOverrides, oExtension);
 						} else {
-							Log.error("[FUTURE FATAL] Method '" + sOverrideMember + "' does not exist in controller " + oController.getMetadata().getName() + " and cannot be overridden");
+							future.errorThrows("Method '" + sOverrideMember + "' does not exist in controller " + oController.getMetadata().getName() + " and cannot be overridden");
 						}
 					}
 					oExtensionInfo.reloadNeeded = true;
@@ -216,7 +218,7 @@ sap.ui.define([
 								//override Extension so 'this' is working for overrides
 								ControllerExtension.overrideMethod(sExtensionOverride, oOrigExtension, oExtensionOverrides, oExtension, oOrigExtensionMetadata.getOverrideExecution(sExtensionOverride));
 							} else {
-								Log.error("[FUTURE FATAL] Method '" + sExtensionOverride + "' of extension '" + sExtensionNamespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
+								future.errorThrows("Method '" + sExtensionOverride + "' of extension '" + sExtensionNamespace + "' is flagged final and cannot be overridden by extension '" + sNamespace + "'");
 							}
 						}
 					}
@@ -265,21 +267,24 @@ sap.ui.define([
 			}
 		}
 
-		/* load controller class
+		/**
+		 * Loads a controller class or a controller-extension
 		 *
 		 * @param {string} sName the controller name
+		 * @param {string} sViewId the ID of the View to which the loaded controller/extensions should be connected
 		 * @param {boolean} bAsync Load async or not
 		 * @return {sap.ui.core.mvc.Controller | Promise} oController <code>Promise</code> in case of asynchronous loading
 		 *           or <code>undefined</code> in case of synchronous loading
+		 * @ui5-transform-hint replace-param bAsync true
 		 */
-		function loadControllerClass(sName, bAsync) {
+		function loadControllerClass(sName, sViewId, bAsync) {
 			if (!sName) {
 				throw new Error("Controller name ('sName' parameter) is required");
 			}
 
-			var sControllerName = sName.replace(/\./g, "/") + ".controller",
-				ControllerClass = resolveClass(sap.ui.require(sControllerName));
-
+			/**
+			 * @deprecated
+			 */
 			function resolveClass(ControllerClass) {
 				if (ControllerClass) {
 					return ControllerClass;
@@ -290,6 +295,30 @@ sap.ui.define([
 					return ObjectPath.get(sName);
 				}
 			}
+
+			const sControllerName = sName.replace(/\./g, "/") + ".controller";
+			let ControllerClass = sap.ui.require(sControllerName);
+			/** @deprecated */
+			ControllerClass ??= resolveClass(ControllerClass);
+
+			/**
+			 * @deprecated
+			 * Sanity check: If the assumed Controller is actually a View we encountered a specific edge case.
+			 *               A JSView that has been migrated to a Typed View can in theory have the same class name
+			 *               as the Controller. While the file names might differ (e.g. sap/typed/Main.view.js and sap/typed/Main.controller.js),
+			 *               the filename does not necessarily imply a class name. In this example the class names could both be "sap.typed.Main".
+			 *               When sync loading, the classes are exposed in the global namespace under this class name.
+			 *               At this time of loading the Controller class, the ObjectPath.get() call in resolveClass() might now retrieve the View class
+			 *               that was previously written into the global namespace instead.
+			 *               This causes a "Maximum call stack size exceeded" error. To prevent this we check specifically for a View class here.
+			 */
+			(() => {
+				if (ControllerClass?.getMetadata?.().isA?.("sap.ui.core.mvc.View")) {
+					throw new Error(`The controller '${sName}' define for the View with ID '${sViewId}' is not a valid Controller, but rather a View. ` +
+					`This happens when the View and Controller classes have the same fully qualified class name. Please make sure that the class names in` +
+					`Controller.extend("...") and the View.extend("...") call differ. If you migrated a 'JSView' to a 'Typed View' please refer to the documentation section under 'Typed View'`);
+				}
+			})();
 
 			/**
 			 * Sync class resolution
@@ -307,7 +336,9 @@ sap.ui.define([
 			return new Promise(function(resolve, reject) {
 				if (!ControllerClass) {
 					sap.ui.require([sControllerName], function (ControllerClass) {
-						resolve(resolveClass(ControllerClass));
+						/** @deprecated */
+						ControllerClass ??= resolveClass(ControllerClass);
+						resolve(ControllerClass);
 					}, reject);
 				} else {
 					resolve(ControllerClass);
@@ -315,15 +346,12 @@ sap.ui.define([
 			});
 		}
 
-		/*
+		/**
 		 * Instantiation of a controller
 		 *
 		 * @param {function} ControllerClass The controller constructor
 		 * @param {string} sName the controller name
-		 * @param {boolean} bAsync Load async or not
-		 * @return {sap.ui.core.mvc.Controller|Promise} A <code>Promise</code> in case of asynchronous extend
-		 *           or the <code>controller</code> in case of synchronous extend
-		 *
+		 * @return {sap.ui.core.mvc.Controller} The created controller instance
 		 */
 		function instantiateController(ControllerClass, sName) {
 			var oController;
@@ -343,13 +371,11 @@ sap.ui.define([
 		 *
 		 * @param {sap.ui.core.mvc.Controller} oController The controller instance
 		 * @param {boolean} bAsync Wether extend async or not
-		 * @returns {Promise|sap.ui.core.mvc.Controller} If <code>bAsync</code> is <code>true</code> a promise which resolves with the extended <code>oController</code>, otherwise the extended <code>oController</code>
 		 * @private
 		 */
-		Controller.extendByMember = function(oController, bAsync) {
-			var sMember;
+		Controller.extendByMember = function(oController) {
 			//create all member extension instances first
-			for (sMember in oController) {
+			for (const sMember in oController) {
 				if (oController[sMember] &&
 					oController[sMember].getMetadata &&
 					oController[sMember].getMetadata().getStereotype() == "controllerextension") {
@@ -357,81 +383,82 @@ sap.ui.define([
 				}
 			}
 			//apply the extensions
-			for (sMember in oController) {
+			for (const sMember in oController) {
 				if (oController[sMember] &&
 					oController[sMember].getMetadata &&
 					oController[sMember].getMetadata().getStereotype() == "controllerextension") {
 					mixinControllerDefinition(oController, oController[sMember], sMember);
 				}
 			}
-			if (bAsync) {
-				return Promise.resolve(oController);
-			} else {
-				return oController;
-			}
 		};
 
-		/*
-		* This function can be used to extend a controller with controller
-		* extensions returned by controller extension provider.
-		*
-		* @param {object|sap.ui.core.mvc.Controller} oController Controller to extend
-		* @param {string} sName Name of the controller
-		* @param {sap.ui.core.ID|undefined} sOwnerId the ID of the owner component to which this controller belongs,
-		*                                            or undefined if the controller is not associated to a component
-		* @param {sap.ui.core.ID|undefined} sViewId the ID of the corresponding View for <code>oController</code>, or undefined if the controller is created via the the factory
-		* @param {boolean} bAsync If set to true, extension will be run in async mode
-		* @return {sap.ui.core.mvc.Controller|Promise} A <code>Promise</code> in case of asynchronous extend
-		*           or the <code>controller</code> in case of synchronous extend
-		* @private
-		*/
+		/**
+		 * This function can be used to extend a controller with controller
+		 * extensions returned by controller extension provider.
+		 *
+		 * @param {object|sap.ui.core.mvc.Controller} oController Controller to extend
+		 * @param {string} sName Name of the controller
+		 * @param {sap.ui.core.ID|undefined} sOwnerId the ID of the owner component to which this controller belongs,
+		 *                                            or undefined if the controller is not associated to a component
+		 * @param {sap.ui.core.ID|undefined} sViewId the ID of the corresponding View for <code>oController</code>, or undefined if the controller is created via the the factory
+		 * @param {boolean} bAsync If set to true, extension will be run in async mode
+		 * @return {sap.ui.core.mvc.Controller|Promise} A <code>Promise</code> in case of asynchronous extend
+		 *           or the <code>controller</code> in case of synchronous extend
+		 * @private
+		 * @ui5-transform-hint replace-param bAsync true
+		 */
 		Controller.applyExtensions = function(oController, sName, sOwnerId, sViewId, bAsync) {
 			/**
-			 * Retrieves the controller-extension with the given name
-			 * @param {boolean} bAsync whether to retrieve the controller extension async or sync
+			 * Retrieves the controller-extension with the given name asynchronously.
 			 * @param {string} sControllerName the extension controller class name
+			 * @returns {Promise<Object>} Promise on the loaded controller extension
 			 */
-			function fnGetExtensionController(bAsync, sControllerName) {
-				if (bAsync) {
-					return loadControllerClass(sControllerName, true).then(function(oExtControllerDef) {
-						// loadControllerClass resolves with the base sap/ui/core/mvc/Controller class,
-						// in case 'sControllerName' is not a module but was defined with sap.ui.controller("...", {})
-						oExtControllerDef = mRegistry[sControllerName] || oExtControllerDef;
-						if (oExtControllerDef !== undefined) {
-							if (oExtControllerDef.getMetadata && oExtControllerDef.getMetadata().isA("sap.ui.core.mvc.Controller")) {
-								Log.fatal("[FUTURE-FATAL] Attempt to load Extension Controller " + sControllerName + " was not successful", "Controller extension should be a plain object.", null, function() {
-									return {
-										type: "ControllerExtension",
-										name: sControllerName
-									};
-								});
-							}
-							return oExtControllerDef;
+			function fnGetExtensionControllerAsync(sControllerName) {
+				return loadControllerClass(sControllerName, sViewId, true).then(function(oExtControllerDef) {
+					// loadControllerClass resolves with the base sap/ui/core/mvc/Controller class,
+					// in case 'sControllerName' is not a module but was defined with sap.ui.controller("...", {})
+					oExtControllerDef = mRegistry[sControllerName] || oExtControllerDef;
+					if (oExtControllerDef !== undefined) {
+						if (oExtControllerDef.getMetadata && oExtControllerDef.getMetadata().isA("sap.ui.core.mvc.Controller")) {
+							future.fatalThrows("Attempt to load Extension Controller " + sControllerName + " was not successful. Controller extension should be a plain object.", "", null, function() {
+								return {
+									type: "ControllerExtension",
+									name: sControllerName
+								};
+							});
 						}
+						return oExtControllerDef;
+					}
 
-					}, function(err) {
-						Log.error("[FUTURE FATAL] Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?");
-					});
+				}, function(err) {
+					future.errorThrows("Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?");
+				});
+			}
+
+			/**
+			 * Retrieves the controller-extension with the given name synchronously.
+			 * @param {string} sControllerName the extension controller class name
+			 * @returns {Object} loaded controller extension
+			 */
+			function fnGetExtensionControllerSync(sControllerName) {
+				// sync load Controller extension if necessary
+				if (!mRegistry[sControllerName] && !sap.ui.require(sControllerName)) {
+					loadControllerClass(sControllerName, sViewId);
+				}
+
+				// retrieve legacy controller from registry
+				if (mRegistry[sControllerName] !== undefined) {
+					return mRegistry[sControllerName];
 				} else {
-					// sync load Controller extension if necessary
-					if (!mRegistry[sControllerName] && !sap.ui.require(sControllerName)) {
-						loadControllerClass(sControllerName);
-					}
-
-					// retrieve legacy controller from registry
-					if (mRegistry[sControllerName] !== undefined) {
-						return mRegistry[sControllerName];
-					} else {
-						/* eslint-disable no-loop-func */
-						Log.error("Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?", null, function() {
-							return {
-								type: "ControllerExtension",
-								name: sControllerName
-							};
-						});
-						/* eslint-enable no-loop-func */
-						return {};
-					}
+					/* eslint-disable no-loop-func */
+					Log.error("Attempt to load Extension Controller " + sControllerName + " was not successful - is the Controller correctly defined in its file?", null, function() {
+						return {
+							type: "ControllerExtension",
+							name: sControllerName
+						};
+					});
+					/* eslint-enable no-loop-func */
+					return {};
 				}
 			}
 
@@ -440,9 +467,7 @@ sap.ui.define([
 				return ControllerExtensionProvider.getControllerExtensions(sName, sOwnerId, sViewId, bAsync)
 					.then(function (mControllers) {
 						// load customizing controllers async
-						var aCustomizingControllerPromises = mControllers.customizingControllerNames.map(function(sControllerName) {
-							return fnGetExtensionController(true, sControllerName);
-						});
+						var aCustomizingControllerPromises = mControllers.customizingControllerNames.map(fnGetExtensionControllerAsync);
 
 						return Promise.all(aCustomizingControllerPromises).then(function(aCustomizingControllers) {
 							// order of extensions: 1. customizing, 2. provider
@@ -456,14 +481,14 @@ sap.ui.define([
 							return oController;
 						});
 					}, function(err){
-						Log.error("[FUTURE FATAL] Controller Extension Provider: Error '" + err + "' thrown in " + Controller._sExtensionProvider + "; extension provider ignored.");
+						future.errorThrows("Controller Extension Provider: Error '" + err + "' thrown in " + Controller._sExtensionProvider + ".", { suffix: "Extension provider is ignored." });
 						return oController;
 					});
 			} else {
 				var mControllers = ControllerExtensionProvider.getControllerExtensions(sName, sOwnerId, sViewId, bAsync);
 
 				// load and apply customizing controllers
-				var aCustomizingControllers = mControllers.customizingControllerNames.map(fnGetExtensionController.bind(null, false));
+				var aCustomizingControllers = mControllers.customizingControllerNames.map(fnGetExtensionControllerSync);
 
 				// apply controller-extensions from the external provider
 				var aAllExtensions = aCustomizingControllers.concat(mControllers.providerControllers);
@@ -487,7 +512,7 @@ sap.ui.define([
 		 * @since 1.56.0
 		 */
 		Controller.create = function (mOptions) {
-			return controllerFactory(mOptions.name, undefined, true, mOptions._viewId);
+			return controllerFactory(mOptions.name, undefined, mOptions._viewId, true);
 		};
 
 		/**
@@ -528,13 +553,18 @@ sap.ui.define([
 					};
 				});
 			}
-			return controllerFactory.apply(this, arguments);
+			return controllerFactory(sName, oControllerImpl, sViewId, bAsync);
 		};
 
-		/*
+		/**
 		 * Old controller factory implementation
+		 * @param {string} sName
+		 * @param {Object|undefined} oControllerImpl
+		 * @param {string|undefined} sViewId
+		 * @param {boolean} bAsync
+		 * @ui5-transform-hint replace-param bAsync true
 		 */
-		function controllerFactory(sName, oControllerImpl, bAsync, sViewId) {
+		function controllerFactory(sName, oControllerImpl, sViewId, bAsync) {
 			var oController,
 				ControllerClass,
 				sOwnerId = ManagedObject._sOwnerId;
@@ -546,7 +576,7 @@ sap.ui.define([
 			if (!oControllerImpl) {
 				// controller *instantiation*
 				if (bAsync) {
-					return loadControllerClass(sName, bAsync)
+					return loadControllerClass(sName, sViewId, bAsync)
 						.then(function(ControllerClass) {
 							return instantiateController(ControllerClass, sName);
 						})
@@ -558,7 +588,7 @@ sap.ui.define([
 							return oController;
 						});
 				} else {
-					ControllerClass = loadControllerClass(sName, bAsync);
+					ControllerClass = loadControllerClass(sName, sViewId, bAsync);
 					oController = instantiateController(ControllerClass, sName);
 					oController = Controller.applyExtensions(oController, sName, sOwnerId, sViewId, bAsync);
 					//if controller is created via the factory all extensions are already mixed in
@@ -620,7 +650,7 @@ sap.ui.define([
 		 */
 		Controller.prototype._getDestroyables = function() {
 			if (!this._aDestroyables) {
-				Log.error("[FUTURE FATAL] Mandatory super constructor not called for Controller: '" + this.getMetadata().getName() + "'.",
+				future.errorThrows(`${this.getMetadata().getName()}: A sub-class of sap.ui.core.mvc.Controller which overrides the constructor must apply the super constructor as well.`,
 					null,
 					"sap.ui.support",
 					function() {
@@ -730,7 +760,7 @@ sap.ui.define([
 
 		Controller.prototype.connectToView = function(oView) {
 			this.oView = oView;
-			const sControllerName = this.oView.getControllerName?.() || "sap.ui.core.mvc.Controller";
+			const sControllerName = this.getMetadata().getName();
 
 			if (this.onInit) {
 				const fnInit = function() { _enforceNoReturnValue(this.onInit.apply(this, arguments), /*mLogInfo=*/{ name: "onInit", component: sControllerName }); };
@@ -982,7 +1012,7 @@ sap.ui.define([
 		 * 	This implies that, for instance, no async function returning a Promise should be used.
 		 *
 		 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
-		 * 	implementation of this hook must not return anything but undefined. Any other
+		 *	implementation of this hook must not return anything but undefined. Any other
 		 * 	return value will cause an error log in this version of UI5 and will fail in future
 		 * 	major versions of UI5.
 		 */
@@ -1002,7 +1032,7 @@ sap.ui.define([
 		 * 	This implies that, for instance, no async function returning a Promise should be used.
 		 *
 		 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
-		 * 	implementation of this hook must not return anything but undefined. Any other
+		 *	implementation of this hook must not return anything but undefined. Any other
 		 * 	return value will cause an error log in this version of UI5 and will fail in future
 		 * 	major versions of UI5.
 		 */
@@ -1023,7 +1053,7 @@ sap.ui.define([
 		 * 	This implies that, for instance, no async function returning a Promise should be used.
 		 *
 		 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
-		 * 	implementation of this hook must not return anything but undefined. Any other
+		 *	implementation of this hook must not return anything but undefined. Any other
 		 * 	return value will cause an error log in this version of UI5 and will fail in future
 		 * 	major versions of UI5.
 		 */
@@ -1044,7 +1074,7 @@ sap.ui.define([
 		 * 	This implies that, for instance, no async function returning a Promise should be used.
 		 *
 		 * 	<b>Note:</b> While the return type is currently <code>void|undefined</code>, any
-		 * 	implementation of this hook must not return anything but undefined. Any other
+		 *	implementation of this hook must not return anything but undefined. Any other
 		 * 	return value will cause an error log in this version of UI5 and will fail in future
 		 * 	major versions of UI5.
 		 */

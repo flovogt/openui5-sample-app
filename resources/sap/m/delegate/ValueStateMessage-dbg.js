@@ -7,7 +7,7 @@
 sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/base/Object',
-	'sap/ui/core/Core',
+	"sap/ui/core/RenderManager",
 	'sap/ui/core/ValueStateSupport',
 	'sap/ui/core/Popup',
 	'sap/ui/core/library',
@@ -17,7 +17,7 @@ sap.ui.define([
 	function(
 		Device,
 		BaseObject,
-		Core,
+		RenderManager,
 		ValueStateSupport,
 		Popup,
 		coreLibrary,
@@ -105,12 +105,6 @@ sap.ui.define([
 
 			oPopup.setContent(oMessageDomRef);
 			oPopup.close(0);
-
-			if (oPopup.getContent()) {
-				oPopup.getContent().style.maxWidth = oControl.getDomRef().offsetWidth + "px";
-			} else {
-				oPopup.getContent().style.maxWidth = "";
-			}
 
 			oPopup.open(
 				this.getOpenDuration(),
@@ -285,7 +279,7 @@ sap.ui.define([
 				return;
 			}
 
-			Core.createRenderManager().render(vValueStateMessageText, oMessageDomRef);
+			new RenderManager().getInterface().render(vValueStateMessageText, oMessageDomRef);
 			oMessageDomRef.lastElementChild.setAttribute("id", this.getId() + "-text");
 		};
 

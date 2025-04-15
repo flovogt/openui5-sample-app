@@ -4,8 +4,9 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
+	"sap/base/future",
 	"sap/base/Log"
-], function(Log) {
+], function(future, Log) {
 	"use strict";
 
 	function _enforceNoReturnValue(vResult, mLogInfo) {
@@ -20,7 +21,7 @@ sap.ui.define([
 				});
 			}
 			// for any return value other than 'undefined'
-			Log.error(`[FUTURE FATAL] The registered Event Listener ${sFunctionName}must not have a return value.`, mLogInfo.component);
+			future.fatalThrows(`${mLogInfo.component}: The registered Event Listener ${sFunctionName}must not have a return value.`);
 		}
 	}
 	return _enforceNoReturnValue;

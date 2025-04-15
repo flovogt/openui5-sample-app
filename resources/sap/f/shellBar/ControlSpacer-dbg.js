@@ -23,7 +23,7 @@ sap.ui.define(['sap/ui/core/Control', 'sap/f/shellBar/ControlSpacerRenderer'],
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @private

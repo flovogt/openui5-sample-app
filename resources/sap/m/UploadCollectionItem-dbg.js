@@ -28,11 +28,11 @@ sap.ui.define([
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
-	 * @deprecated as of version 1.88
+	 * @deprecated as of version 1.88, replaced by {@link sap.m.upload.UploadSetItem}.
 	 * @since 1.26.0
 	 * @alias sap.m.UploadCollectionItem
 	 */

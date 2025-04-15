@@ -7,6 +7,7 @@ sap.ui.define([
 	"sap/base/config",
 	"sap/base/Event",
 	"sap/base/Eventing",
+	"sap/base/future",
 	"sap/base/Log",
 	"sap/base/i18n/Localization",
 	"sap/base/util/deepEqual",
@@ -16,6 +17,7 @@ sap.ui.define([
 	BaseConfig,
 	BaseEvent,
 	Eventing,
+	future,
 	Log,
 	Localization,
 	deepEqual,
@@ -25,7 +27,6 @@ sap.ui.define([
 
 	const oWritableConfig = BaseConfig.getWritableInstance();
 	const oEventing = new Eventing();
-	let mChanges;
 	let oThemeManager;
 
 	/**
@@ -95,21 +96,17 @@ sap.ui.define([
 					throw new TypeError("Providing a theme root as part of the theme parameter is not allowed.");
 				}
 
-				const bFireChange = !mChanges;
-				mChanges ??= {};
 				const sOldTheme = Theming.getTheme();
 				oWritableConfig.set("sapTheme", sTheme);
 				const sNewTheme = Theming.getTheme();
 				const bThemeChanged = sOldTheme !== sNewTheme;
 				if (bThemeChanged) {
-					mChanges.theme = {
-						"new": sNewTheme,
-						"old": sOldTheme
+					const mChanges = {
+						theme: {
+							"new": sNewTheme,
+							"old": sOldTheme
+						}
 					};
-				} else {
-					mChanges = undefined;
-				}
-				if (bFireChange) {
 					fireChange(mChanges);
 				}
 				if (!oThemeManager && bThemeChanged) {
@@ -197,9 +194,6 @@ sap.ui.define([
 			assert(typeof sThemeName === "string", "sThemeName must be a string");
 			assert(typeof sThemeBaseUrl === "string", "sThemeBaseUrl must be a string");
 
-			const bFireChange = !mChanges;
-			mChanges ??= {};
-
 			const oThemeRootConfigParam = {
 				name: "sapUiThemeRoots",
 				type: oWritableConfig.Type.MergedObject
@@ -237,24 +231,21 @@ sap.ui.define([
 				mNewThemeRoots[sThemeName][""] = sThemeBaseUrl;
 			}
 			if (!deepEqual(mOldThemeRoots, mNewThemeRoots)) {
+				const mChanges = {};
 				oWritableConfig.set("sapUiThemeRoots", mNewThemeRoots);
 				if (aLibraryNames) {
-					mChanges.themeRoots = {
+					mChanges["themeRoots"] = {
 						"new": Object.assign({}, mNewThemeRoots[sThemeName]),
 						"old": Object.assign({}, mOldThemeRoots[sThemeName])
 					};
 				} else {
-					mChanges.themeRoots = {
+					mChanges["themeRoots"] = {
 						"new": sThemeBaseUrl,
 						"old": mOldThemeRoots[sThemeName]?.[""]
 					};
 				}
-				mChanges.themeRoots.forceUpdate = bForceUpdate && sThemeName === Theming.getTheme();
-			} else {
-				mChanges = undefined;
-			}
-			if (bFireChange) {
-				fireChange();
+				mChanges["themeRoots"].forceUpdate = bForceUpdate && sThemeName === Theming.getTheme();
+				fireChange(mChanges);
 			}
 		},
 
@@ -283,7 +274,7 @@ sap.ui.define([
 		 * The theme applied Event.
 		 *
 		 * @typedef {object} module:sap/ui/core/Theming$AppliedEvent
-		 * @property {string} theme The newly set language.
+		 * @property {string} theme The newly set theme.
 		 * @public
 		 * @since 1.118.0
 		 */
@@ -501,10 +492,9 @@ sap.ui.define([
 		}
 	};
 
-	function fireChange() {
+	function fireChange(mChanges) {
 		if (mChanges) {
 			oEventing.fireEvent("change", mChanges);
-			mChanges = undefined;
 		}
 	}
 
@@ -517,9 +507,9 @@ sap.ui.define([
 		return !!sAllowedOrigins?.split(",").some((sAllowedOrigin) => {
 			try {
 				sAllowedOrigin = bNoProtocol && !sAllowedOrigin.startsWith("//") ? "//" + sAllowedOrigin : sAllowedOrigin;
-				return sAllowedOrigin === "*" || sOrigin === new URL(sAllowedOrigin.trim(), globalThis.location.href).origin;
+				return sAllowedOrigin === "*" || sOrigin === new URL(sAllowedOrigin.trim(), window.location.href).origin;
 			} catch (error) {
-				Log.error("[FUTURE FATAL] sapAllowedThemeOrigin provides invalid theme origin: " + sAllowedOrigin);
+				future.errorThrows("sapAllowedThemeOrigins provides invalid theme origin: " + sAllowedOrigin, {cause: error});
 				return false;
 			}
 		});
@@ -532,7 +522,7 @@ sap.ui.define([
 
 		try {
 			// Remove search query as they are not supported for themeRoots/resourceRoots
-			oThemeRoot = new URL(sThemeRoot, globalThis.location.href);
+			oThemeRoot = new URL(sThemeRoot, window.location.href);
 			oThemeRoot.search = "";
 
 			// If the URL is absolute, validate the origin
@@ -541,7 +531,7 @@ sap.ui.define([
 			} else {
 				// For relative URLs or not allowed origins
 				// ensure same origin and resolve relative paths based on origin
-				oThemeRoot = new URL(oThemeRoot.pathname, globalThis.location.href);
+				oThemeRoot = new URL(oThemeRoot.pathname, window.location.href);
 				sPath = oThemeRoot.toString();
 			}
 

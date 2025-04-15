@@ -17,13 +17,13 @@ sap.ui.define(['sap/ui/base/ManagedObject', "sap/base/Log"],
 	 *
 	 * @public
 	 *
-	 * @deprecated since 1.115.
+	 * @deprecated As of version 1.115, replaced by {@link sap.m.p13n.Engine}
 	 *
 	 * @class Table Personalization Provider
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 * @alias sap.m.TablePersoProvider
 	 */
 	var TablePersoProvider = ManagedObject.extend("sap.m.TablePersoProvider", /** @lends sap.m.TablePersoProvider.prototype */

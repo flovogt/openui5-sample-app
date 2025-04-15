@@ -48,7 +48,7 @@ sap.ui.define([
 	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -129,7 +129,14 @@ sap.ui.define([
 				 *
 				 * @experimental Since 1.119 this feature is experimental and the API may change.
 				 */
-				iconSize: { type: "sap.m.AvatarSize", defaultValue: AvatarSize.S }
+				iconSize: { type: "sap.m.AvatarSize", defaultValue: AvatarSize.S },
+
+				/**
+				 * Defines how the image fits in the icon area.
+				 *
+				 * @since 1.130
+				 */
+				iconFitType: { type: "sap.m.AvatarImageFitType", defaultValue: AvatarImageFitType.Cover }
 			},
 			aggregations: {
 
@@ -147,13 +154,6 @@ sap.ui.define([
 				 * Defines the inner avatar control.
 				 */
 				_avatar: { type: "sap.m.Avatar", multiple: false, visibility: "hidden" }
-			},
-			events: {
-
-				/**
-				 * Fires when the user presses the control.
-				 */
-				press: {}
 			}
 		},
 		renderer: HeaderRenderer
@@ -167,16 +167,10 @@ sap.ui.define([
 		BaseHeader.prototype.init.apply(this, arguments);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
-
-		this._oAriaAvatarText = new InvisibleText({id: this.getId() + "-ariaAvatarText"});
-		this._oAriaAvatarText.setText(this._oRb.getText("ARIA_HEADER_AVATAR_TEXT"));
 	};
 
 	Header.prototype.exit = function () {
 		BaseHeader.prototype.exit.apply(this, arguments);
-
-		this._oAriaAvatarText.destroy();
-		this._oAriaAvatarText = null;
 	};
 
 	/**
@@ -201,7 +195,7 @@ sap.ui.define([
 	Header.prototype._getSubtitle = function () {
 		var oSubtitle = this.getAggregation("_subtitle");
 		if (!oSubtitle) {
-			oSubtitle = new Text().addStyleClass("sapFCardSubtitle");
+			oSubtitle = new Text(this.getId() + "-subtitle").addStyleClass("sapFCardSubtitle");
 			this.setAggregation("_subtitle", oSubtitle);
 		}
 		return oSubtitle;
@@ -215,9 +209,7 @@ sap.ui.define([
 	Header.prototype._getAvatar = function () {
 		var oAvatar = this.getAggregation("_avatar");
 		if (!oAvatar) {
-			oAvatar = new Avatar({
-				imageFitType: AvatarImageFitType.Contain
-			}).addStyleClass("sapFCardIcon");
+			oAvatar = new Avatar().addStyleClass("sapFCardIcon");
 			this.setAggregation("_avatar", oAvatar);
 		}
 		return oAvatar;
@@ -232,11 +224,17 @@ sap.ui.define([
 
 		this._getTitle()
 			.setText(this.getTitle())
-			.setMaxLines(this.getTitleMaxLines());
+			.setMaxLines(this.getTitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getTitle());
 
 		this._getSubtitle()
 			.setText(this.getSubtitle())
-			.setMaxLines(this.getSubtitleMaxLines());
+			.setMaxLines(this.getSubtitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getSubtitle());
 
 		this._getAvatar()
 			.setDisplayShape(this.getIconDisplayShape())
@@ -244,7 +242,8 @@ sap.ui.define([
 			.setInitials(this.getIconInitials())
 			.setTooltip(this.getIconAlt())
 			.setBackgroundColor(this.getIconBackgroundColor())
-			.setDisplaySize(this.getIconSize());
+			.setDisplaySize(this.getIconSize())
+			.setImageFitType(this.getIconFitType());
 	};
 
 	/**
@@ -297,13 +296,24 @@ sap.ui.define([
 			aIds.push(this.getId() + "-status");
 		}
 
+		if (this.getDataTimestamp()) {
+			aIds.push(this.getId() + "-dataTimestamp");
+		}
+
 		if (this.getIconSrc() || this.getIconInitials()) {
-			aIds.push(this.getId() + "-ariaAvatarText");
+			aIds.push(this._getAvatar().getId());
 		}
 
 		aIds.push(this._getBannerLinesIds());
 
 		return aIds.filter((sElement) => { return !!sElement; }).join(" ");
+	};
+
+	/**
+	 * @override
+	 */
+	Header.prototype.getTitleId = function () {
+		return this._getTitle().getId();
 	};
 
 	Header.prototype.isLoading = function () {

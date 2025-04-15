@@ -7,6 +7,7 @@
 // Provides control sap.f.DynamicPageTitle.
 sap.ui.define([
 	"./library",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/base/ManagedObjectObserver",
@@ -20,11 +21,12 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/ui/core/Icon",
 	"sap/ui/Device",
-    "sap/ui/events/KeyCodes",
-	"sap/ui/core/InvisibleMessage",
-	"sap/ui/core/Core"
+	"sap/ui/core/RenderManager",
+	"sap/ui/events/KeyCodes",
+	"sap/ui/core/InvisibleMessage"
 ], function(
 	library,
+	Library,
 	CoreLibrary,
 	Control,
 	ManagedObjectObserver,
@@ -38,9 +40,9 @@ sap.ui.define([
 	Log,
 	Icon,
 	Device,
+	RenderManager,
 	KeyCodes,
-	InvisibleMessage,
-	oCore
+	InvisibleMessage
 ) {
 	"use strict";
 
@@ -93,7 +95,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -376,13 +378,15 @@ sap.ui.define([
 	DynamicPageTitle.TOGGLE_HEADER_TEXT_ID = InvisibleText.getStaticId("sap.f", "TOGGLE_HEADER");
 	DynamicPageTitle.DEFAULT_HEADER_TEXT_ID = InvisibleText.getStaticId("sap.f", "DEFAULT_HEADER_TEXT");
 
+	DynamicPageTitle.KNOWN_HEADING_CONTROL_CLASS_NAMES = ["sap.m.Title", "sap.m.Text", "sap.m.FormattedText", "sap.m.Label"];
+
 	/**
 	 * Retrieves the resource bundle for the <code>sap.f</code> library.
 	 * @returns {Object} the resource bundle object
 	 * @private
 	 */
 	DynamicPageTitle._getResourceBundle = function () {
-		return oCore.getLibraryResourceBundle("sap.f");
+		return Library.getResourceBundleFor("sap.f");
 	};
 
 	DynamicPageTitle.ARIA = {
@@ -402,7 +406,7 @@ sap.ui.define([
 			return;
 		}
 
-		oRenderManager = oCore.createRenderManager();
+		oRenderManager = new RenderManager().getInterface();
 		oRenderManager.renderControl(oControlToRender);
 		oRenderManager.flush(oContainerDOM);
 		oRenderManager.destroy();
@@ -410,6 +414,20 @@ sap.ui.define([
 
 	function isFunction(oObject) {
 		return typeof oObject === "function";
+	}
+
+	function findTitleInFlexBox(oHeading) {
+		var oTitle = null;
+
+		for (var item of oHeading.getItems()) {
+			if (item.isA("sap.m.Title")) {
+				return item;
+			} else if (item.isA("sap.m.FlexBox")) {
+				oTitle = findTitleInFlexBox(item);
+			}
+		}
+
+		return oTitle;
 	}
 
 	/* ========== LIFECYCLE METHODS  ========== */
@@ -702,6 +720,23 @@ sap.ui.define([
 
 	/* ========== PRIVATE METHODS  ========== */
 
+	DynamicPageTitle.prototype._getTitleText = function() {
+		var oHeading = this.getHeading(),
+			sClassName = oHeading && oHeading.getMetadata().getName(),
+			oTitle,
+			sTitleText;
+
+		if (DynamicPageTitle.KNOWN_HEADING_CONTROL_CLASS_NAMES.indexOf(sClassName) > -1) {
+			sTitleText = oHeading.getText();
+		} else if (oHeading?.isA("sap.m.FlexBox")) {
+			oTitle = findTitleInFlexBox(oHeading);
+			sTitleText = oTitle?.getText();
+		}
+
+		return sTitleText;
+	};
+
+
 	/**
 	 * Creates and caches an instance of the {@link sap.ui.core.InvisibleText} control for the specified aria label.
 	 * @param {string} sId The ID for the invisible text control.
@@ -876,6 +911,16 @@ sap.ui.define([
 
 		oAction.sParentAggregationName = oAction._sOriginalParentAggregationName;
 		oAction._sOriginalParentAggregationName = null;
+	};
+
+	DynamicPageTitle.prototype.onfocusfail = function (oEvent) {
+		var oSourceControl = oEvent.srcControl;
+
+		if (oSourceControl.sParentAggregationName === "actions") {
+			this.getAggregation("_actionsToolbar")?.onfocusfail(oEvent);
+		} else {
+			Control.prototype.onfocusfail.apply(this, arguments);
+		}
 	};
 
 	/**

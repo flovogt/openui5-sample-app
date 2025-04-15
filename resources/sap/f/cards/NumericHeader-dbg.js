@@ -55,9 +55,10 @@ sap.ui.define([
 	 * </ul>
 	 *
 	 * @extends sap.f.cards.BaseHeader
+	 * @implements sap.f.cards.IHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.134.0
 	 *
 	 * @constructor
 	 * @public
@@ -150,6 +151,13 @@ sap.ui.define([
 				iconSize: { type: "sap.m.AvatarSize", defaultValue: AvatarSize.S },
 
 				/**
+				 * Defines how the image fits in the icon area.
+				 *
+				 * @since 1.130
+				 */
+				iconFitType: { type: "sap.m.AvatarImageFitType", defaultValue: AvatarImageFitType.Cover },
+
+				/**
 				 * General unit of measurement for the header. Displayed as side information to the subtitle.
 				 */
 				unitOfMeasurement: { "type": "string", group : "Data" },
@@ -228,6 +236,15 @@ sap.ui.define([
 				},
 
 				/**
+				 * Micro Chart
+				 * @experimental since 1.124
+				 */
+				microChart: {
+					type: "sap.ui.core.Control",
+					multiple: false
+				},
+
+				/**
 				 * Used to display title text
 				 */
 				_title: { type: "sap.m.Text", multiple: false, visibility: "hidden" },
@@ -256,13 +273,6 @@ sap.ui.define([
 				 * Displays the main and side indicators
 				 */
 				_numericIndicators: { type: "sap.f.cards.NumericIndicators", multiple: false, visibility: "hidden" }
-			},
-			events: {
-
-				/**
-				 * Fires when the user presses the control.
-				 */
-				press: {}
 			}
 		},
 		renderer: NumericHeaderRenderer
@@ -276,16 +286,10 @@ sap.ui.define([
 		BaseHeader.prototype.init.apply(this, arguments);
 
 		this.data("sap-ui-fastnavgroup", "true", true); // Define group for F6 handling
-
-		this._oAriaAvatarText = new InvisibleText({id: this.getId() + "-ariaAvatarText"});
-		this._oAriaAvatarText.setText(this._oRb.getText("ARIA_HEADER_AVATAR_TEXT"));
 	};
 
 	NumericHeader.prototype.exit = function () {
 		BaseHeader.prototype.exit.apply(this, arguments);
-
-		this._oAriaAvatarText.destroy();
-		this._oAriaAvatarText = null;
 	};
 
 	/**
@@ -297,11 +301,17 @@ sap.ui.define([
 
 		this._getTitle()
 			.setText(this.getTitle())
-			.setMaxLines(this.getTitleMaxLines());
+			.setMaxLines(this.getTitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getTitle());
 
 		this._getSubtitle()
 			.setText(this.getSubtitle())
-			.setMaxLines(this.getSubtitleMaxLines());
+			.setMaxLines(this.getSubtitleMaxLines())
+			.setWrappingType(this.getWrappingType());
+
+		this._enhanceText(this._getSubtitle());
 
 		this._getUnitOfMeasurement().setText(this.getUnitOfMeasurement());
 
@@ -311,21 +321,23 @@ sap.ui.define([
 			.setInitials(this.getIconInitials())
 			.setTooltip(this.getIconAlt())
 			.setBackgroundColor(this.getIconBackgroundColor())
-			.setDisplaySize(this.getIconSize());
+			.setDisplaySize(this.getIconSize())
+			.setImageFitType(this.getIconFitType());
 
-		if (!this.isPropertyInitial("detailsState") && !this.isPropertyInitial("detailsMaxLines")) {
-			Log.error("Both details state and details max lines can not be used at the same time. Max lines setting will be ignored.");
-		}
+		this._getDetails()
+			.setText(this.getDetails())
+			.setMaxLines(this.getDetailsMaxLines())
+			.setWrappingType(this.getWrappingType());
 
 		if (!this.isPropertyInitial("detailsState")) {
-			this._createDetails(true)
-				.setText(this.getDetails())
-				.setState(this.getDetailsState());
-		} else {
-			this._createDetails()
-				.setText(this.getDetails())
-				.setMaxLines(this.getDetailsMaxLines());
+			Object.values(ValueState).forEach((sState) => {
+				this._getDetails().removeStyleClass(`sapFCardNumericHeaderDetailsState${sState}`);
+			});
+
+			this._getDetails().addStyleClass(`sapFCardNumericHeaderDetailsState${this.getDetailsState()}`);
 		}
+
+		this._enhanceText(this._getDetails());
 
 		this._getNumericIndicators()
 			.setNumber(this.getNumber())
@@ -363,6 +375,13 @@ sap.ui.define([
 	};
 
 	/**
+	 * @override
+	 */
+	NumericHeader.prototype.getTitleId = function () {
+		return this._getTitle().getId();
+	};
+
+	/**
 	 * Lazily create a title and return it.
 	 *
 	 * @private
@@ -376,7 +395,8 @@ sap.ui.define([
 				id: this.getId() + "-title",
 				wrapping: true,
 				maxLines: this.getTitleMaxLines()
-			});
+			}).addStyleClass("sapFCardTitle");
+
 			this.setAggregation("_title", oControl);
 		}
 
@@ -398,6 +418,7 @@ sap.ui.define([
 				wrapping: true,
 				maxLines: this.getSubtitleMaxLines()
 			});
+
 			this.setAggregation("_subtitle", oControl);
 		}
 
@@ -412,9 +433,7 @@ sap.ui.define([
 	NumericHeader.prototype._getAvatar = function () {
 		var oAvatar = this.getAggregation("_avatar");
 		if (!oAvatar) {
-			oAvatar = new Avatar({
-				imageFitType: AvatarImageFitType.Contain
-			}).addStyleClass("sapFCardIcon");
+			oAvatar = new Avatar().addStyleClass("sapFCardIcon");
 			this.setAggregation("_avatar", oAvatar);
 		}
 		return oAvatar;
@@ -433,7 +452,7 @@ sap.ui.define([
 			oControl = new Text({
 				id: this.getId() + "-unitOfMeasurement",
 				wrapping: false
-			});
+			}).addStyleClass("sapFCardHeaderUnitOfMeasurement");
 			this.setAggregation("_unitOfMeasurement", oControl);
 		}
 
@@ -441,42 +460,20 @@ sap.ui.define([
 	};
 
 	/**
-	 * Create details and return it.
-	 * @private
-	 * @param {boolean} bUseObjectStatus If set to true the details will be sap.m.ObjectStatus
-	 * @return {sap.m.Text|sap.m.ObjectStatus} The details aggregation
-	 */
-	NumericHeader.prototype._createDetails = function (bUseObjectStatus) {
-		var oControl = this.getAggregation("_details");
-
-		if (oControl?.isA("sap.m.Text") && bUseObjectStatus) {
-			oControl.destroy();
-		} else if (oControl) {
-			return oControl;
-		}
-
-		var oSettings = {
-			id: this._getDetailsId()
-		};
-
-		if (bUseObjectStatus) {
-			oControl = new ObjectStatus(oSettings);
-		} else {
-			oControl = new Text(oSettings);
-		}
-
-		this.setAggregation("_details", oControl);
-
-		return oControl;
-	};
-
-	/**
 	 * Gets the control create for showing details.
 	 * @private
-	 * @return {sap.m.Text|sap.m.ObjectStatus} The details aggregation
+	 * @return {sap.m.Text} The details aggregation
 	 */
 	NumericHeader.prototype._getDetails = function () {
-		return this.getAggregation("_details");
+		var oControl = this.getAggregation("_details");
+
+		if (!oControl) {
+			oControl = new Text(this._getDetailsId()).addStyleClass("sapFCardHeaderDetails");
+
+			this.setAggregation("_details", oControl);
+		}
+
+		return oControl;
 	};
 
 	/**
@@ -530,10 +527,14 @@ sap.ui.define([
 			aIds.push(this.getId() + "-status");
 		}
 
+		if (this.getDataTimestamp()) {
+			aIds.push(this.getId() + "-dataTimestamp");
+		}
+
 		aIds.push(this._getUnitOfMeasurement().getId());
 
 		if (this.getIconSrc() || this.getIconInitials()) {
-			aIds.push(this.getId() + "-ariaAvatarText");
+			aIds.push(this._getAvatar().getId());
 		}
 
 		if (this.getNumber() || this.getScale()) {

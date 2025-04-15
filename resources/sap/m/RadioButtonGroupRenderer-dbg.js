@@ -6,9 +6,9 @@
 
 // Provides default renderer for control sap.m.RadioButtonGroup
 sap.ui.define([
-	"sap/ui/core/library",
-	"sap/ui/core/Core"
-], function (coreLibrary, Core) {
+	"sap/base/i18n/Localization",
+	"sap/ui/core/library"
+], function (Localization, coreLibrary) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -40,7 +40,7 @@ sap.ui.define([
 
 		var iColumns = oRBGroup.getColumns();
 		var sControlTextDir = oRBGroup.getTextDirection();
-		var bGlobalTextDir = Core.getConfiguration().getRTL();
+		var bGlobalTextDir = Localization.getRTL();
 
 		oRM.openStart("div", oRBGroup)
 			.class("sapMRbG");
@@ -90,11 +90,6 @@ sap.ui.define([
 			if (iColumns > 1 && iColumns != aVisibleRBs.length) {
 				oRM.close("div");
 			}
-		}
-
-		if (iColumns > 1 && iColumns != aVisibleRBs.length) {
-			// dummy Column to avoid big spaces between RadioButtons in Safari
-			oRM.openStart("div").class("sapMRbGDummy").openEnd().close("div");
 		}
 
 		oRM.close("div");
