@@ -112,6 +112,9 @@ html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
 	}
 
 	// Avatar
+	.sapFShellBarProfile:focus {
+		border: none;
+	}
 	.sapFShellBarProfile:not(:focus):hover {
 		box-shadow: 0 0 0.125rem 0 fade(@sapContent_ShadowColor, 72);
 		background-color: none;
@@ -166,11 +169,6 @@ html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
 		&.sapMImgFocusable:focus {
 			border-radius: 0.5rem;
 		}
-	}
-
-	//Primary Title
-	.sapFShellBarPrimaryTitle {
-		color: var(--sapShell_SubBrand_TextColor);
 	}
 
 	//Second Title
@@ -252,7 +250,7 @@ html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
 
 			.sapMSFB:hover {
 				box-shadow: none;
-				border: 0.0625rem solid @sapUiButtonLiteHoverBorderColor;
+				border: 0.0625rem solid @sapUiShellInteractiveBorderColor;
 				border-radius: 0;
 				height: 2.125rem;
 				color: @sapUiShellInteractiveTextColor;
@@ -280,7 +278,6 @@ html.sap-desktop .sapMTB-Transparent-CTX .sapMBtnInner.sapMToggleBtnPressed{
 		.sapMSF:not(.sapMSFDisabled):hover .sapMSFF {
 			background-color: @sapUiShellHoverBackground;
 			box-shadow: @sapUiContentInteractionShadow;
-			border-bottom: 1px solid @sapUiFieldHoverBorderColor;
 		}
 
 		.sapMBtn .sapMBtnInner {

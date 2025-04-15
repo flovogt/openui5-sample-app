@@ -5,33 +5,35 @@
 
 @_sap_m_SelectListItem_Height: 2.5rem;
 @_sap_m_SelectListItem_CompactHeight: 2rem;
-@_sap_m_SelectListItemBelizeFocus_Height: 0.25rem; /* 2 borders * 0.0625rem + 2 offsets (top and bottom) * 0.0625rem */
+@_sap_m_SelectListItemBelizeFocus_Height: 0.25rem; // 2 borders * 0.0625rem + 2 offsets (top and bottom) * 0.0625rem
 
 /* selected */
 .sapMSelectListItemBase.sapMSelectListItemBaseSelected {
-	background: var(--sapList_SelectionBackgroundColor);
-	color: var(--sapList_TextColor);
-	border-bottom: 0.0625rem solid var(--sapList_SelectionBorderColor);
+	background: @sapUiListSelectionBackgroundColor;
+	color: @sapUiListTextColor;
+	border-bottom: 0.0625rem solid @sapUiListSelectionBorderColor;
 
 	&:hover {
-		background: var(--sapList_Hover_SelectionBackground);
+		background: @sapUiListHoverSelectionBackground;
 	}
 }
 
+
 /* pressed */
 html.sap-desktop .sapMSelectListItemBase.sapMSelectListItemBasePressed:focus {
-	outline: 0.0625rem dotted var(--sapContent_ContrastFocusColor);
+	outline: 0.0625rem dotted @sapUiContentContrastFocusColor;
 }
 
 .sapMSelectListItemBase.sapMSelectListItemBasePressed,
 .sapMSelectListItemBase.sapMSelectListItemBaseSelected.sapMSelectListItemBasePressed {
-	background-color: var(--sapList_Active_Background);
-	color: var(--sapList_Active_TextColor);
+	background-color: @sapUiListActiveBackground;
+	color: @sapUiListActiveTextColor;
 }
 
 .sapMSelectListItemBase.sapMSelectListItemBasePressed .sapMSelectListItemIcon {
-	color: var(--sapContent_ContrastIconColor);
+	color: @sapUiContentContrastIconColor;
 }
+
 
 /* disabled */
 .sapMSelectListItemBaseDisabled {
@@ -43,8 +45,8 @@ html.sap-desktop .sapMSelectListItemBase:focus::after,
 .sapMSltPicker-CTX .sapMSelectListItemBaseSelected::after,
 .sapMComboBoxBasePicker-CTX .sapMSelectListItemBaseSelected::after {
 	pointer-events: none;
-	content: '';
-	outline: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);
+	content: "";
+	outline: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiContentFocusColor;
 	outline-offset: -0.1875rem;
 	position: absolute;
 	top: 0;
@@ -60,9 +62,9 @@ html.sap-desktop .sapMSelectListItemBase:focus {
 }
 
 .sapMSelectListItemBase {
-	background-color: var(--sapList_Background);
-	border-color: var(--sapList_BorderColor);
+	background-color: @sapUiListBackground;
+	border-color: @sapUiListBorderColor;
 	position: relative;
-	font-size: var(--sapFontSize);
-	color: var(--sapList_TextColor);
+	font-size: @sapFontSize;
+	color: @sapUiListTextColor;
 }

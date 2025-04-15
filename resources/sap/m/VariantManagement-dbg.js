@@ -6,8 +6,6 @@
 
 // Provides control sap.m.VariantManagement.
 sap.ui.define([
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/base/ManagedObjectModel",
 	"sap/ui/model/Filter",
@@ -43,14 +41,11 @@ sap.ui.define([
 	"sap/m/OverflowToolbarLayoutData",
 	"sap/m/VBox",
 	'sap/m/HBox',
-	"sap/m/IllustratedMessage",
 	"sap/ui/events/KeyCodes",
 	'sap/base/Log',
 	"sap/ui/core/library",
 	"sap/m/library"
 ], function(
-	Element,
-	Library,
 	JSONModel,
 	ManagedObjectModel,
 	Filter,
@@ -86,7 +81,6 @@ sap.ui.define([
 	OverflowToolbarLayoutData,
 	VBox,
 	HBox,
-	IllustratedMessage,
 	KeyCodes,
 	Log,
 	coreLibrary,
@@ -114,9 +108,6 @@ sap.ui.define([
 
 	// shortcut for sap.m.ListKeyboardMode
 	var ListKeyboardMode = mobileLibrary.ListKeyboardMode;
-
-	// shortcut for sap.m.Sticky
-	var Sticky = mobileLibrary.Sticky;
 
 	// shortcut for sap.ui.core.ValueState
 	var ValueState = coreLibrary.ValueState;
@@ -188,9 +179,9 @@ sap.ui.define([
 				},
 
 				/**
-				 *  Indicates that contexts functionality is supported.<br>
-				 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
-				 * @restricted sap.ui.fl, sap.ui.comp
+				 *  Indicates that contexts functionality is supported.
+				 * <b>Note:</b>
+				 * This property is used internally for SAPUI5 Adaptation scenario.
 				 */
 				supportContexts: {
 					type: "boolean",
@@ -217,7 +208,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Controls the visibility of the Save As button.
+				 * Controls the visibility of the 'SaveAs' button
 				 */
 				showSaveAs: {
 					type: "boolean",
@@ -226,7 +217,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * If set to <code>false</code>, neither the Save As nor the Save button in the My Views dialog is visible.
+				 * If set to <code>false</code> neither 'Save As' nor 'Save' buttons on the 'My Views' dialog are visible.
 				 */
 				creationAllowed: {
 					type: "boolean",
@@ -235,7 +226,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Indicates if the buttons and the complete footer in the My Views dialog are visible.
+				 * Indicates if the buttons and the complete footer in the <i>My Views</i> dialog are visible.
 				 */
 				showFooter: {
 					type: "boolean",
@@ -253,7 +244,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * The title in the My Views popover.
+				 * The title in the 'My Views' popover.
 				 */
 				popoverTitle: {
 					type: "string",
@@ -305,7 +296,7 @@ sap.ui.define([
 				},
 
 				/**
-				 * Defines the Apply Automatically text for the standard variant in the Manage Views dialog if the application controls this behavior.
+				 * Defines the Apply Automatically text for the standard variant in the <i>Manage Views</i> dialog if the application controls this behavior.
 				 */
 				_displayTextForExecuteOnSelectionForStandardVariant: {
 					type: "string",
@@ -318,10 +309,10 @@ sap.ui.define([
 				 * Renders the name of the variant as a text.
 				 * The name of the variant is usually rendered as {@link sap.m.Title}
 				 * but there are use cases - related to accessibility requirements - where the
-				 * rendering should be done using {@link sap.m.Text} instead.<br>
+				 * rendering should be done using {@link sap.m.Text} instead.
 				 * <b>Note:</b>
-				 * If the name of the variant is rendered as <code>sap.m.Text</code>, all the <code>sap.m.Title</code>
-				 * specific information like <code>level</code> and <code>titleStyle</code> is ignored.
+				 * If the name of the variant is rendered as <code>sap.m.Text</code>, all the <code>sap.m.Title</code>-
+				 * specific information (<code>headerLevel</code> and <code>titleStyle</code>) is ignored.
 				 *
 				 * @since 1.118
 				 */
@@ -368,7 +359,7 @@ sap.ui.define([
 			events: {
 
 				/**
-				 * This event is fired when the Save View dialog or the Save As dialog is closed with the Save button.
+				 * This event is fired when either <i>Save As</i> is triggered from the <i>Save View</i> dialog, or <i>Save</i> from <i>My Views</i>.
 				 */
 				save: {
 					parameters: {
@@ -381,6 +372,7 @@ sap.ui.define([
 
 						/**
 						 * Indicates if an existing variant is updated or if a new variant is created.
+						 * Basically 'Save' operation leads to overwrite <code>true</code>, while 'Save As' leads to overwrite <code>false</code>.
 						 */
 						overwrite: {
 							type: "boolean"
@@ -415,16 +407,14 @@ sap.ui.define([
 						},
 
 						/**
-						 * Array describing the contexts.<br>
-						 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
-						 * @restricted sap.ui.fl, sap.ui.comp
+						 * Array describing the contexts.
 						 */
 						contexts: {
 							type: "object[]"
 						},
 
 						/**
-						 * Indicates the check box state for 'Create Tile'.<br>
+						 * Indicates the check box state for 'Create Tile'.
 						 * <b>Note:</b>
 						 * This event parameter is used only internally.
 						 */
@@ -451,10 +441,10 @@ sap.ui.define([
 				manage: {
 					parameters: {
 						/**
-						 * List of changed variants.
+						 * List of changed variants. Each entry contains a 'key' - the variant key and a 'name' - the new title of the variant
 						 */
 						renamed: {
-							type: "sap.m.VariantManagementRename[]"
+							type: "object[]"
 						},
 
 						/**
@@ -465,17 +455,17 @@ sap.ui.define([
 						},
 
 						/**
-						 * List of variant keys and the associated Execute on Selection indicator.
+						 * List of variant keys and the associated Execute on Selection indicator. Each entry contains a 'key' - the variant key and a 'exe' - flag describing the intention
 						 */
 						exe: {
-							type: "sap.m.VariantManagementExe[]"
+							type: "object[]"
 						},
 
 						/**
-						 * List of variant keys and the associated favorite indicator.
+						 * List of variant keys and the associated favorite indicator. Each entry contains a 'key' - the variant key and a 'visible' - flag describing the intention
 						 */
 						fav: {
-							type: "sap.m.VariantManagementFav[]"
+							type: "object[]"
 						},
 
 						/**
@@ -486,10 +476,7 @@ sap.ui.define([
 						},
 
 						/**
-						 * List of variant keys and the associated contexts array.
-						 * Each entry contains a <code>key</code> (the variant key) and a <code>contexts</code> array describing the contexts.<br>
-						 * <b>Note:</b> This property is used internally by the SAPUI5 flexibility layer.
-						 * @restricted sap.ui.fl, sap.ui.comp
+						 * List of variant keys and the associated contexts array. Each entry contains a 'key' - the variant key and a 'contexts' - array describing the contexts
 						 */
 						contexts: {
 							type: "object[]"
@@ -544,7 +531,7 @@ sap.ui.define([
 	VariantManagement.prototype.init = function() {
 		Control.prototype.init.apply(this, arguments);
 
-		this._oRb = Library.getResourceBundleFor("sap.m");
+		this._oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 
         this._oManagedObjectModel = new ManagedObjectModel(this);
@@ -622,7 +609,7 @@ sap.ui.define([
  	 * Special handling of the rendering the apply automatically control in <i>Manage Views</i>
 	 * @returns {string} Value of the private property
 	 * @private
-	 * @restricted sap.ui.fl, sap.ui.comp
+	 * @restricted sap.ui.mdc, sap.ui.comp
  	 */
 	VariantManagement.prototype.getDisplayTextForExecuteOnSelectionForStandardVariant = function() {
 		return this.getProperty("_displayTextForExecuteOnSelectionForStandardVariant");
@@ -632,7 +619,7 @@ sap.ui.define([
 	 * @param {string} sValue to be displayed
 	 * @returns {string} the current instance
 	 * @private
-	 * @restricted sap.ui.fl, sap.ui.comp
+	 * @restricted sap.ui.mdc, sap.ui.comp
  	 */
 	VariantManagement.prototype.setDisplayTextForExecuteOnSelectionForStandardVariant = function(sValue) {
 		this.setProperty("_displayTextForExecuteOnSelectionForStandardVariant", sValue);
@@ -641,9 +628,9 @@ sap.ui.define([
 	/**
  	 * Special handling of the rendering of this control.
 	 * @param {boolean} bValue defines the intended rendering
-	 * @returns {sap.m.VariantManagement} the current instance
+	 * @returns {sap.ui.m.VariantManagement} the current instance
 	 * @private
-	 * @restricted sap.ui.fl, sap.ui.comp
+	 * @restricted sap.ui.mdc, sap.ui.comp
  	 */
 	VariantManagement.prototype.setShowAsText = function(bValue) {
 		this.setProperty("_showAsText", bValue);
@@ -655,7 +642,7 @@ sap.ui.define([
  	 * Special handling of the rendering of this control.
 	 * @returns {boolean} the current intend
 	 * @private
-	 * @restricted sap.ui.fl, sap.ui.comp
+	 * @restricted sap.ui.mdc, sap.ui.comp
  	 */
 	VariantManagement.prototype.getShowAsText = function() {
 		return this.getProperty("_showAsText");
@@ -840,8 +827,7 @@ sap.ui.define([
 	VariantManagement.prototype._createInnerModel = function() {
 		var oModel = new JSONModel({
 			showCreateTile: false,
-			isDesignMode: false,
-			hasNoData: false
+			isDesignMode: false
 		});
 		this.setModel(oModel, VariantManagement.INNER_MODEL_NAME);
 	};
@@ -859,9 +845,6 @@ sap.ui.define([
 	};
 	VariantManagement.prototype.setDesignMode = function(bValue) {
 		this._setInnerModelProperty("/isDesignMode", bValue);
-	};
-	VariantManagement.prototype.setHasNoData = function(bValue) {
-		this._setInnerModelProperty("/hasNoData", bValue);
 	};
 
 	VariantManagement.prototype._setInnerModelProperty = function(sPropertyPath, vValue) {
@@ -1016,7 +999,7 @@ sap.ui.define([
 			if (nPos > 0) {
 				sId = sId.substring(0, nPos);
 			}
-			return Element.getElementById(sId);
+			return sap.ui.getCore().byId(sId);
 		}
 
 		return null;
@@ -1137,36 +1120,11 @@ sap.ui.define([
 		this.oErrorVariantPopOver.openBy(this.oVariantLayout);
 	};
 
-	VariantManagement.prototype._createIllustratedMessages = function() {
-
-		if (!this._oNoDataIllustratedMessage || this._oNoDataIllustratedMessage.bIsDestroyed) {
-			this._oNoDataIllustratedMessage = new IllustratedMessage({
-				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA"),
-				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_DESCR"),
-				enableVerticalResponsiveness: true,
-				illustrationSize: "Auto",
-				illustrationType: mobileLibrary.IllustratedMessageType.SimpleEmptyList
-			});
-		}
-		if (!this._oNoDataFoundIllustratedMessage || this._oNoDataFoundIllustratedMessage.bIsDestroyed) {
-			this._oNoDataFoundIllustratedMessage = new IllustratedMessage({
-				title: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND"),
-				description: this._oRb.getText("VARIANT_MANAGEMENT_NODATA_FOUND_DESCR"),
-				enableVerticalResponsiveness: true,
-				illustrationSize: "Auto",
-				illustrationType: mobileLibrary.IllustratedMessageType.NoSearchResults
-			});
-			this._oNoDataFoundIllustratedMessage.addStyleClass("sapMVarMngmtIllustratedMessage");
-		}
-	};
-
 	// My Views List
 	VariantManagement.prototype._createVariantList = function() {
 		if (this.oVariantPopOver) {
 			return;
 		}
-
-		this._createIllustratedMessages();
 
 		this.oVariantManageBtn = new Button(this.getId() + "-manage", {
 			text: this._oRb.getText("VARIANT_MANAGEMENT_MANAGE"),
@@ -1234,13 +1192,6 @@ sap.ui.define([
 				path: "/selectedKey",
 				model: "$mVariants"
 			},
-			visible: {
-				path: "/hasNoData",
-				model: VariantManagement.INNER_MODEL_NAME,
-				formatter: function(bValue) {
-					return !bValue;
-				}
-			},
 			itemPress: function(oEvent) {
 				var sSelectionKey = null;
 				if (oEvent && oEvent.getParameters()) {
@@ -1250,27 +1201,21 @@ sap.ui.define([
 					}
 				}
 				if (sSelectionKey) {
-					this.setCurrentVariantKey(sSelectionKey);
+
+					var bTriggerForSameItem = this.getProperty("_selectStategyForSameItem");
+
+					if (bTriggerForSameItem || (!bTriggerForSameItem && (this.getSelectedKey() !== sSelectionKey))) {
+						this.setSelectedKey(sSelectionKey);
+
+						this.fireSelect({
+							key: sSelectionKey
+						});
+					}
 					this.oVariantPopOver.close();
 				}
 			}.bind(this)
 		});
-
-		this.oVariantListInvisibleText = new InvisibleText({
-			text: this._oRb.getText("VARIANT_MANAGEMENT_VIEW_LIST")
-		});
-
-		this.oVariantListInvisibleText.toStatic();
-		this.oVariantList.addAriaLabelledBy(this.oVariantListInvisibleText);
-
-		this.oNodataTextLayout = new VBox(this.getId() + "-no-data", {
-			visible: {
-				path: "/hasNoData",
-				model: VariantManagement.INNER_MODEL_NAME
-			},
-			fitContainer: true,
-			items: [this._oNoDataFoundIllustratedMessage]
-		});
+		this.oVariantList.setNoDataText(this._oRb.getText("VARIANT_MANAGEMENT_NODATA"));
 
 		var oItemTemplate = new Item({
 			key: "{$mVariants>key}",
@@ -1295,7 +1240,7 @@ sap.ui.define([
 				]
 			}),
 			content: [
-				this.oVariantList, this.oNodataTextLayout
+				this.oVariantList
 			],
 			footer: new OverflowToolbar({
 				content: [
@@ -1319,7 +1264,6 @@ sap.ui.define([
 			titleAlignment: "Auto",
 			contentWidth: "400px",
 			placement: PlacementType.VerticalPreferredBottom,
-			resizable: true,
 			content: [
 				this.oVariantSelectionPage
 			],
@@ -1345,32 +1289,10 @@ sap.ui.define([
 		this.oVariantPopOver.isPopupAdaptationAllowed = function() {
 			return false;
 		};
+
+		// this.oVariantList.getBinding("items").filter(this._getFilters());
 	};
 
-
-	/**
-	 * Enables the programmatic selection of a variant.
-	 * @public
-	 * @param {string} sKey of variant to be selected. If the passed key doesn't identify a variant, it will be ignored
-	 */
-	VariantManagement.prototype.setCurrentVariantKey = function(sKey) {
-		var oItem = this.getItemByKey(sKey);
-		if (oItem) {
-			var bTriggerForSameItem = this.getProperty("_selectStategyForSameItem");
-
-			if (bTriggerForSameItem || (!bTriggerForSameItem && (this.getSelectedKey() !== sKey))) {
-				this.setSelectedKey(sKey);
-
-				this.setModified(false);
-
-				this.fireSelect({
-					key: sKey
-				});
-			}
-		} else {
-			Log.error("setCurrentVariantKey called with unknown key:'" + sKey + "'");
-		}
-	};
 
 	VariantManagement.prototype._determineEmphasizedFooterButton = function() {
 		if (this.oVariantSaveBtn.getVisible()) {
@@ -1399,16 +1321,7 @@ sap.ui.define([
 		this._createVariantList();
 		this._oSearchField.setValue("");
 
-		const oListBinding = this.oVariantList.getBinding("items");
-		oListBinding.attachChange(function(oEvent) {
-			this.setHasNoData(this.oVariantList.getItems().length === 0);
-		}.bind(this));
-		oListBinding.filter(this._getFilters());
-
-		if (this.oVariantList.getItems().length < 1) {
-			this.oNodataTextLayout.removeAllItems();
-			this.oNodataTextLayout.addItem(this._oNoDataIllustratedMessage);
-		}
+		this.oVariantList.getBinding("items").filter(this._getFilters());
 
 		this.oVariantSelectionPage.setShowSubHeader(this.oVariantList.getItems().length > 9);
 
@@ -1443,16 +1356,6 @@ sap.ui.define([
 		});
 
 		oVariantList.getBinding("items").filter(this._getFilters(oFilter));
-
-		if (oVariantList.getItems().length < 1) {
-			if ((this.oNodataTextLayout.getItems().length === 0) || (this.oNodataTextLayout.getItems().length > 0) && (this.oNodataTextLayout.getItems()[0] !== this._oNoDataFoundIllustratedMessage)) {
-				if (!this._oNoDataFoundIllustratedMessage.hasStyleClass("sapMVarMngmtIllustratedMessage")) {
-					this._oNoDataFoundIllustratedMessage.toggleStyleClass("sapMVarMngmtIllustratedMessage");
-				}
-				this.oNodataTextLayout.removeAllItems();
-				this.oNodataTextLayout.addItem(this._oNoDataFoundIllustratedMessage);
-			}
-		}
 	};
 
 	// Save View dialog
@@ -1988,13 +1891,6 @@ sap.ui.define([
 
 		oManagementTable.getBinding("items").filter(aFilters);
 
-        if (this.oManagementTable.getItems().length < 1) {
-			if (this._oNoDataFoundIllustratedMessage.hasStyleClass("sapMVarMngmtIllustratedMessage")) {
-				this._oNoDataFoundIllustratedMessage.toggleStyleClass("sapMVarMngmtIllustratedMessage");
-			}
-			this.oManagementTable.setNoData(this._oNoDataFoundIllustratedMessage);
-		}
-
 		this._bRebindRequired = true;
 	};
 
@@ -2005,15 +1901,11 @@ sap.ui.define([
 	VariantManagement.prototype._createManagementDialog = function() {
 		if (!this.oManagementDialog || this.oManagementDialog.bIsDestroyed) {
 
-			this._createIllustratedMessages();
-
 			this.oManagementTable = new Table(this.getId() + "-managementTable", {
 				contextualWidth: "Auto",
 				fixedLayout: false,
 				growing: true,
-				noData: this._oNoDataIllustratedMessage,
-				keyboardMode: ListKeyboardMode.Navigation,
-				sticky: [ Sticky.ColumnHeaders ],
+				keyboardMode: ListKeyboardMode.Edit,
 				columns: [
 					new Column({
 						header: new InvisibleText({
@@ -2398,8 +2290,6 @@ sap.ui.define([
 
 
 	VariantManagement.prototype._openManagementDialog = function() {
-		this._clearDeletedItems();
-		this._clearRenamedItems();
 		this._createManagementDialog();
 
 		if (this.oVariantPopOver) {
@@ -2408,6 +2298,8 @@ sap.ui.define([
 
 		this._suspendManagementTableBinding();
 
+		this._clearDeletedItems();
+		this._clearRenamedItems();
 		this._sDefaultKey = this.getDefaultKey();
 		this._sOriginalDefaultKey = this._sDefaultKey;
 
@@ -2432,10 +2324,6 @@ sap.ui.define([
 			} else {
 				this.oManagementTable.getBinding("items").filter(this._getVisibleFilter());
 			}
-		}
-
-        if (this.oManagementTable.getItems().length < 1) {
-			this.oManagementTable.setNoData(this._oNoDataIllustratedMessage);
 		}
 
 		this.oManagementDialog.open();
@@ -2532,7 +2420,8 @@ sap.ui.define([
 		this._clearRenamedItems();
 
 		this._bRebindRequired = true;
-		//this.oManagementTable.unbindItems();
+		this.oManagementTable.unbindItems();
+
 
 		if (this._oManagedObjectModel) {
 			this._oManagedObjectModel.checkUpdate();
@@ -2562,7 +2451,7 @@ sap.ui.define([
 		var sKey = oItem.getKey();
 
 		// do not allow the deletion of the standard
-		if (!oItem.getRemove()) {
+		if (this.getStandardVariantKey() === sKey) {
 			return;
 		}
 
@@ -3010,10 +2899,6 @@ sap.ui.define([
 			this.oVariantInvisibleText.destroy(true);
 			this.oVariantInvisibleText = undefined;
 		}
-		if (this.oVariantListInvisibleText && !this.oVariantListInvisibleText._bIsBeingDestroyed) {
-			this.oVariantListInvisibleText.destroy(true);
-			this.oVariantListInvisibleText = undefined;
-		}
 
 		if (this.oDefault && !this.oDefault._bIsBeingDestroyed) {
 			this.oDefault.destroy();
@@ -3046,16 +2931,6 @@ sap.ui.define([
 		this._oSearchFieldOnMgmtDialog = undefined;
 		this._sDefaultKey = undefined;
 		this._oCtrlRef = undefined;
-
-		if (this._oNoDataIllustratedMessage && !this._oNoDataIllustratedMessage.bIsDestroyed) {
-			this._oNoDataIllustratedMessage.destroy();
-		}
-		if (this._oNoDataFoundIllustratedMessage && !this._oNoDataFoundIllustratedMessage.bIsDestroyed) {
-			this._oNoDataFoundIllustratedMessage.destroy();
-		}
-
-		this._oNoDataIllustratedMessage = undefined;
-		this._oNoDataFoundIllustratedMessage = undefined;
 
 		oModel = this.getModel(VariantManagement.INNER_MODEL_NAME);
 		if (oModel) {

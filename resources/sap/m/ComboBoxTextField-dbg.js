@@ -8,15 +8,13 @@ sap.ui.define([
 	'./InputBase',
 	'./library',
 	'sap/ui/core/LabelEnablement',
-	"./ComboBoxTextFieldRenderer",
-	"sap/ui/core/Lib"
+	"./ComboBoxTextFieldRenderer"
 ],
 	function(
 		InputBase,
 		library,
 		LabelEnablement,
-		ComboBoxTextFieldRenderer,
-		Library
+		ComboBoxTextFieldRenderer
 	) {
 		"use strict";
 
@@ -31,7 +29,7 @@ sap.ui.define([
 		 * @extends sap.m.InputBase
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
@@ -67,7 +65,7 @@ sap.ui.define([
 			renderer: ComboBoxTextFieldRenderer
 		});
 
-		var oRb = Library.getResourceBundleFor("sap.m");
+		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 		ComboBoxTextField.prototype.init = function () {
 			InputBase.prototype.init.apply(this, arguments);

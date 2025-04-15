@@ -497,9 +497,16 @@
 			right: auto;
 			left: 1rem;
 		}
-		.sapFSPSplitterBar {
-			left: initial;
-			right: -1rem;
+		.sapFSPActionBarList {
+			.sapFSPItem {
+				flex-direction: row-reverse;
+				&.sapFSPSelected {
+					&::before {
+						right: 0;
+						left: auto;
+					}
+				}
+			}
 		}
 	}
 }

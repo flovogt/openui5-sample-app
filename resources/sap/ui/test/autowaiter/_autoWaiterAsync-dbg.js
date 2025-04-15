@@ -23,20 +23,14 @@ sap.ui.define([
 	});
 	var bWaitStarted;
 	var sLastAutoWaiterLog;
-	var defaultConfig = {
+	var config = {
 		interval: 400, // milliseconds
 		timeout: 15000 // milliseconds
 	};
-	var config = extend({}, defaultConfig);
 
 	function extendConfig(oNewConfig) {
 		validateConfig(oNewConfig);
 		extend(config, oNewConfig);
-		_autoWaiter.extendConfig(config);
-	}
-
-	function resetConfig() {
-		config = extend({}, defaultConfig);
 		_autoWaiter.extendConfig(config);
 	}
 
@@ -95,7 +89,6 @@ sap.ui.define([
 
 	return {
 		extendConfig: extendConfig,
-		resetConfig: resetConfig,
 		waitAsync: waitAsync
 	};
 }, true);

@@ -7,8 +7,6 @@
 // Provides control sap.m.Breadcrumbs.
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	"sap/ui/dom/units/Rem",
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/util/openWindow",
@@ -26,8 +24,6 @@ sap.ui.define([
 	'sap/ui/core/InvisibleText'
 ], function(
 	Control,
-	Element,
-	Library,
 	Rem,
 	Parameters,
 	openWindow,
@@ -53,9 +49,7 @@ sap.ui.define([
 		SeparatorStyle = library.BreadcrumbsSeparatorStyle,
 
 		// shortcut for texts resource bundle
-		oResource = Library.getResourceBundleFor("sap.m"),
-
-		PICKER_OFFSET_Y = 4;
+		oResource = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Constructor for a new <code>Breadcrumbs</code>.
@@ -74,7 +68,7 @@ sap.ui.define([
 	 * @implements sap.m.IBreadcrumbs, sap.m.IOverflowToolbarContent, sap.ui.core.IShrinkable
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -98,7 +92,7 @@ sap.ui.define([
 				 * Determines the text of current/last element in the Breadcrumbs path.
 				 * @since 1.34
 				 */
-				currentLocationText: {type: "string", group: "Data", defaultValue: null},
+				currentLocationText: {type: "string", group: "Behavior", defaultValue: null},
 				/**
 				 * Determines the visual style of the separator between the <code>Breadcrumbs</code> elements.
 				 * @since 1.69
@@ -110,12 +104,6 @@ sap.ui.define([
 				}
 			},
 			aggregations: {
-
-				/**
-				 * Link determing the current/last element in the Breadcrumbs path.
-				 * @since 1.123
-				 */
-				currentLocation: {type: "sap.m.Link", multiple: false},
 
 				/**
 				 * A list of all the active link elements in the Breadcrumbs control.
@@ -213,12 +201,8 @@ sap.ui.define([
 		this.bRenderingPhase = false;
 	};
 
-	Breadcrumbs.prototype.focus = function () {
-		setTimeout(() => { Control.prototype.focus.apply(this, arguments); } , 0);
-	};
-
 	Breadcrumbs.prototype._setMinWidth = function () {
-		var oCurrentLocation = this.getCurrentLocation(),
+		var oCurrentLocation = this._getCurrentLocation(),
 			iWidth,
 			iDefaultMinWidthOFT;
 		// When in OFT, set min-width=width of the currentLocationText, so that it won't be truncated too much, before going into the overflow menu
@@ -320,24 +304,6 @@ sap.ui.define([
 		return this.getAggregation("_currentLocation");
 	};
 
-	Breadcrumbs.prototype.setCurrentLocation = function (oLink) {
-		if (oLink) {
-			oLink.addStyleClass("sapMBreadcrumbsCurrentLocation");
-		}
-
-		return this.setAggregation("currentLocation", oLink);
-	};
-
-	Breadcrumbs.prototype.getCurrentLocation = function () {
-		var oLinkAggregation = this.getAggregation("currentLocation");
-
-		if (!oLinkAggregation || !oLinkAggregation.getText()) {
-			return this._getCurrentLocation();
-		}
-
-		return oLinkAggregation;
-	};
-
 	Breadcrumbs.prototype._setCurrentLocationAccInfo = function (oCurrentLocation) {
 		var aVisibleItems = this._getControlsForBreadcrumbTrail(),
 			positionText = Breadcrumbs._getResourceBundleText("BREADCRUMB_ITEM_POS", [aVisibleItems.length, aVisibleItems.length]);
@@ -345,7 +311,7 @@ sap.ui.define([
 		oCurrentLocation.$().attr("aria-current", "page");
 		oCurrentLocation.$().attr("tabindex", 0);
 		oCurrentLocation.$().attr("role", "link");
-		oCurrentLocation.$().attr("aria-label", this.getCurrentLocation().getText() + " " + positionText);
+		oCurrentLocation.$().attr("aria-label", this.getCurrentLocationText() + " " + positionText);
 	};
 
 	function fnConvertArguments(sAggregationName, aArguments) {
@@ -394,7 +360,7 @@ sap.ui.define([
 	Breadcrumbs.prototype._destroyInvisibleTexts = function () {
 		var oControl;
 		this._aCachedInvisibleTexts.forEach(function (oData) {
-			oControl = Element.getElementById(oData.controlId);
+			oControl = sap.ui.getCore().byId(oData.controlId);
 
 			// remove reference to the invisible text on the sap.m.Link control
 			// check for control existence as it might have been destroyed already
@@ -414,10 +380,6 @@ sap.ui.define([
 			.attachAfterOpen(this._removeItemNavigation, this)
 			.attachBeforeClose(this._restoreItemNavigation, this);
 
-		if (!Device.system.phone) {
-			oSelect.getPicker().setOffsetY(PICKER_OFFSET_Y);
-		}
-
 		oSelect._onBeforeOpenDialog = this._onSelectBeforeOpenDialog.bind(this);
 		oSelect._onBeforeOpenPopover = this._onSelectBeforeOpenPopover.bind(this);
 		oSelect.onsapescape = this._onSelectEscPress.bind(this);
@@ -432,7 +394,7 @@ sap.ui.define([
 	Breadcrumbs.prototype._onSelectBeforeOpenDialog = function () {
 		var oSelect = this._getSelect();
 
-		if (this.getCurrentLocation().getText() && Device.system.phone) {
+		if (this.getCurrentLocationText() && Device.system.phone) {
 			oSelect.setSelectedIndex(0);
 		} else {
 			oSelect.setSelectedItem(null);
@@ -492,7 +454,7 @@ sap.ui.define([
 			return;
 		}
 
-		oLink = Element.getElementById(oSelectedItem.getKey());
+		oLink = sap.ui.getCore().byId(oSelectedItem.getKey());
 
 		/* if it's not a link, then it must be only the current location text, we shouldn't do anything */
 		if (!(oLink instanceof Link)) {
@@ -517,8 +479,8 @@ sap.ui.define([
 	Breadcrumbs.prototype._getItemsForMobile = function () {
 		var oItems = this.getLinks().filter(function (oLink) { return oLink.getVisible(); });
 
-		if (this.getCurrentLocation().getText()) {
-			oItems.push(this.getCurrentLocation());
+		if (this.getCurrentLocationText()) {
+			oItems.push(this._getCurrentLocation());
 		}
 
 		return oItems;
@@ -559,8 +521,8 @@ sap.ui.define([
 
 		aVisibleControls = this.getLinks().filter(function (oLink) { return oLink.getVisible(); });
 
-		if (this.getCurrentLocation().getText()) {
-			return aVisibleControls.concat([this.getCurrentLocation()]);
+		if (this.getCurrentLocationText()) {
+			return aVisibleControls.concat([this._getCurrentLocation()]);
 		}
 		return aVisibleControls;
 	};
@@ -755,21 +717,18 @@ sap.ui.define([
 			iSelectedDomIndex = -1,
 			aItemsToNavigate = this._getItemsToNavigate(),
 			aNavigationDomRefs = [],
-			bIsDisabledLink = false,
 			oItemDomRef;
 
 		if (aItemsToNavigate.length === 0) {
 			return;
 		}
 
-		aItemsToNavigate.forEach(function (oItem) {
-			oItemDomRef = oItem.getFocusDomRef();
+		aItemsToNavigate.forEach(function (oItem, iIndex) {
+			oItemDomRef = oItem.getDomRef();
 			if (oItemDomRef) {
-				bIsDisabledLink = oItem.isA("sap.m.Link") && !oItem.getEnabled();
-				if (!bIsDisabledLink) {
-					aNavigationDomRefs.push(oItemDomRef);
-				}
+				oItemDomRef.setAttribute("tabindex", iIndex === 0 ? "0" : "-1");
 			}
+			aNavigationDomRefs.push(oItem.getFocusDomRef());
 		});
 
 		this.addDelegate(oItemNavigation);
@@ -809,7 +768,6 @@ sap.ui.define([
 		}
 	};
 
-	/* @deprecated as of version 1.123 */
 	Breadcrumbs.prototype.setCurrentLocationText = function (sText) {
 		var oCurrentLocation = this._getCurrentLocation(),
 			vResult = this.setProperty("currentLocationText", sText, true);

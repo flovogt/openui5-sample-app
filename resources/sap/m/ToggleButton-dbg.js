@@ -10,10 +10,9 @@ sap.ui.define([
 	'./library',
 	'sap/ui/core/EnabledPropagator',
 	'./ToggleButtonRenderer',
-	"sap/ui/core/Lib",
 	"sap/ui/events/KeyCodes"
 ],
-	function(Button, library, EnabledPropagator, ToggleButtonRenderer, Library, KeyCodes) {
+	function(Button, library, EnabledPropagator, ToggleButtonRenderer, KeyCodes) {
 	"use strict";
 
 
@@ -33,7 +32,7 @@ sap.ui.define([
 	 * @extends sap.m.Button
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -147,7 +146,7 @@ sap.ui.define([
 		var oInfo = Button.prototype.getAccessibilityInfo.apply(this, arguments);
 		if (this.getPressed()) {
 			oInfo.description = ((oInfo.description || "") + " " +
-				Library.getResourceBundleFor("sap.m").getText("ACC_CTR_STATE_PRESSED")).trim();
+				sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_STATE_PRESSED")).trim();
 		}
 		return oInfo;
 	};

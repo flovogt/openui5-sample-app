@@ -241,7 +241,9 @@ sap.ui.define([
 	_MetadataConverter.prototype.getOrCreateArray = function (oParent, sProperty) {
 		var oResult = oParent[sProperty];
 
-		oResult ??= oParent[sProperty] = [];
+		if (!oResult) {
+			oResult = oParent[sProperty] = [];
+		}
 		return oResult;
 	};
 
@@ -255,7 +257,9 @@ sap.ui.define([
 	_MetadataConverter.prototype.getOrCreateObject = function (oParent, sProperty) {
 		var oResult = oParent[sProperty];
 
-		oResult ??= oParent[sProperty] = {};
+		if (!oResult) {
+			oResult = oParent[sProperty] = {};
+		}
 		return oResult;
 	};
 

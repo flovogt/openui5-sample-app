@@ -17,7 +17,7 @@ sap.ui.define(['./ColumnPopoverItem', 'sap/m/ToggleButton'], function(ColumnPopo
 	 * @extends sap.m.ColumnPopoverItem
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @since 1.63

@@ -15,10 +15,16 @@ sap.ui.define([
 		"hideControl": "default",
 		"unhideControl": "default",
 		"combineButtons": {
-			"changeHandler": CombineButtonsHandler
+			"changeHandler": CombineButtonsHandler,
+			"layers": {
+				"CUSTOMER": false
+			}
 		},
 		"splitMenuButton": {
-			"changeHandler": SplitMenuButtonHandler
+			"changeHandler": SplitMenuButtonHandler,
+			"layers": {
+				"CUSTOMER": false
+			}
 		},
 		"moveActions": {
 			"changeHandler": MoveDynamicPageTitleActions

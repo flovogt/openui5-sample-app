@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/Lib",
 	'sap/ui/core/Renderer',
 	'./DatePickerRenderer',
 	'./DateTimeFieldRenderer',
@@ -12,13 +11,12 @@ sap.ui.define([
 	'sap/ui/core/date/UI5Date'
 ],
 	function(
-		Library,
 		Renderer,
 		DatePickerRenderer,
 		DateTimeFieldRenderer,
 		coreLibrary,
 		UI5Date
-	) {
+) {
 	"use strict";
 
 	/**
@@ -40,7 +38,7 @@ sap.ui.define([
 	DateTimePickerRenderer.getDescribedByAnnouncement = function(oDP) {
 
 		var sBaseAnnouncement = DateTimeFieldRenderer.getDescribedByAnnouncement.apply(this, arguments);
-		return Library.getResourceBundleFor("sap.m").getText("DATETIMEPICKER_TYPE") + " " + sBaseAnnouncement;
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("DATETIMEPICKER_TYPE") + " " + sBaseAnnouncement;
 
 	};
 

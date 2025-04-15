@@ -5,14 +5,17 @@
  */
 
 sap.ui.define([
-	"sap/ui/core/Lib",
-	"sap/ui/thirdparty/jquery",
-	'sap/ui/base/Object',
-	"sap/base/Log",
-	"sap/ui/support/RuleAnalyzer",
-	"sap/ui/support/library"
-],
-	function(Lib, jQuery, BaseObject, Log, RuleAnalyzer, library) {
+		"sap/ui/thirdparty/jquery",
+		'sap/ui/base/Object',
+		"sap/base/Log",
+		"sap/ui/support/RuleAnalyzer",
+		"sap/ui/support/library"
+	],
+	function(jQuery,
+			 BaseObject,
+			 Log,
+			 RuleAnalyzer,
+			 library) {
 	"use strict";
 
 	/**
@@ -43,7 +46,7 @@ sap.ui.define([
 		 * @returns {jQuery.promise} A promise that gets resolved when the Support Assistant is ready.
 		 */
 		onAfterInit : function () {
-			var bLoaded = Lib.all()["sap.ui.support"],
+			var bLoaded = sap.ui.getCore().getLoadedLibraries()["sap.ui.support"],
 				deferred = jQuery.Deferred();
 
 			if (!bLoaded) {

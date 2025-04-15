@@ -5,24 +5,11 @@
  */
 
 // Provides control sap.m.MenuItem.
-sap.ui.define([
-	'./library',
-	'sap/ui/core/library',
-	'sap/ui/core/Element',
-	'sap/ui/core/Item',
-	'sap/ui/base/ManagedObjectObserver'
-], function(
-	library,
-	coreLibrary,
-	Element,
-	Item,
-	ManagedObjectObserver
-) {
+sap.ui.define(['./library', 'sap/ui/core/Item', 'sap/ui/base/ManagedObjectObserver'],
+	function(library, Item, ManagedObjectObserver) {
 		"use strict";
 
 
-		// shortcut for sap.ui.core.ItemSelectionMode
-		var ItemSelectionMode = coreLibrary.ItemSelectionMode;
 
 		/**
 		 * Constructor for a new <code>MenuItem</code>.
@@ -34,10 +21,9 @@ sap.ui.define([
 		 * The <code>MenuItem</code> control is used for creating items for the <code>sap.m.Menu</code>.
 		 * It is derived from a core <code>sap.ui.core.Item</code>.
 		 * @extends sap.ui.core.Item
-		 * @implements sap.m.IMenuItem
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
@@ -46,9 +32,6 @@ sap.ui.define([
 		 */
 		var MenuItem = Item.extend("sap.m.MenuItem", /** @lends sap.m.MenuItem.prototype */ { metadata : {
 
-			interfaces: [
-				"sap.m.IMenuItem"
-			],
 			library : "sap.m",
 			properties : {
 
@@ -65,52 +48,19 @@ sap.ui.define([
 				visible : {type: "boolean", group : "Appearance", defaultValue: true},
 
 				/**
-				 * Determines whether the <code>MenuItem</code> is selected.
-				 * A selected <code>MenuItem</code> has a check mark rendered at its end.
-				 * <b>Note: </b> selection functionality works only if the menu item is a member of <code>MenuItemGroup</code> with
-				 * <code>itemSelectionMode</code> set to {@link sap.ui.core.ItemSelectionMode.SingleSelect} or {@link sap.ui.unified.ItemSelectionMode.MultiSelect}.
-				 * @since 1.127.0
-				 */
-				selected : {type : "boolean", group : "Behavior", defaultValue : false},
-
-				/**
-				 * Defines the shortcut text that should be displayed on the menu item on non-mobile devices.
-				 * <b>Note:</b> The text is only displayed and set as а value of the <code>aria-keyshortcuts</code> attribute.
-				 */
-				shortcutText : {type : "string", group : "Appearance", defaultValue : ''},
-
-				/**
 				 * Defines whether a visual separator should be rendered before the item.
 				 * <b>Note:</b> If an item is invisible its separator is also not displayed.
 				 */
 				startsSection : {type : "boolean", group : "Behavior", defaultValue : false}
-
 			},
 			defaultAggregation: "items",
 			aggregations: {
-
 				/**
 				 * Defines the sub-items contained within this element.
 				 */
-				items: { type: "sap.m.IMenuItem", multiple: true, singularName: "item", bindable: "bindable" },
-
-				/**
-				 * Defines the content that is displayed at the end of a menu item. This aggregation allows for the addition of custom elements, such as icons and buttons.
-	 			 * @since 1.131
-				 */
-				endContent: { type: "sap.ui.core.Control", multiple : true }
-
-			},
-			associations : {
-
-				/**
-				 * MenuItemGroup associated with this item.
-				 */
-				_group : {type : "sap.ui.unified.MenuItemGroup",  group : "Behavior", visibility : "hidden"}
-
+				items: { type: "sap.m.MenuItem", multiple: true, singularName: "item", bindable: "bindable" }
 			},
 			events: {
-
 				/**
 				 * Fired after the item has been pressed.
 				 */
@@ -153,7 +103,6 @@ sap.ui.define([
 						methodParams: {type: "object"}
 					}
 				}
-
 			}
 		}});
 
@@ -193,11 +142,8 @@ sap.ui.define([
 			Item.prototype.addAggregation.apply(this, arguments);
 
 			if (sAggregationName === 'customData' && oVisualItemId) {
-				oVisualItem = Element.getElementById(oVisualItemId);
+				oVisualItem = sap.ui.getCore().byId(oVisualItemId);
 				this._addCustomData(oVisualItem, oObject);
-			} else if (sAggregationName === "endContent" && oVisualItemId){
-				oVisualItem = Element.getElementById(oVisualItemId);
-				this._addEndContent(oVisualItem, oObject);
 			}
 
 			this.fireEvent("aggregationChanged", { aggregationName: sAggregationName, methodName: "add", methodParams: { item: oObject } }, false, true);
@@ -212,13 +158,9 @@ sap.ui.define([
 			Item.prototype.insertAggregation.apply(this, arguments);
 
 			if (sAggregationName === 'customData' && oVisualItemId) {
-				oVisualItem = Element.getElementById(oVisualItemId);
+				oVisualItem = sap.ui.getCore().byId(oVisualItemId);
 				oVisualItem.insertCustomData(oObject.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX), iIndex);
 				this._observeCustomDataChanges(oObject);
-			} else if (sAggregationName === "endContent" && oVisualItemId) {
-				oVisualItem = Element.getElementById(oVisualItemId);
-				oVisualItem.insertEndContent(oObject.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX), iIndex);
-				this._observeEndContentChanges(oObject);
 			}
 
 			this.fireEvent("aggregationChanged", { aggregationName: sAggregationName, methodName: "insert", methodParams: { item: oObject, index: iIndex }}, false, true);
@@ -237,16 +179,6 @@ sap.ui.define([
 						properties: ["value"]
 					});
 				}
-			} else if (sAggregationName === "endContent") {
-				if (this.getEndContent().length === 1) {
-					this._disconnectAndDestroyEndContentObserver();
-				} else if (vObject && this._oEndContentObserver) {
-					if (!this.getEndContent().length) {
-						this._oEndContentObserver.unobserve(vObject, {
-							aggregations: ["endContent"]
-						});
-					}
-				}
 			}
 
 			this.fireEvent("aggregationChanged", { aggregationName: sAggregationName, methodName: "remove", methodParams: { item: oObject }}, false, true);
@@ -259,8 +191,6 @@ sap.ui.define([
 
 			if (sAggregationName === 'customData') {
 				this._disconnectAndDestroyCustomDataObserver();
-			} else if (sAggregationName === "endContent") {
-				this._disconnectAndDestroyEndContentObserver();
 			}
 
 			this.fireEvent("aggregationChanged", { aggregationName: sAggregationName, methodName: "removeall", methodParams: { items: aObjects }}, false, true);
@@ -271,8 +201,6 @@ sap.ui.define([
 		MenuItem.prototype.destroyAggregation = function(sAggregationName, bSuppressInvalidate) {
 			if (sAggregationName === 'customData') {
 				this._disconnectAndDestroyCustomDataObserver();
-			} else if (sAggregationName === "endContent") {
-				this._disconnectAndDestroyEndContentObserver();
 			}
 
 			this.fireEvent("aggregationChanged", { aggregationName: sAggregationName, methodName: "destroy"}, false, true);
@@ -280,7 +208,7 @@ sap.ui.define([
 		};
 
 		MenuItem.prototype.destroy = function() {
-			var oVisualControl = Element.getElementById(this._getVisualControl());
+			var oVisualControl = sap.ui.getCore().byId(this._getVisualControl());
 
 			if (oVisualControl) {
 				oVisualControl.destroy();
@@ -293,7 +221,7 @@ sap.ui.define([
 			Item.prototype.addEventDelegate.apply(this, arguments);
 
 			if (this._getVisualControl()) {
-				var oVisualControl = Element.getElementById(this._getVisualControl());
+				var oVisualControl = sap.ui.getCore().byId(this._getVisualControl());
 				oVisualControl.addEventDelegate(oDelegate, oThis);
 			}
 
@@ -304,29 +232,9 @@ sap.ui.define([
 			Item.prototype.removeEventDelegate.apply(this, arguments);
 
 			if (this._getVisualControl()) {
-				var oVisualControl = Element.getElementById(this._getVisualControl());
+				var oVisualControl = sap.ui.getCore().byId(this._getVisualControl());
 				oVisualControl.removeEventDelegate(oDelegate);
 			}
-
-			return this;
-		};
-
-		/**
-		 * Sets the <code>selected</code> state of the <code>MenuItem</code> if it is allowed.
-		 *
-		 * @override
-		 * @param {boolean} bState Whether the menu item should be selected
-		 * @returns {this} Returns <code>this</code> to allow method chaining
-		 */
-		MenuItem.prototype.setSelected = function(bState) {
-			var oGroup = Element.getElementById(this.getAssociation("_group"));
-
-			// in case of single selection, clear selected state of all other items in the group to ensure that only one item is selected
-			if (bState && oGroup && oGroup.getItemSelectionMode() === ItemSelectionMode.SingleSelect) {
-				oGroup._clearSelectedItems();
-			}
-
-			this.setProperty("selected", bState);
 
 			return this;
 		};
@@ -344,18 +252,6 @@ sap.ui.define([
 		};
 
 		/**
-		 * Observes the endContent aggregation of the passed menu item
-		 *
-		 * @param {sap.ui.unified.MenuItem} oVisualItem the sap.ui.unified.MenuItem, which aggregation will be observed
-		 * @param {sap.ui.core.Control} oEndContent A control that will be added to the endContent aggregation
-		 * @private
-		 */
-		MenuItem.prototype._addEndContent = function (oVisualItem, oEndContent) {
-			oVisualItem.addEndContent(oEndContent.clone(MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX, undefined, { bCloneChildren: false, bCloneBindings: true }));
-			this._observeEndContentChanges(oEndContent);
-		};
-
-		/**
 		 * Observes the value property of the passed menu item
 		 *
 		 * @param {sap.ui.core.CustomData} oCustomData the custom data, which property will be observed
@@ -368,35 +264,13 @@ sap.ui.define([
 		};
 
 		/**
-		 * Observes the endContent aggregation of the passed menu item
-		 *
-		 * @param {sap.ui.core.Control} oEndContent the control that is observed for property changes
-		 * @private
-		 */
-		MenuItem.prototype._observeEndContentChanges = function (oEndContent) {
-			this._getEndContentObserver().observe(oEndContent, {
-				properties: true
-			});
-		};
-
-		/**
-		 * Sets the value property of the inner sap.ui.unified.MenuItem
-		 *
-		 * @param {object} oChanges the changes detected by the ManagedObjectObservers
-		 * @private
-		 */
-		MenuItem.prototype._customDataObserverCallbackFunction = function (oChanges) {
-			Element.getElementById(oChanges.object.getId() + "-" + MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX).setValue(oChanges.current);
-		};
-
-		/**
 		 * Sets the value property of the inner sap.ui.unified.MenuItem
 		 *
 		 * @param {object} oChanges the detected from the ManagedObjectObserver changes
 		 * @private
 		 */
-		MenuItem.prototype._endContentObserverCallbackFunction = function (oChanges) {
-			Element.getElementById(oChanges.object.getId() + "-" + MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX).setProperty(oChanges.name, oChanges.current);
+		MenuItem.prototype._customDataObserverCallbackFunction = function (oChanges) {
+			sap.ui.getCore().byId(oChanges.object.getId() + "-" + MenuItem.UNIFIED_MENU_ITEMS_ID_SUFFIX).setValue(oChanges.current);
 		};
 
 		/**
@@ -413,19 +287,6 @@ sap.ui.define([
 		};
 
 		/**
-		 * Returns the ManagedObjectObserver for the end content
-		 *
-		 * @return {sap.ui.base.ManagedObjectObserver} the end content observer object
-		 * @private
-		 */
-		MenuItem.prototype._getEndContentObserver = function () {
-			if (!this._oEndContentObserver) {
-				this._oEndContentObserver = new ManagedObjectObserver(this._endContentObserverCallbackFunction);
-			}
-			return this._oEndContentObserver;
-		};
-
-		/**
 		 * Disconnects and destroys the ManagedObjectObserver observing the menu items
 		 *
 		 * @private
@@ -438,23 +299,10 @@ sap.ui.define([
 			}
 		};
 
-		/**
-		 * Disconnects and destroys the ManagedObjectObserver observing the menu items
-		 *
-		 * @private
-		 */
-		MenuItem.prototype._disconnectAndDestroyEndContentObserver = function () {
-			if (this._oEndContentObserver) {
-				this._oEndContentObserver.disconnect();
-				this._oEndContentObserver.destroy();
-				this._oEndContentObserver = null;
-			}
-		};
-
 		//Internal methods used to identify the item in the Menu's hierarchy.
 
 		/**
-		 * Sets visual child of the control (unified Menu).
+		 * Sets visual child of the control.
 		 * @private
 		 */
 		MenuItem.prototype._setVisualChild = function(vControl) {
@@ -462,7 +310,7 @@ sap.ui.define([
 		};
 
 		/**
-		 * Sets visual parent of the control (unified Menu).
+		 * Sets visual parent of the control.
 		 * @private
 		 */
 		MenuItem.prototype._setVisualParent = function(vControl) {
@@ -470,7 +318,7 @@ sap.ui.define([
 		};
 
 		/**
-		 * Sets visual control of the control (unified MenuItem).
+		 * Sets visual control of the control.
 		 * @private
 		 */
 		MenuItem.prototype._setVisualControl = function(vControl) {
@@ -486,7 +334,7 @@ sap.ui.define([
 		};
 
 		/**
-		 * Gets visual child of the control (unified Menu).
+		 * Gets visual child of the control.
 		 * @private
 		 */
 		MenuItem.prototype._getVisualChild = function() {
@@ -494,7 +342,7 @@ sap.ui.define([
 		};
 
 		/**
-		 * Gets visual parent of the control (unified Menu).
+		 * Gets visual parent of the control.
 		 * @private
 		 */
 		MenuItem.prototype._getVisualParent = function() {
@@ -502,28 +350,11 @@ sap.ui.define([
 		};
 
 		/**
-		 * Gets visual control of the control (unified MenuItem).
+		 * Gets visual control of the control.
 		 * @private
 		 */
 		MenuItem.prototype._getVisualControl = function() {
 			return this._sVisualControl;
-		};
-
-		MenuItem.prototype._getItems = function() {
-			var aItems = [];
-
-			const findItems = (aItemItems) => {
-				aItemItems.forEach((oItem) => {
-					if (!oItem.getItemSelectionMode) {
-						aItems.push(oItem);
-					} else {
-						findItems(oItem.getItems());
-					}
-				});
-			};
-
-			findItems(this.getItems());
-			return aItems;
 		};
 
 		return MenuItem;

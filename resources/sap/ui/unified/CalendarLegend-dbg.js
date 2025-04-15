@@ -10,18 +10,17 @@ sap.ui.define([
 	'./library',
 	'./CalendarLegendRenderer',
 	"sap/base/Log",
-	"sap/ui/core/Element",
-	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/unified/CalendarLegendItem",
+	"sap/ui/core/Core",
 	"sap/ui/Device",
 	"sap/ui/core/delegate/ItemNavigation"
 ],
-	function(Control, library, CalendarLegendRenderer, Log, Element, Library, jQuery, CalendarLegendItem, Device, ItemNavigation) {
+	function(Control, library, CalendarLegendRenderer, Log, jQuery, CalendarLegendItem, Core, Device, ItemNavigation) {
 	"use strict";
 
 	// Resource Bundle
-	var oResourceBundle = Library.getResourceBundleFor("sap.ui.unified");
+	var oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 
 	// shortcut for sap.ui.unified.CalendarDayType
 	var CalendarDayType = library.CalendarDayType;
@@ -57,7 +56,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -190,18 +189,16 @@ sap.ui.define([
 	CalendarLegend.prototype._onItemNavigationAfterFocus = function(oEvent) {
 		var oSource = oEvent.getSource(),
 			oLegendItemDomRef = oSource.getItemDomRefs()[oSource.getFocusedIndex()],
-			sType = Element.getElementById(oLegendItemDomRef.id).getType(),
-			sColor =  Element.getElementById(oLegendItemDomRef.id).getColor(),
+			sType = Core.byId(oLegendItemDomRef.id).getType(),
 			oParent = this._getParent();
 
 		this._setSpecialDateTypeFilter(sType);
-		this._setSpecialDateColorFilter(sColor);
 		oParent && oParent.invalidate();
 	};
 
 	CalendarLegend.prototype._onItemNavigationFocusLeave = function(oEvent) {
 		var oParent = this._getParent();
-		this._setSpecialDateColorFilter();
+
 		this._setSpecialDateTypeFilter();
 		oParent && oParent.invalidate();
 	};
@@ -215,27 +212,11 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets a special date color that should be filtered. Only dates with this color should be displayed as special.
-	 * @param {string} sColor special date color that should be displayed only
-	 */
-	CalendarLegend.prototype._setSpecialDateColorFilter = function(sColor) {
-		this._sSpecialDateColorFilter = sColor || "";
-	};
-
-	/**
 	 * Returns a special date type that should be filtered.
 	 * @returns {string} special date type that should be displayed only.
 	 */
 	CalendarLegend.prototype._getSpecialDateTypeFilter = function() {
 		return this._sSpecialDateTypeFilter || "";
-	};
-
-	/**
-	 * Returns a special date color that should be filtered.
-	 * @returns {string} special date color that should be displayed only.
-	 */
-	CalendarLegend.prototype._getSpecialDateColorFilter = function() {
-		return this._sSpecialDateColorFilter || "";
 	};
 
 	/**
@@ -363,7 +344,6 @@ sap.ui.define([
 
 		delete oFreeTypes[CalendarDayType.None];
 		delete oFreeTypes[CalendarDayType.NonWorking];
-		delete oFreeTypes[CalendarDayType.Working];
 
 		//remove types that are used
 		for (i = 0; i < aItems.length; i++) {
@@ -383,12 +363,6 @@ sap.ui.define([
 				return oItem.getId();
 			}
 		).join(" ");
-	};
-
-	CalendarLegend.prototype._getAllItems = function() {
-		var aStandardItems = this.getAggregation("_standardItems") || [],
-			aCustomItems = this.getItems() || [];
-		return aStandardItems.concat(aCustomItems);
 	};
 
 	return CalendarLegend;

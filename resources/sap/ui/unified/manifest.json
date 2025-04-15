@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.134.0"
+      "version": "1.120.27"
     },
     "title": "Unified controls intended for both, mobile and desktop scenarios",
     "description": "Unified controls intended for both, mobile and desktop scenarios",
@@ -22,10 +22,10 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.134",
+      "minUI5Version": "1.120",
       "libs": {
         "sap.ui.core": {
-          "minVersion": "1.134.0"
+          "minVersion": "1.120.27"
         }
       }
     },
@@ -124,13 +124,9 @@
           "sap.ui.unified.FileUploaderXHRSettings",
           "sap.ui.unified.MenuItem",
           "sap.ui.unified.MenuItemBase",
-          "sap.ui.unified.MenuItemGroup",
           "sap.ui.unified.MenuTextFieldItem",
-          "sap.ui.unified.NonWorkingPeriod",
-          "sap.ui.unified.RecurringNonWorkingPeriod",
           "sap.ui.unified.ShellHeadItem",
-          "sap.ui.unified.ShellHeadUserItem",
-          "sap.ui.unified.TimeRange"
+          "sap.ui.unified.ShellHeadUserItem"
         ],
         "types": [
           "sap.ui.unified.CalendarAppointmentVisualization",
@@ -146,7 +142,6 @@
           "sap.ui.unified.StandardCalendarLegendItem"
         ],
         "interfaces": [
-          "sap.ui.unified.IMenuItem",
           "sap.ui.unified.IProcessableBlobs"
         ]
       }

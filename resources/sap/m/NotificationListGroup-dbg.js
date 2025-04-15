@@ -6,10 +6,10 @@
 
 sap.ui.define([
 	'./library',
+	'sap/ui/core/Core',
 	'./NotificationListBase',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/core/IconPool',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
 	'sap/ui/Device',
 	'sap/m/Button',
@@ -17,10 +17,10 @@ sap.ui.define([
 ],
 function(
 	library,
+	Core,
 	NotificationListBase,
 	InvisibleText,
 	IconPool,
-	Library,
 	coreLibrary,
 	Device,
 	Button,
@@ -34,7 +34,7 @@ function(
 	// shortcut for sap.m.ButtonType
 	var ButtonType = library.ButtonType;
 
-	var RESOURCE_BUNDLE = Library.getResourceBundleFor('sap.m'),
+	var RESOURCE_BUNDLE = Core.getLibraryResourceBundle('sap.m'),
 		EXPAND_TEXT = RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_EXPAND'),
 		COLLAPSE_TEXT = RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_COLLAPSE'),
 		READ_TEXT = RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_READ'),
@@ -62,7 +62,7 @@ function(
 	 * @extends sap.m.NotificationListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -105,21 +105,21 @@ function(
 				/**
 				 * Determines the notification group's author name.
 				 *
-				 * @deprecated As of version 1.73, the concept has been discarded.
+				 * @deprecated As of version 1.73
 				 */
 				authorName: {type: 'string', group: 'Appearance', defaultValue: '', deprecated: true},
 
 				/**
 				 * Determines the URL of the notification group's author picture.
 				 *
-				 *  @deprecated As of version 1.73, the concept has been discarded.
+				 *  @deprecated As of version 1.73
 				 */
 				authorPicture: {type: 'sap.ui.core.URI', deprecated: true},
 
 				/**
 				 * Determines the due date of the NotificationListGroup.
 				 *
-				 *  @deprecated As of version 1.73, the concept has been discarded.
+				 *  @deprecated As of version 1.73
 				 */
 				datetime: {type: 'string', group: 'Appearance', defaultValue: '', deprecated: true}
 			},
@@ -243,16 +243,21 @@ function(
 	 * @private
 	 */
 	NotificationListGroup.prototype._getGroupTitleInvisibleText = function() {
+
 		var readUnreadText = this.getUnread() ? UNREAD_TEXT : READ_TEXT,
+			priorityText,
 			priority = this.getPriority(),
+			counterText,
 			ariaTexts = [readUnreadText];
 
-		if (priority !== Priority.None) {
-			ariaTexts.push(RESOURCE_BUNDLE.getText("NOTIFICATION_LIST_GROUP_PRIORITY", [priority]));
-		}
+			if (priority !== Priority.None) {
+				priorityText = RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_PRIORITY', priority);
+				ariaTexts.push(priorityText);
+			}
 
 		if (this.getShowItemsCounter()) {
-			ariaTexts.push(RESOURCE_BUNDLE.getText("LIST_ITEM_COUNTER", [this._getVisibleItemsCount()]));
+			counterText = RESOURCE_BUNDLE.getText("LIST_ITEM_COUNTER", [this._getVisibleItemsCount()]);
+			ariaTexts.push(counterText);
 		}
 
 		return this._groupTitleInvisibleText.setText(ariaTexts.join(' '));
@@ -345,7 +350,7 @@ function(
 	 */
 	NotificationListGroup.prototype._getMaxNumberReachedMsg = function () {
 		return {
-			title: RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_MAX_NOTIFICATIONS_TITLE', [this.getItems().length - maxNumberOfNotifications]),
+			title: RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_MAX_NOTIFICATIONS_TITLE', this.getItems().length - maxNumberOfNotifications),
 			description: RESOURCE_BUNDLE.getText('NOTIFICATION_LIST_GROUP_MAX_NOTIFICATIONS_BODY')
 		};
 	};

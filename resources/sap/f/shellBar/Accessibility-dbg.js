@@ -4,11 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/Lib",
-	'sap/ui/core/library'
+	'sap/ui/core/library',
+	"sap/ui/core/Core"
 ], function(
-	Library,
-	coreLibrary
+	coreLibrary,
+	Core
 ) {
 	"use strict";
 
@@ -27,7 +27,7 @@ sap.ui.define([
 			this._oControl.addDelegate(this._controlDelegate, false, this);
 		}
 
-		this.oRb = Library.getResourceBundleFor("sap.f");
+		this.oRb = Core.getLibraryResourceBundle("sap.f");
 	};
 
 	Accessibility.AriaHasPopup = {

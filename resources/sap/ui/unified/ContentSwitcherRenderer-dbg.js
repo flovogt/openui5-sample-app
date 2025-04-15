@@ -4,12 +4,11 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
-	"sap/ui/core/ControlBehavior",
 	'sap/ui/unified/library',
 	"sap/base/security/encodeXML",
 	"sap/ui/core/Configuration"
 ],
-	function(ControlBehavior, library, encodeXML, Configuration) {
+	function(library, encodeXML, Configuration) {
 	"use strict";
 
 
@@ -20,7 +19,7 @@ sap.ui.define([
 	/**
 	 * AnimatedContentSwitcher renderer.
 	 * @namespace
-	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @deprecated Since version 1.44.0.
 	 */
 	var ContentSwitcherRenderer = {
 	};
@@ -35,7 +34,7 @@ sap.ui.define([
 	ContentSwitcherRenderer.render = function(oRm, oControl){
 		var sId            = oControl.getId();
 		var sAnimation     = oControl.getAnimation();
-		if (ControlBehavior.getAnimationMode() === Configuration.AnimationMode.none) {
+		if (Configuration.getAnimationMode() === Configuration.AnimationMode.none) {
 			sAnimation = ContentSwitcherAnimation.None;
 		}
 

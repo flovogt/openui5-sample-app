@@ -5,8 +5,8 @@
  */
 
 // Provides class sap.ui.core.date.Persian
-sap.ui.define(['./UniversalDate', './_Calendars', 'sap/base/i18n/date/CalendarType'],
-	function(UniversalDate, _Calendars, CalendarType) {
+sap.ui.define(['./UniversalDate', '../CalendarType', './_Calendars'],
+	function(UniversalDate, CalendarType, _Calendars) {
 	"use strict";
 
 

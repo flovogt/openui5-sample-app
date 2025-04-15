@@ -6,9 +6,9 @@
 
 // Provides default renderer for control sap.m.Text
 sap.ui.define([
-	"sap/ui/core/Lib"
+	"sap/ui/core/Core"
 ],
-	function(Library) {
+	function(Core) {
 	"use strict";
 
 	/**
@@ -26,7 +26,7 @@ sap.ui.define([
 	 * @param {sap.m.Tile} oControl An object representation of the control that should be rendered
 	 */
 	TileRenderer.render = function(rm, oControl) {
-		var oRB = Library.getResourceBundleFor("sap.m"),
+		var oRB = Core.getLibraryResourceBundle("sap.m"),
 			oTileContainer,
 			aVisibleTiles;
 
@@ -49,7 +49,6 @@ sap.ui.define([
 
 			rm.accessibilityState(oControl, {
 				role: "option",
-				roledescription: oRB.getText("GENERIC_TILE_ROLE_DESCRIPTION"),
 				posinset: oTileContainer._indexOfVisibleTile(oControl, aVisibleTiles) + 1,
 				setsize: aVisibleTiles.length
 			});

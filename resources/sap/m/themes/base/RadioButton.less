@@ -3,7 +3,7 @@
 /* Base theme                         */
 /* ================================== */
 
-@_sap_m_Radio_Button_Read_Only_fill: var(--sapContent_NonInteractiveIconColor);
+@_sap_m_Radio_Button_Read_Only_fill: @sapUiContentNonInteractiveIconColor;
 
 .sapMRb {
 	height: 3rem;
@@ -18,17 +18,8 @@
 	display: flex;
 
 	> .sapMRbBLabel:not(.sapMLabelNoText) {
-		padding-right: 0.125rem; /* if this is changed, please change in RadioButtonGroup too for usage in Form */
+		padding-right: 0.125rem;
 	}
-}
-
-.sapMRb .sapMLabel.sapMRbBLabel {
-	align-items: center;
-	display: inline-flex;
-}
-
-.sapMRb.sapMRbWrapped {
-	height: auto;
 }
 
 .sapMILI-CTX .sapMRb {
@@ -56,19 +47,15 @@
 		transform: translate(0.675rem, 0.675rem);
 		margin: 0.825rem;
 		padding: 1px; /* using padding here so that margin won't collide */
-		stroke: var(--sapField_BorderColor);
-		fill: var(--sapField_Background);
+		stroke: @sapUiFieldBorderColor;
+		fill: @sapUiFieldBackground;
 	}
 }
-
 .sapUiSizeCompact {
-
 	.sapMRb .sapMRbB {
-
-		.sapMRbBOut {
-			transform: translate(0.5rem, 0.5rem);
-		}
-	}
+	.sapMRbBOut {
+		transform: translate(0.5rem, 0.5rem);
+	}}
 }
 
 .sapMRbSvg {
@@ -86,13 +73,11 @@
 }
 
 .sapMRb:not(.sapMRbDis) {
-
 	&:hover {
 		cursor: pointer;
 	}
 
 	.sapMRbBLabel {
-
 		&:hover {
 			cursor: pointer;
 		}
@@ -105,8 +90,8 @@
 	visibility: hidden;
 }
 
-.sapMRb:focus::before {
-	content: '';
+.sapMRb:focus:before {
+	content: "";
 	display: block;
 	position: absolute;
 	top: .625rem;
@@ -114,13 +99,6 @@
 	left: .625rem;
 	right: .6875rem;
 	pointer-events: none;
-}
-
-.sapMRbHasLabel.sapMRb.sapMRbWrapped:focus::before {
-	bottom: 0.375rem;
-	top: 0.375rem;
-	left: 0.375rem;
-	right: 0;
 }
 
 .sapMRbB .sapMRbBInn {
@@ -133,41 +111,33 @@
 }
 
 .sapUiSizeCompact {
-
 	.sapMRbBInn {
 		transform: translate(0.5rem, 0.5rem);
 	}
 }
 
-.sapMRbHasLabel.sapMRb:focus::before {
+.sapMRbHasLabel.sapMRb:focus:before {
 	right: 0;
 }
 
-/* Right to left */
-.sapMRbG[dir=rtl] .sapMRbHasLabel.sapMRb:focus::before {
-	left: 0;
-	right: .6875rem;
-}
-
-.sapMRbDis:focus::before {
+.sapMRbDis:focus:before {
 	display: none;
 }
 
 .sapMRbSel .sapMRbBInn {
-	fill: var(--sapSelectedColor);
+	fill: @sapUiSelected;
 	stroke: none;
 }
 
 .sapMLIBActive .sapMRbSel .sapMRbBInn {
-	fill: var(--sapList_Active_TextColor);
+	fill: @sapUiListActiveTextColor;
 }
 
 /* Read only */
 .sapMRb.sapMRbRo {
-
 	.sapMRbBOut {
-		stroke: var(--sapField_ReadOnly_BorderColor);
-		fill: var(--sapField_ReadOnly_Background);
+		stroke: @sapUiFieldReadOnlyBorderColor;
+		fill: @sapUiFieldReadOnlyBackground;
 	}
 
 	&.sapMRbSel .sapMRbBInn {
@@ -177,34 +147,24 @@
 }
 
 /* Align RadioButton in Form with other controls */
-.sapUiForm.sapUiFormEdit-CTX {
-
+.sapUiForm.sapUiFormEdit-CTX{
 	.sapMRb > .sapMRbB {
 		width: 2.3rem;
-	}
-
-	.sapMRb > .sapMRbBLabel:not(.sapMLabelNoText) {
-		padding-right: 0; /* space between controls is handled by Form */
 	}
 
 	.sapMRbSvg {
 		margin-left: 0.125rem;
 	}
 
-	.sapMRb:focus::before {
+	.sapMRb:focus:before {
 		left: 0;
 	}
 }
 
 /* Compact size */
-.sapUiSizeCompact {
-
+.sapUiSizeCompact{
 	.sapMRb {
 		height: 2rem;
-	}
-
-	.sapMRb.sapMRbWrapped {
-		height: auto;
 	}
 
 	.sapMRbSvg {
@@ -215,7 +175,7 @@
 		margin: 0.5rem;
 	}
 
-	.sapMRb:focus::before {
+	.sapMRb:focus:before {
 		top: .325rem;
 		bottom: .325rem;
 		left: .325rem;
@@ -223,7 +183,7 @@
 	}
 
 	.sapMRbB {
-		height: 2rem;
+		height : 2rem;
 		width: 2rem;
 		font-size: 1rem; /* override font size of the message dialog */
 
@@ -246,31 +206,11 @@
 		height: 2rem;
 	}
 
-	.sapMRb > .sapMRbBLabel.sapMLabelWrapped {
-		line-height: normal;
-		height: auto;
-		padding-block: 0.5rem;
-		padding-inline-end: 1px;
-	}
-
-	.sapMRbHasLabel.sapMRb:focus::before {
+	.sapMRbHasLabel.sapMRb:focus:before {
 		right: 0;
 	}
 
-	.sapMRbHasLabel.sapMRb.sapMRbWrapped:focus::before {
-		bottom: 0;
-		top: 0.25rem;
-		left: 0.25rem;
-	}
-
-	/* Right to left */
-	.sapMRbG[dir=rtl] .sapMRbHasLabel.sapMRb:focus::before  {
-		left: 0;
-		right: .3875rem;
-	}
-
-	.sapUiForm.sapUiFormEdit-CTX {
-
+	.sapUiForm.sapUiFormEdit-CTX{
 		.sapMRb > .sapMRbB {
 			width: 1.625rem;
 		}
@@ -279,21 +219,18 @@
 			margin-left: 0.125rem;
 		}
 
-		.sapMRb:focus::before {
+		.sapMRb:focus:before {
 			left: 0;
 		}
 	}
 }
 
-html[dir='rtl'] {
-
+html[dir="rtl"] {
 	.sapMRbB .sapMRbBInn,
 	.sapMRb .sapMRbB .sapMRbBOut {
 		transform: translate(-0.675rem, 0.675rem);
 	}
-
 	.sapUiSizeCompact {
-
 		.sapMRbB .sapMRbBInn,
 		.sapMRb .sapMRbB .sapMRbBOut {
 			transform: translate(-0.5rem, 0.5rem);
@@ -304,9 +241,8 @@ html[dir='rtl'] {
 /* Condensed size */
 .sapUiSizeCondensed.sapUiTable,
 .sapUiSizeCondensed .sapUiTable {
-
 	.sapMRb {
-		height: 1.5rem;
+		height : 1.5rem;
 		vertical-align: top;
 	}
 
@@ -329,25 +265,12 @@ html[dir='rtl'] {
 		}
 	}
 
-	.sapUiTableDataCell > .sapUiTableCellInner > .sapMRb > .sapMRbB {
-		margin: 0 0.25rem; /* extra space in the condensed ULV */
+	.sapUiTableDataCell > .sapUiTableCellInner > .sapMRb>.sapMRbB{
+			margin: 0 0.25rem; /* extra space in the condensed ULV */
 	}
 
 	.sapMRbBLabel {
 		line-height: 1.5rem;
 		height: 1.5rem;
 	}
-
-	.sapMRb > .sapMRbBLabel.sapMLabelWrapped {
-		line-height: normal;
-		height: auto;
-	}
-}
-
-.sapMRb > .sapMRbBLabel.sapMLabelWrapped {
-	line-height: normal;
-	display: flex;
-	height: auto;
-	padding-block: 0.75rem;
-	padding-inline-end: 1px;
 }

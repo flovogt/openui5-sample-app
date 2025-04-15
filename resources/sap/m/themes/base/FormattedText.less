@@ -4,7 +4,7 @@
 /* ==================================== */
 
 .sapMFT {
-	font-family: var(--sapFontFamily);
+	font-family: @sapUiFontFamily;
 	vertical-align: top;
 	font-size: @sapMFontMediumSize;
 
@@ -34,10 +34,10 @@
 
 /* If control is used on black/dark background */
 .sapUiInverted-CTX .sapMFT {
-	color: var(--sapContent_ContrastTextColor);
+	color: @sapUiContentContrastTextColor;
 }
 
 /* Do not invert for table */
 .sapUiInverted-CTX .sapUiTable .sapMFT {
-	color: var(--sapTextColor);
+	color: @sapUiBaseText;
 }

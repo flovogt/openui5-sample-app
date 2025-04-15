@@ -7,21 +7,21 @@
 // Provides control sap.m.ScrollContainer
 sap.ui.define([
 	"./library",
-	"sap/base/i18n/Localization",
 	"sap/ui/core/Control",
 	"sap/ui/core/delegate/ScrollEnablement",
 	"sap/ui/core/Element",
 	"./ScrollContainerRenderer",
-	"sap/ui/dom/denormalizeScrollBeginRTL"
+	"sap/ui/dom/denormalizeScrollBeginRTL",
+	"sap/ui/core/Configuration"
 ],
 	function(
 		library,
-		Localization,
 		Control,
 		ScrollEnablement,
 		Element,
 		ScrollContainerRenderer,
-		denormalizeScrollBeginRTL
+		denormalizeScrollBeginRTL,
+		Configuration
 	) {
 		"use strict";
 
@@ -39,7 +39,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
@@ -160,7 +160,7 @@ sap.ui.define([
 				var oDomRef = this.getDomRef();
 				if (oDomRef) {
 					// only if rendered
-					if (Localization.getRTL()) {
+					if (Configuration.getRTL()) {
 						x = denormalizeScrollBeginRTL(x, oDomRef);
 					}
 					this._oScroller.scrollTo(x, y, time);

@@ -24,12 +24,9 @@ sap.ui.define([
 	 * @param {sap.ui.model.Model} oModel Model instance that this binding is created for and that it belongs to
 	 * @param {string} sPath Binding path pointing to the tree / array that should be bound; syntax is defined by subclasses
 	 * @param {sap.ui.model.Context} [oContext=null] Context object for this binding, mandatory when when a relative binding path is given
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aApplicationFilters=[]]
-	 *   The filters to be used initially with type {@link sap.ui.model.FilterType.Application}; call {@link #filter} to
-	 *   replace them
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} [aApplicationFilters=null] Predefined application filter, either a single instance or an array
 	 * @param {object} [mParameters=null] Additional model specific parameters as defined by subclasses; this class does not introduce any own parameters
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link #sort} to replace them
+	 * @param {sap.ui.model.Sorter[]} [aSorters=null] Predefined sorter/s contained in an array (optional)
 	 * @throws {Error} If one of the filters uses an operator that is not supported by the underlying model
 	 *   implementation or if the {@link sap.ui.model.Filter.NONE} filter instance is contained in
 	 *   <code>aApplicationFilters</code> together with other filters
@@ -37,14 +34,10 @@ sap.ui.define([
 	 * @class
 	 * Tree binding implementation for client models.
 	 *
-	 * Note that a hierarchy's "state" (i.e. the information about expanded, collapsed, selected, and deselected nodes) may become
+	 * Please Note that a hierarchy's "state" (i.e. the information about expanded, collapsed, selected, and deselected nodes) may become
 	 * inconsistent when the structure of the model data is changed at runtime. This is because each node is identified internally by its
 	 * index position relative to its parent, plus its parent's ID. Therefore, inserting or removing a node in the model data will likely
 	 * lead to a shift in the index positions of other nodes, causing them to lose their state and/or to gain the state of another node.
-
-	 * <b>Note:</b> Tree bindings of client models do neither support
-	 * {@link sap.ui.model.Binding#suspend suspend} nor {@link sap.ui.model.Binding#resume resume}.
-
 	 *
 	 * @alias sap.ui.model.ClientTreeBinding
 	 * @extends sap.ui.model.TreeBinding
@@ -320,7 +313,6 @@ sap.ui.define([
 		}
 		this._mLengthsCache = {};
 		this._fireChange({reason: "filter"});
-		/** @deprecated As of version 1.11.0 */
 		this._fireFilter({filters: aFilters});
 
 		return this;

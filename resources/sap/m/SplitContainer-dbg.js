@@ -8,8 +8,6 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
-	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/Element",
 	'sap/ui/core/IconPool',
 	'sap/ui/core/InvisibleText',
 	'sap/ui/Device',
@@ -17,17 +15,14 @@ sap.ui.define([
 	'sap/m/Popover',
 	'sap/m/Button',
 	'./SplitContainerRenderer',
-	"sap/ui/core/Lib",
-	"sap/ui/core/RenderManager",
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/Log",
-	"sap/ui/thirdparty/jquery"
+	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration"
 ],
 function(
 	library,
 	Control,
-	ControlBehavior,
-	Element,
 	IconPool,
 	InvisibleText,
 	Device,
@@ -35,11 +30,10 @@ function(
 	Popover,
 	Button,
 	SplitContainerRenderer,
-	Library,
-	RenderManager,
 	containsOrEquals,
 	Log,
-	jQuery
+	jQuery,
+	Configuration
 ) {
 	"use strict";
 
@@ -88,7 +82,7 @@ function(
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -510,13 +504,13 @@ function(
 		var that = this;
 
 		// Init static hidden text for ARIA
-		if (ControlBehavior.isAccessibilityEnabled() && !SplitContainer._sAriaPopupLabelId) {
+		if (Configuration.getAccessibility() && !SplitContainer._sAriaPopupLabelId) {
 			SplitContainer._sAriaPopupLabelId = new InvisibleText({
 				text: '' // add empty string in order to prevent the redundant speech output
 			}).toStatic().getId();
 		}
 
-		this._rb = Library.getResourceBundleFor("sap.m");
+		this._rb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 		// Pages arrays: As we delegate the pages to internal navigation container we have to remember the pages
 		// in private member variables. By doing this we can return the right pages for master /detail aggregations.
@@ -633,13 +627,13 @@ function(
 			this._bMasterisOpen = false;
 		}
 
-		this._oMasterNav.setInitialPage(Element.getElementById(this.getInitialMaster()));
+		this._oMasterNav.setInitialPage(sap.ui.getCore().byId(this.getInitialMaster()));
 		this._oMasterNav.setDefaultTransitionName(this.getDefaultTransitionNameMaster());
 
 		this._updateMasterButtonTooltip();
 
 		if (!Device.system.phone) {
-			this._oDetailNav.setInitialPage(Element.getElementById(this.getInitialDetail()));
+			this._oDetailNav.setInitialPage(sap.ui.getCore().byId(this.getInitialDetail()));
 			this._updateMasterButtonText();
 		}
 
@@ -1710,7 +1704,7 @@ function(
 	};
 
 	SplitContainer.prototype._handleResize = function() {
-			var isLandscape = Device.orientation.landscape,
+		var isLandscape = Device.orientation.landscape,
 			_currentPage = this._oDetailNav.getCurrentPage(),
 			mode = this.getMode();
 
@@ -1764,10 +1758,7 @@ function(
 					this._removeMasterButton(_currentPage);
 				}
 			}
-
-			/**
-			 * @deprecated As of version 1.87
-			 */
+			// execute the code after SplitContainer has changed itself due to orientation change event
 			if (this._onOrientationChange) {
 				this._onOrientationChange();
 			}
@@ -1822,7 +1813,7 @@ function(
 				//render only the master navContainer, to prevent the whole app from rerendering
 				var $master = that.$();
 				if ($master[0]) {
-					var rm = new RenderManager().getInterface();
+					var rm = sap.ui.getCore().createRenderManager();
 					rm.renderControl(that._oMasterNav.addStyleClass("sapMSplitContainerMaster"));
 					rm.flush($master[0], false, (that.$("BG")[0]) ? 1 : 0);
 					rm.destroy();
@@ -1887,7 +1878,7 @@ function(
 			var sTitle = oPage.getTitle();
 			if (sTitle) {
 				sTitle = sTitle.replace(/[_0-9]+$/, '');
-				sTooltip = this._rb.getText('SPLITCONTAINER_NAVBUTTON_TOOLTIP', [sTitle]);
+				sTooltip = this._rb.getText('SPLITCONTAINER_NAVBUTTON_TOOLTIP', sTitle);
 			}
 		}
 
@@ -1910,6 +1901,7 @@ function(
 		this._oShowMasterBtn = new Button(this.getId() + "-MasterBtn", {
 			icon: IconPool.getIconURI("menu2"),
 			tooltip: this.getMasterButtonTooltip(),
+			type: ButtonType.Default,
 			press: jQuery.proxy(this._onMasterButtonTap, this)
 		}).addStyleClass("sapMSplitContainerMasterBtn");
 	};
@@ -1934,13 +1926,9 @@ function(
 			aHeaderContent = oHeaderAggregation.aAggregationContent;
 
 		for (var i = 0; i < aHeaderContent.length; i++) {
-			if (aHeaderContent[i] instanceof Button && aHeaderContent[i].getVisible() && aHeaderContent[i] !== this._oShowMasterBtn) {
-				/**
-				 * @deprecated As of version 1.120
-				 */
-				if (aHeaderContent[i].getType() !== ButtonType.Back && aHeaderContent[i].getType() !== ButtonType.Up) {
-					continue;
-				}
+			if (aHeaderContent[i] instanceof Button && aHeaderContent[i].getVisible()
+				&& (aHeaderContent[i].getType() == ButtonType.Back || (aHeaderContent[i].getType() == ButtonType.Up
+				&& aHeaderContent[i] !== this._oShowMasterBtn))) {
 				this._bDetailNavButton = true;
 				return;
 			}

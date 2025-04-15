@@ -6,12 +6,12 @@
 
 sap.ui.define([
 	'./library',
-	'sap/ui/core/InvisibleText',
-	"sap/ui/core/Lib"],
+	'sap/ui/core/Core',
+	'sap/ui/core/InvisibleText'],
 		function (
 			library,
-			InvisibleText,
-			Library) {
+			Core,
+			InvisibleText) {
 	"use strict";
 
 	/**
@@ -28,7 +28,7 @@ sap.ui.define([
 	IconTabHeaderRenderer.getInvisibleSplitTabDescriptionText = function() {
 		if (!this.oInvisibleSplitTabDescriptionText) {
 			this.oInvisibleSplitTabDescriptionText = new InvisibleText({
-				text: Library.getResourceBundleFor("sap.m").getText("ICONTABHEADER_SPLIT_TAB_DESCRIPTION")
+				text: Core.getLibraryResourceBundle("sap.m").getText("ICONTABHEADER_SPLIT_TAB_DESCRIPTION")
 			}).toStatic();
 		}
 

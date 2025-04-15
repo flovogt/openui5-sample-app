@@ -5,13 +5,8 @@
  */
 
 // Provides class sap.ui.core.date.Islamic
-sap.ui.define([
-	'./UniversalDate',
-	'sap/base/Log',
-	'sap/base/i18n/Formatting',
-	'sap/base/i18n/date/CalendarType',
-	'./_Calendars'
-], function(UniversalDate, Log, Formatting, CalendarType, _Calendars) {
+sap.ui.define(['./UniversalDate', '../CalendarType', 'sap/base/Log', 'sap/base/i18n/Formatting', './_Calendars'],
+	function(UniversalDate, CalendarType, Log, Formatting, _Calendars) {
 	"use strict";
 
 

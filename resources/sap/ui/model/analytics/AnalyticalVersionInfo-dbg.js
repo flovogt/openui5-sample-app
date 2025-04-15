@@ -9,7 +9,7 @@
  * @namespace
  * @name sap.ui.model.analytics
  * @public
- * @deprecated As of version 1.117, the concept has been discarded.
+ * @deprecated As of version 1.117.0
  */
 
 sap.ui.define(["sap/base/Log"], function(Log) {

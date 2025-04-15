@@ -58,7 +58,6 @@ sap.ui.define(["sap/ui/core/library", "sap/ui/core/InvisibleText"],
 
 		if (!oControl.getEditable()) {
 			oRm.class("sapMTokenReadOnly");
-			oAccAttributes.readonly = null;
 		}
 
 		if (oControl.getTruncated()) {

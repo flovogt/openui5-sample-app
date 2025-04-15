@@ -5,8 +5,8 @@
  */
 
 // Provides default renderer for control sap.ui.unified.SplitContainer
-sap.ui.define(["sap/ui/core/ControlBehavior", "sap/ui/core/library", "sap/ui/core/Configuration"],
-	function(ControlBehavior, coreLibrary, Configuration) {
+sap.ui.define(["sap/ui/core/library", "sap/ui/core/Configuration"],
+	function(coreLibrary, Configuration) {
 	"use strict";
 
 
@@ -17,7 +17,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "sap/ui/core/library", "sap/ui/cor
 	/**
 	 * SplitContainer renderer.
 	 * @namespace
-	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @deprecated Since version 1.44.0.
 	 */
 	var SplitContainerRenderer = {};
 
@@ -35,7 +35,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", "sap/ui/core/library", "sap/ui/cor
 		rm.writeControlData(oControl);
 		rm.addClass("sapUiUfdSpltCont");
 		rm.addClass("sapUiUfdSpltCont" + (bVertical ? "V" : "H"));
-		if (ControlBehavior.getAnimationMode() !== Configuration.AnimationMode.none) {
+		if (Configuration.getAnimationMode() !== Configuration.AnimationMode.none) {
 			rm.addClass("sapUiUfdSpltContAnim");
 		}
 

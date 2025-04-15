@@ -5,7 +5,7 @@
  */
 
 // Provides type module:sap/base/i18n/date/CalendarType.
-sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
+sap.ui.define([], function() {
 	"use strict";
 
 	/**
@@ -48,8 +48,6 @@ sap.ui.define(["sap/base/i18n/date/_EnumHelper"], function(_EnumHelper) {
 		 */
 		Buddhist: "Buddhist"
 	};
-
-	_EnumHelper.register("sap.base.i18n.date.CalendarType", CalendarType);
 
 	return CalendarType;
 

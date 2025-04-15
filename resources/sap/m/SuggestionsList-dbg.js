@@ -6,12 +6,10 @@
 
 // Provides control sap.m.SuggestionsList.
 sap.ui.define([
-	'./library',
-	'./SuggestionsListRenderer',
-	'sap/ui/core/Control',
-	"sap/ui/core/RenderManager",
-	"sap/ui/core/Element"
-], function(library, SuggestionsListRenderer, Control, RenderManager, Element) {
+		'./library',
+		'./SuggestionsListRenderer',
+		'sap/ui/core/Control'
+	], function(library, SuggestionsListRenderer, Control) {
 		"use strict";
 
 		//
@@ -50,7 +48,7 @@ sap.ui.define([
 
 		SuggestionsList.prototype.getItems = function(){
 			try {
-				return Element.getElementById(this.getParentInput()).getSuggestionItems();
+				return sap.ui.getCore().byId(this.getParentInput()).getSuggestionItems();
 			} catch (e) {
 				return [];
 			}
@@ -61,7 +59,7 @@ sap.ui.define([
 			var rm;
 			var domRef = this.getDomRef();
 			if (domRef) {
-				rm = new RenderManager().getInterface();
+				rm = sap.ui.getCore().createRenderManager();
 				this.getRenderer().renderItems(rm, this);
 				rm.flush(domRef);
 				rm.destroy();
@@ -76,7 +74,7 @@ sap.ui.define([
 			var index;
 			var item;
 			var itemId;
-			var parentInput = Element.getElementById(this.getParentInput());
+			var parentInput = sap.ui.getCore().byId(this.getParentInput());
 			var descendantAttr = "aria-activedescendant";
 
 			// selectByIndex(null || undefined || -1) -> remove selection

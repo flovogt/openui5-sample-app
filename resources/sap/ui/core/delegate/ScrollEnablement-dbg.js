@@ -61,7 +61,7 @@ sap.ui.define([
 		 *
 		 * @protected
 		 * @alias sap.ui.core.delegate.ScrollEnablement
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 * @author SAP SE
 		 */
 		var ScrollEnablement = BaseObject.extend("sap.ui.core.delegate.ScrollEnablement", /** @lends sap.ui.core.delegate.ScrollEnablement.prototype */ {
@@ -139,7 +139,7 @@ sap.ui.define([
 			 * @param {boolean} bBounce new value for property <code>bounce</code>.
 			 * @protected
 			 * @since 1.17
-			 * @deprecated since 1.42 without replacement.
+			 * @deprecated since 1.42
 			 */
 			setBounce: function(bBounce) {
 			},
@@ -364,7 +364,7 @@ sap.ui.define([
 			},
 
 			onkeydown : function(oEvent) {
-				if (this._useDefaultScroll(oEvent.target) || oEvent.getMark("dnd")) {
+				if (this._useDefaultScroll(oEvent.target)) {
 					return;
 				}
 

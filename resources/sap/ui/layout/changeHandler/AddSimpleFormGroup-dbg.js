@@ -17,7 +17,8 @@ sap.ui.define([
 		* Change handler for adding a simple form group.
 		* @alias sap.ui.layout.changeHandler.AddSimpleFormGroup
 		* @author SAP SE
-		* @version 1.134.0
+		* @version 1.120.27
+		* @experimental Since 1.27.0
 		*/
 	var AddSimpleFormGroup = {};
 

@@ -7,7 +7,6 @@
 // Provides class sap.ui.core.support.plugins.ViewInfo (ViewInfo support plugin)
 sap.ui.define([
 	"sap/ui/core/Element",
-	"sap/ui/core/RenderManager",
 	"sap/ui/core/support/Plugin",
 	"sap/ui/core/support/controls/TreeViewer",
 	"sap/ui/core/support/controls/ObjectViewer",
@@ -18,7 +17,6 @@ sap.ui.define([
 	"sap/ui/thirdparty/jquery"
 ], function(
 	Element,
-	RenderManager,
 	Plugin,
 	TreeViewer,
 	ObjectViewer,
@@ -34,7 +32,7 @@ sap.ui.define([
 		 * Creates an instance of sap.ui.core.support.plugins.ViewInfo.
 		 * @class This class represents the ViewInfo plugin for the support tool functionality of UI5. This class is internal and all its functions must not be used by an application.
 		 * @extends sap.ui.core.support.Plugin
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 * @private
 		 * @deprecated As of version 1.118
 		 * @alias sap.ui.core.support.plugins.ViewInfo
@@ -205,7 +203,7 @@ sap.ui.define([
 		ViewInfo.prototype.renderContentAreas = function() {
 			this._propertyChangeDebugger = {};
 			this._methodDebugger = {};
-			var rm = new RenderManager().getInterface();
+			var rm = sap.ui.getCore().createRenderManager();
 
 			if (!this.aTrees) {
 				this.aTrees = [];

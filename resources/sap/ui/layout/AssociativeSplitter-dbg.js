@@ -7,9 +7,8 @@
 sap.ui.define([
 	'./Splitter',
 	'./SplitterRenderer',
-	"sap/base/Log",
-	"sap/ui/core/Element"
-], function(Splitter, SplitterRenderer, Log, Element) {
+	"sap/base/Log"
+], function(Splitter, SplitterRenderer, Log) {
 	"use strict";
 
 	/**
@@ -25,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.layout.Splitter
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @private
@@ -93,7 +92,7 @@ sap.ui.define([
 		var aContentAreas = this.getContentAreas();
 
 		var aValidAssContentAreas = aAssociatedContentAreas.map(function (sId) {
-			return Element.getElementById(sId);
+			return sap.ui.getCore().byId(sId);
 		}).filter(function (oContent) { return oContent; });
 
 		return aContentAreas.concat(aValidAssContentAreas);
@@ -110,11 +109,11 @@ sap.ui.define([
 
 		iBar = parseInt(this._oLastDOMclicked.id.substr((sId + "-splitbar-").length));
 		oContentArea = this._getContentAreas()[iBar];
-		oContentArea._currentPosition = this._calculatedSizes[iBar];
+		oContentArea._currentPosition = this.getCalculatedSizes()[iBar];
 		oContentArea._lastPosition = oContentArea._lastPosition || oContentArea._currentPosition;
 
 		if (oContentArea._currentPosition === oContentArea._lastPosition) {
-			this._resizeContents(iBar, (this._calculatedSizes[iBar]) * -1, true);
+			this._resizeContents(iBar, (this.getCalculatedSizes()[iBar]) * -1, true);
 		} else {
 			this._resizeContents(iBar, oContentArea._lastPosition, true);
 			oContentArea._lastPosition = null;

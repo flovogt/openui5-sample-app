@@ -7,7 +7,7 @@ sap.ui.define([
 		'./library',
 		'./Button',
 		'./ScrollContainer',
-		"sap/base/i18n/Localization",
+		'sap/ui/core/Core',
 		'sap/ui/core/Control',
 		'sap/ui/core/Element',
 		'sap/ui/Device',
@@ -21,6 +21,7 @@ sap.ui.define([
 		"sap/ui/events/KeyCodes",
 		"sap/ui/events/PseudoEvents",
 		"sap/ui/thirdparty/jquery",
+		"sap/ui/core/Configuration",
 		"sap/ui/core/Lib",
 		"sap/ui/dom/jquery/scrollLeftRTL", // jQuery Plugin "scrollLeftRTL"
 		"sap/ui/dom/jquery/scrollRightRTL", // jQuery Plugin "scrollRightRTL"
@@ -30,7 +31,7 @@ sap.ui.define([
 		library,
 		Button,
 		ScrollContainer,
-		Localization,
+		Core,
 		Control,
 		Element,
 		Device,
@@ -44,6 +45,7 @@ sap.ui.define([
 		KeyCodes,
 		PseudoEvents,
 		jQuery,
+		Configuration,
 		CoreLib
 	) {
 		"use strict";
@@ -96,7 +98,6 @@ sap.ui.define([
 					oRM.openStart("div", oControl);
 					oRM.class("sapMHdrCntrItemCntr");
 					oRM.class("sapMHrdrCntrInner");
-					oRM.attr("tabindex", -1);
 					oRM.attr("aria-setsize", oControl.getSetSize());
 					oRM.attr("aria-posinset", oControl.getPosition());
 					oRM.attr("role", "listitem");
@@ -125,7 +126,7 @@ sap.ui.define([
 		 * @since 1.44.0
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @public
 		 * @alias sap.m.HeaderContainer
@@ -205,14 +206,9 @@ sap.ui.define([
 					/**
 					* Enables grid layout in mobile view.
         			* @since 1.99
+					* @experimental since 1.99
 					*/
-					gridLayout: {type: "boolean", defaultValue: false},
-					/**
-					 * The height of all the items is stretched to match the largest item in the row within the HeaderContainer.
-					 *
-					 * If set to <code>true</code>, the items are going to get stretched.
-					 */
-					snapToRow: {type: "boolean", group: "Appearance", defaultValue: false}
+					gridLayout: {type: "boolean", defaultValue: false}
 				},
 				defaultAggregation: "content",
 				aggregations: {
@@ -282,7 +278,7 @@ sap.ui.define([
 
 		HeaderContainer.prototype.init = function () {
 			this._aItemEnd = [];
-			this._bRtl = Localization.getRTL();
+			this._bRtl = Configuration.getRTL();
 			this._oRb = CoreLib.getResourceBundleFor("sap.m");
 			this._oScrollCntr = new ScrollContainer(this.getId() + "-scrl-cntnr", {
 				width: "100%",
@@ -446,7 +442,7 @@ sap.ui.define([
 		};
 
 		HeaderContainer.prototype.onAfterRendering = function () {
-			this._bRtl = Localization.getRTL();
+			this._bRtl = Configuration.getRTL();
 			this._checkOverflow();
 		};
 
@@ -1166,7 +1162,7 @@ sap.ui.define([
 		};
 
 		HeaderContainer.prototype._getParentCell = function (oDomElement) {
-			return jQuery(oDomElement).parents(".sapMHrdrCntrInner").addBack(".sapMHrdrCntrInner").get(0);
+			return jQuery(oDomElement).parents(".sapMHrdrCntrInner").andSelf(".sapMHrdrCntrInner").get(0);
 		};
 
 

@@ -7,13 +7,12 @@
 sap.ui.define([
 	'./library',
 	'./SinglePlanningCalendarView',
-	"sap/base/i18n/Formatting",
-	"sap/ui/core/Locale",
 	'sap/ui/unified/calendar/CalendarDate',
 	'sap/ui/unified/calendar/CalendarUtils',
-	'sap/ui/core/LocaleData'
+	'sap/ui/core/LocaleData',
+	'sap/ui/core/Configuration'
 ],
-function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, CalendarUtils, LocaleData) {
+function (library, SinglePlanningCalendarView, CalendarDate, CalendarUtils, LocaleData, Configuration) {
 	"use strict";
 
 	/**
@@ -30,7 +29,7 @@ function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, 
 	 * @extends sap.m.SinglePlanningCalendarView
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -49,7 +48,7 @@ function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, 
 	/**
 	 * Returns the number of columns to be displayed in the grid of the <code>sap.m.SinglePlanningCalendar</code>.
 	 *
-	 * @returns {int} the number of columns to be displayed
+	 * @return {int} the number of columns to be displayed
 	 * @override
 	 * @public
 	 */
@@ -61,7 +60,7 @@ function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, 
 	 * Should return a number of entities until the next/previous startDate of the
 	 * <code>sap.m.SinglePlanningCalendar</code> after navigating forward or backwards.
 	 *
-	 * @returns {int} the number of entities to be skipped by scrolling
+	 * @return {int} the number of entities to be skipped by scrolling
 	 * @override
 	 * @public
 	 */
@@ -73,13 +72,13 @@ function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, 
 	 * Calculates the startDate which will be displayed in the <code>sap.m.SinglePlanningCalendar</code> based
 	 * on a given date.
 	 *
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate The given date
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate of the view
+	 * @param {object} oStartDate the given date
+	 * @return {object} the startDate of the view
 	 * @override
 	 * @public
 	 */
-	SinglePlanningCalendarWorkWeekView.prototype.calculateStartDate = function (oDate) {
-		var oCalDate = CalendarDate.fromLocalJSDate(oDate),
+	SinglePlanningCalendarWorkWeekView.prototype.calculateStartDate = function (oStartDate) {
+		var oCalDate = CalendarDate.fromLocalJSDate(oStartDate),
 			oCalFirstDateOfWeek = CalendarUtils._getFirstDateOfWeek(oCalDate),
 			oLocaleData = this._getFormatSettingsLocaleData();
 
@@ -93,11 +92,11 @@ function(library, SinglePlanningCalendarView, Formatting, Locale, CalendarDate, 
 	/**
 	 * Returns local data about the current locale.
 	 *
-	 * @returns {LocaleData} the local data
+	 * @return {LocaleData} the local data
 	 * @private
 	 */
 	SinglePlanningCalendarWorkWeekView.prototype._getFormatSettingsLocaleData = function () {
-		return LocaleData.getInstance(new Locale(Formatting.getLanguageTag()));
+		return LocaleData.getInstance(Configuration.getFormatSettings().getFormatLocale());
 	};
 
 	return SinglePlanningCalendarWorkWeekView;

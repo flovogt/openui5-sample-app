@@ -5,15 +5,6 @@
 
 @_sap_m_ObjectAttribute_ListTextShadowColor: none;
 
-.sapMObjectAttributeActive.sapMLnkLargeReactiveArea {
-	.sapMObjectAttributeTitle,
-	.sapMObjectAttributeColon,
-	.sapMObjectAttributeText,
-	.sapMObjectAttributeText > .sapMLnk {
-		line-height: 1.5rem;
-	}
-}
-
 .sapMListTbl .sapMObjectAttributeActive .sapMText,
 .sapMObjectAttributeActive .sapMText,
 .sapMObjectAttributeActive .sapMObjectAttributeText {
@@ -27,13 +18,13 @@
 .sapMObjectAttributeActive .sapMObjectAttributeText:focus::after {
 	pointer-events: none;
 	display: block;
-	content: '';
+	content: "";
 	position: absolute;
 	top: 2px;
 	left: 1px;
 	bottom: 2px;
 	right: 1px;
-	outline: 2px dotted var(--sapContent_FocusColor);
+	outline: 2px dotted @sapUiContentFocusColor;
 }
 
 .sapMObjectAttributeActive .sapMObjectAttributeText:active,
@@ -49,7 +40,7 @@
 .sapMOHR .sapMObjectAttributeActive .sapMObjectAttributeText:hover,
 .sapMOHR .sapMObjectAttributeActive .sapMObjectAttributeText:focus {
 	text-decoration: underline;
-	color: var(--sapLink_Hover_Color);
+	color: @sapUiLinkHoverColor;
 }
 
 /*=========================================== */

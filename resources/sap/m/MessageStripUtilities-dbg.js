@@ -5,11 +5,9 @@
 */
 
 sap.ui.define([
-	'sap/ui/core/IconPool',
-	"sap/ui/core/Lib"
-], function(
-	IconPool,
-	Library
+	'sap/ui/core/IconPool'
+], function (
+	IconPool
 ) {
 	"use strict";
 
@@ -20,8 +18,8 @@ sap.ui.define([
 	var MessageStripUtilities = {};
 
 	MessageStripUtilities.MESSAGES = {
-		TYPE_NOT_SUPPORTED: "Value 'module:sap/ui/core/message/MessageType.None' for property 'type' is not supported. " +
-		"Defaulting to 'module:sap/ui/core/message/MessageType.Information'"
+		TYPE_NOT_SUPPORTED: "Value 'sap.ui.core.MessageType.None' for property 'type' is not supported. " +
+		"Defaulting to 'sap.ui.core.MessageType.Information'"
 	};
 
 	MessageStripUtilities.CLASSES = {
@@ -36,7 +34,7 @@ sap.ui.define([
 		CLOSABLE: "data-sap-ui-ms-closable"
 	};
 
-	MessageStripUtilities.RESOURCE_BUNDLE = Library.getResourceBundleFor("sap.m");
+	MessageStripUtilities.RESOURCE_BUNDLE = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Calculate the icon uri that should be set to the control property.

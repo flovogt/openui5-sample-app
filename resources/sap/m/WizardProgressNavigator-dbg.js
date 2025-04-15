@@ -7,7 +7,6 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
-	"sap/ui/core/Lib",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/core/delegate/ItemNavigation",
 	"sap/ui/Device",
@@ -20,7 +19,6 @@ sap.ui.define([
 function(
 	library,
 	Control,
-	Library,
 	ResizeHandler,
 	ItemNavigation,
 	Device,
@@ -45,7 +43,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @private
@@ -125,9 +123,8 @@ function(
 		this._iActiveStep = 1;
 		this._aCachedSteps = [];
 		this._aStepOptionalIndication = [];
-		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
+		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		this._oActionSheet = new ActionSheet();
-		this._aStepIds = [];
 		this._createStepNavigation();
 	};
 
@@ -153,6 +150,7 @@ function(
 
 		this._updateStepNavigation(iZeroBasedActiveStep);
 		this._updateStepActiveAttribute(iZeroBasedActiveStep);
+		this._removeStepAriaDisabledAttribute(iZeroBasedActiveStep);
 
 		this._updateStepCurrentAttribute(iZeroBasedCurrentStep);
 		this._updateStepAriaCurrentAttribute(iZeroBasedCurrentStep);
@@ -187,8 +185,6 @@ function(
 	};
 
 	WizardProgressNavigator.prototype.onsapspace = function (oEvent) {
-		oEvent.preventDefault();
-
 		if (this._onEnter) {
 			this._onEnter(oEvent, this._oStepNavigation.getFocusedIndex());
 		}
@@ -215,7 +211,6 @@ function(
 		this._iCurrentStep = null;
 		this._iActiveStep = null;
 		this._aCachedSteps = null;
-		this._aStepIds = null;
 
 		this._aStepOptionalIndication = null;
 	};
@@ -286,6 +281,7 @@ function(
 		this._updateCurrentStep(iIndex, this._iCurrentStep);
 
 		this._updateStepActiveAttribute(iIndex - 1, this._iActiveStep - 1);
+		this._addStepAriaDisabledAttribute(iIndex - 1);
 		this._updateStepNavigation(iIndex - 1);
 
 		this._iCurrentStep = iIndex;
@@ -420,6 +416,34 @@ function(
 	};
 
 	/**
+	 * Adds aria-disabled attribute to all steps after the specified index.
+	 * @param {number} iIndex The index from which to add aria-disabled=true. Zero-based.
+	 * @private
+	 */
+	WizardProgressNavigator.prototype._addStepAriaDisabledAttribute = function (iIndex) {
+		var iStepsLength = this._aCachedSteps.length,
+			oStep;
+
+		for (var i = iIndex + 1; i < iStepsLength; i++) {
+			oStep = this._aCachedSteps[i];
+
+			oStep.setAttribute(WizardProgressNavigatorRenderer.ATTRIBUTES.ARIA_DISABLED, true);
+		}
+	};
+
+	/**
+	 * Removes the steps aria-disabled attribute from the DOM structure of the Control.
+	 * @param {number} iIndex The index at which the attribute should be removed. Zero-based.
+	 * @private
+	 */
+	WizardProgressNavigator.prototype._removeStepAriaDisabledAttribute = function (iIndex) {
+		if (this._aCachedSteps[iIndex]) {
+			this._aCachedSteps[iIndex]
+				.removeAttribute(WizardProgressNavigatorRenderer.ATTRIBUTES.ARIA_DISABLED);
+		}
+	};
+
+	/**
 	 * Updates the step aria-current attribute in the DOM structure of the Control.
 	 * @param {number} iNewIndex The new index at which the attribute should be set. Zero-based.
 	 * @param {number} iOldIndex The old index at which the attribute was set. Zero-based.
@@ -491,6 +515,7 @@ function(
 
 		this._iActiveStep = iNewStep;
 		this._updateStepNavigation(iZeroBasedNewStep);
+		this._removeStepAriaDisabledAttribute(iZeroBasedNewStep);
 		this._updateStepActiveAttribute(iZeroBasedNewStep, iZeroBasedOldStep);
 		this._updateStepAriaLabelAttribute(iZeroBasedNewStep);
 	};
@@ -702,16 +727,6 @@ function(
 						.attr(WizardProgressNavigatorRenderer.ATTRIBUTES.STEP);
 
 		return parseInt($iStepNumber);
-	};
-
-	WizardProgressNavigator.prototype._setStepIds = function (aSteps) {
-		if (!aSteps.length) {
-			return;
-		}
-
-		this._aStepIds = aSteps.map(function (oStep) {
-			return oStep.getId();
-		});
 	};
 
 	return WizardProgressNavigator;

@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/base/i18n/date/CalendarType", "sap/ui/core/Lib", 'sap/ui/core/Renderer', 'sap/ui/unified/calendar/CalendarDate', './MonthRenderer'],
-	function(CalendarType, Library, Renderer, CalendarDate, MonthRenderer) {
+sap.ui.define(['sap/ui/core/Renderer', 'sap/ui/unified/calendar/CalendarDate', './MonthRenderer', "sap/ui/core/CalendarType"],
+	function(Renderer, CalendarDate, MonthRenderer, CalendarType) {
 	"use strict";
 
 	/*
@@ -104,7 +104,7 @@ sap.ui.define(["sap/base/i18n/date/CalendarType", "sap/ui/core/Lib", 'sap/ui/cor
 			aWeekNumbers;
 
 		if (oDatesRow.getShowWeekNumbers() && oDatesRow._getPrimaryCalendarType() === CalendarType.Gregorian) {
-			oResourceBundle = Library.getResourceBundleFor("sap.ui.unified");
+			oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified");
 
 			oRm.openStart("div", oDatesRow.getId() + "-weeks");
 			oRm.class("sapUiCalRowWeekNumbers");

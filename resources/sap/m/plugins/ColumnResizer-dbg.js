@@ -6,18 +6,25 @@
 
 sap.ui.define([
 	"./PluginBase",
-	"sap/base/i18n/Localization",
+	"sap/ui/core/Core",
 	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
 	"sap/ui/Device",
 	"sap/m/ColumnPopoverActionItem",
 	"sap/m/table/columnmenu/QuickAction",
 	"sap/m/Button",
-	"sap/ui/core/Lib",
 	"sap/ui/thirdparty/jquery",
-	// jQuery Plugin "aria"
-	"sap/ui/dom/jquery/Aria"
-], function(PluginBase, Localization, Element, InvisibleText, Device, ColumnPopoverActionItem, QuickAction, Button, Library, jQuery) {
+	"sap/ui/dom/jquery/Aria" // jQuery Plugin "aria"
+], function(PluginBase,
+	Core,
+	Element,
+	InvisibleText,
+	Device,
+	ColumnPopoverActionItem,
+	QuickAction,
+	Button,
+	jQuery
+) {
 	"use strict";
 
 	/**
@@ -33,12 +40,11 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @since 1.91
 	 * @alias sap.m.plugins.ColumnResizer
-	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	var ColumnResizer = PluginBase.extend("sap.m.plugins.ColumnResizer", /** @lends sap.m.plugins.ColumnResizer.prototype */ { metadata: {
 		library: "sap.m",
@@ -69,13 +75,12 @@ sap.ui.define([
 	var oSession = {};
 	var bResizing = false;
 	var CSS_CLASS = "sapMPluginsColumnResizer";
-	var bRTL = Localization.getRTL();
+	var bRTL = Core.getConfiguration().getRTL();
 	var sBeginDirection = bRTL ? "right" : "left";
 	var sEndDirection = bRTL ? "left" : "right";
 	var iDirectionFactor = bRTL ? -1 : 1;
 
-	//TBD Remove the ColumnResizer.getPlugin part when usages (SmartTable) are cleaned up and use findOn instead.
-	ColumnResizer.findOn = ColumnResizer.getPlugin = PluginBase.findOn;
+	ColumnResizer.getPlugin = PluginBase.getPlugin;
 
 	ColumnResizer.prototype.init = function() {
 		this._iHoveredColumnIndex = -1;
@@ -511,7 +516,7 @@ sap.ui.define([
 
 		return new QuickAction({
 			content: new Button({
-				text: Library.getResourceBundleFor("sap.m").getText("table.COLUMNMENU_RESIZE"),
+				text: Core.getLibraryResourceBundle("sap.m").getText("table.COLUMNMENU_RESIZE"),
 				press: function() {
 					oColumnMenu.close();
 					this.startResizing(oColumn.getDomRef());
@@ -533,7 +538,7 @@ sap.ui.define([
 		}
 
 		return new ColumnPopoverActionItem({
-			text: Library.getResourceBundleFor("sap.m").getText("COLUMNRESIZER_RESIZE_BUTTON"),
+			text: Core.getLibraryResourceBundle("sap.m").getText("COLUMNRESIZER_RESIZE_BUTTON"),
 			icon: "sap-icon://resize-horizontal",
 			press: this.startResizing.bind(this, oColumn.getDomRef())
 		});

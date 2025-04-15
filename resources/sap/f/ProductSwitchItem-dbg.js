@@ -40,10 +40,11 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
+		 * @experimental Since 1.72. This class is experimental and provides only limited functionality. Also the API might be changed in future.
 		 * @alias sap.f.ProductSwitchItem
 		 * @since 1.72
 		 */

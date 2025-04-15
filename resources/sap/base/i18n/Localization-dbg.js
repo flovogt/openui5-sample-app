@@ -304,7 +304,7 @@ sap.ui.define([
 		 *                                    represented as en-US with a private extension
 		 * </pre>
 		 *
-		 * Call {@link module:sap/base/i18n/Localization.getLanguageTag getLanguageTag} to get a
+		 * Call {@link moduel:sap/base/i18n/Localization.getLanguageTag getLanguageTag} to get a
 		 * {@link module:sap/base/i18n/LanguageTag LanguageTag} object matching the language.
 		 * For a normalized BCP47 tag, call {@link module:sap/base/i18n/LanguageTag.toString toString()}
 		 * on the returned <code>LanguageTag</code>
@@ -522,7 +522,7 @@ sap.ui.define([
 		/**
 		 * Returns a LanguageTag object for the current language.
 		 *
-		 * The LanguageTag is derived from {@link module:sap/base/i18n/Localization.getLanguage Localization.getLanguage}.
+		 * The LanguageTag is derived from {@link modue:sap/base/i18n/Localization.getLanguage Localization.getLanguage}.
 		 *
 		 * @returns {module:sap/base/i18n/LanguageTag} The LanguageTag
 		 * @public
@@ -698,6 +698,7 @@ sap.ui.define([
 		 * Might return undefined if the information is not available.
 		 *
 		 * @returns {string[]|undefined} List of Languages delivered with core
+		 * @experimental
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 * @since 1.120.0
@@ -708,6 +709,7 @@ sap.ui.define([
 
 		/**
 		 * @returns {string[]} List of supported languages
+		 * @experimental
 		 * @private
 		 * @ui5-restricted sap.ui.core
 		 * @since 1.120.0

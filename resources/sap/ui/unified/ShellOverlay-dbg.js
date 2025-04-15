@@ -8,7 +8,6 @@
 sap.ui.define([
 	'sap/ui/Device',
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
 	'sap/ui/core/Popup',
 	'./library',
 	'sap/ui/core/theming/Parameters',
@@ -18,12 +17,10 @@ sap.ui.define([
 	// jQuery Plugin "rect"
 	'sap/ui/dom/jquery/rect',
 	// jQuery custom selectors ":sapTabbable"
-	'sap/ui/dom/jquery/Selectors'
-],
+	'sap/ui/dom/jquery/Selectors' ],
 	function(
 		Device,
 		Control,
-		Element,
 		Popup,
 		library,
 		Parameters,
@@ -46,13 +43,13 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
 	 * @since 1.16.3
 	 * @alias sap.ui.unified.ShellOverlay
-	 * @deprecated As of version 1.44.0, the concept has been discarded.
+	 * @deprecated Since version 1.44.0.
 	 */
 	var ShellOverlay = Control.extend("sap.ui.unified.ShellOverlay", /** @lends sap.ui.unified.ShellOverlay.prototype */ {
 		metadata : {
@@ -344,7 +341,7 @@ sap.ui.define([
 		if (!sId) {
 			return;
 		}
-		var oShell = Element.getElementById(sId);
+		var oShell = sap.ui.getCore().byId(sId);
 		if (!oShell || !(oShell instanceof sap.ui.unified.ShellLayout)) {
 			return;
 		}

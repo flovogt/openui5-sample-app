@@ -8,10 +8,7 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
 	'sap/ui/core/IconPool',
-	"sap/ui/core/Lib",
-	"sap/ui/core/RenderManager",
 	'sap/ui/core/util/ResponsivePaddingsEnablement',
 	'./TabContainerRenderer',
 	'./TabStrip',
@@ -19,7 +16,7 @@ sap.ui.define([
 	'./Button',
 	'sap/ui/Device'
 ],
-	function(library, Control, Element, IconPool, Library, RenderManager, ResponsivePaddingsEnablement, TabContainerRenderer, TabStrip, TabStripItem, Button, Device) {
+	function(library, Control, IconPool, ResponsivePaddingsEnablement, TabContainerRenderer, TabStrip, TabStripItem, Button, Device) {
 		"use strict";
 
 		// shortcut for sap.m.ButtonType
@@ -69,7 +66,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
@@ -235,6 +232,7 @@ sap.ui.define([
 		 * Called before the control is rendered.
 		 */
 		TabContainer.prototype.onBeforeRendering = function() {
+
 			if (this.getSelectedItem()) {
 				return;
 			}
@@ -249,7 +247,7 @@ sap.ui.define([
 		 */
 		TabContainer.prototype._getAddNewTabButton = function() {
 			var oControl = this.getAggregation("_addNewButton");
-			var oRb = Library.getResourceBundleFor("sap.m");
+			var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 			if (!oControl) {
 				oControl = new Button({
@@ -339,7 +337,7 @@ sap.ui.define([
 		TabContainer.prototype._getSelectedItemContent = function() {
 			var oTabStrip = this._getTabStrip(),
 				sSelectedItem = this.getSelectedItem(),
-				oSelectedItem = Element.getElementById(sSelectedItem),
+				oSelectedItem = sap.ui.getCore().byId(sSelectedItem),
 				oTabStripItem = this._toTabStripItem(oSelectedItem);
 
 			if (oTabStrip) {
@@ -402,7 +400,7 @@ sap.ui.define([
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | sap.ui.core.ID | sap.m.TabContainerItem} vItem The item to remove or its index or ID
+		 * @param {int | string | sap.m.TabContainerItem} vItem The item to remove or its index or ID
 		 * @returns {sap.m.TabContainerItem|null} The removed item or <code>null</code>
 		 * @public
 		 */
@@ -475,7 +473,19 @@ sap.ui.define([
 		 */
 		TabContainer.prototype.addItem = function(oItem) {
 			this.addAggregation("items", oItem, false);
-			this._getTabStrip().addItem(this._setupTabStripItem(oItem));
+
+			this._getTabStrip().addItem(
+				new TabStripItem({
+					key: oItem.getId(),
+					text: oItem.getName(),
+					additionalText: oItem.getAdditionalText(),
+					icon: oItem.getIcon(),
+					iconTooltip: oItem.getIconTooltip(),
+					modified: oItem.getModified(),
+					tooltip: oItem.getTooltip(),
+					customData: oItem.getCustomData()
+				})
+			);
 
 			return this;
 		};
@@ -504,7 +514,19 @@ sap.ui.define([
 		 * @override
 		 */
 		TabContainer.prototype.insertItem = function(oItem, iIndex) {
-			this._getTabStrip().insertItem(this._setupTabStripItem(oItem), iIndex);
+			this._getTabStrip().insertItem(
+				new TabStripItem({
+					key: oItem.getId(),
+					text: oItem.getName(),
+					additionalText: oItem.getAdditionalText(),
+					icon: oItem.getIcon(),
+					iconTooltip: oItem.getIconTooltip(),
+					modified: oItem.getModified(),
+					tooltip: oItem.getTooltip(),
+					customData: oItem.getCustomData()
+				}),
+				iIndex
+			);
 
 			return this.insertAggregation("items", oItem, iIndex);
 		};
@@ -596,29 +618,6 @@ sap.ui.define([
 		};
 
 		/**
-		 * Set properties of internal TabStripItem control according to provided TabContainerItem control properties.
-		 *
-		 * @param {sap.m.TabContainerItem} oItem source TabContainerItem instance
-		 * @private
-		 * @returns {sap.m.TabStripItem} The corresponding tab strip item instance.
-		 */
-		TabContainer.prototype._setupTabStripItem = function(oItem) {
-			var oTabStripItem = oItem._getTabStripItem();
-
-			if (oTabStripItem) {
-				oTabStripItem.setKey(oItem.getId());
-				oTabStripItem.setText(oItem.getName());
-				oTabStripItem.setAdditionalText(oItem.getAdditionalText());
-				oTabStripItem.setIcon(oItem.getIcon());
-				oTabStripItem.setIconTooltip(oItem.getIconTooltip());
-				oTabStripItem.setModified(oItem.getModified());
-				oTabStripItem.setTooltip(oItem.getTooltip());
-			}
-
-			return oTabStripItem;
-		};
-
-		/**
 		 * Re-renders only the displayed content.
 		 * @private
 		 * @param {Object} oContent The content, which should be rendered.
@@ -631,7 +630,7 @@ sap.ui.define([
 				return;
 			}
 
-			oRM = new RenderManager().getInterface();
+			oRM = sap.ui.getCore().createRenderManager();
 			for (var i = 0; i < oContent.length; i++) {
 				oRM.renderControl(oContent[i]);
 			}
@@ -654,17 +653,5 @@ sap.ui.define([
 			return oFirstItem;
 		};
 
-		// Override customData getters/setters to forward the customData added to TabContainer to the internal TabStrip
-		["addCustomData", "getCustomData", "destroyCustomData", "indexOfCustomData",
-		 "insertCustomData", "removeAllCustomData", "removeCustomData", "data"].forEach(function(sName){
-			TabContainer.prototype[sName] = function() {
-				var oTabStrip = this._getTabStrip();
-				if (oTabStrip && oTabStrip[sName]) {
-					var res = oTabStrip[sName].apply(oTabStrip, arguments);
-					return res === oTabStrip ? this : res;
-				}
-			};
-		});
-
-	   return TabContainer;
+		return TabContainer;
 	});

@@ -8,12 +8,11 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'./library',
-	"sap/ui/core/Element",
 	'sap/ui/core/library',
 	'./TitleRenderer',
 	"sap/m/HyphenationSupport"
 ],
-	function(Control, library, Element, coreLibrary, TitleRenderer, HyphenationSupport) {
+	function(Control, library, coreLibrary, TitleRenderer, HyphenationSupport) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -74,7 +73,7 @@ sap.ui.define([
 	 * @implements sap.ui.core.IShrinkable
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 * @since 1.27.0
 	 *
 	 * @constructor
@@ -205,7 +204,7 @@ sap.ui.define([
 		var sTitle = this.getTitle();
 
 		if (sTitle) {
-			var oTitle = Element.getElementById(sTitle);
+			var oTitle = sap.ui.getCore().byId(sTitle);
 			if (oTitle && oTitle.isA("sap.ui.core.Title")) {
 				return oTitle;
 			}
@@ -227,7 +226,7 @@ sap.ui.define([
 	 * Sets the title for a <code>sap.m.Title</code> or <code>sap.ui.core.Title</code>
 	 *
 	 * @public
-	 * @param {sap.m.Title|sap.ui.core.Title} vTitle Given variant of a title which can be <code>sap.m.Title</code> or <code>sap.ui.core.Title</code>.
+	 * @param {sap.m.Title|sap.ui.core.Title} vTitle Given variant of the a title which can be <code>sap.m.Title</code> or <code>sap.ui.core.Title</code>.
 	 * @returns {this} this Title reference for chaining.
 	 */
 	Title.prototype.setTitle = function(vTitle){

@@ -6,7 +6,6 @@
 
 // Provides element sap.m.DynamicDateOption.
 sap.ui.define([
-	"sap/ui/core/Lib",
 	'sap/ui/core/date/UI5Date',
 	'sap/ui/core/Element',
 	'./Label',
@@ -16,10 +15,8 @@ sap.ui.define([
 	'sap/ui/unified/DateRange',
 	'sap/ui/unified/calendar/MonthPicker',
 	'sap/ui/unified/calendar/CustomMonthPicker',
-	'sap/ui/core/format/TimezoneUtil'
-],
+	'sap/ui/core/format/TimezoneUtil'],
 	function(
-		Library,
 		UI5Date,
 		Element,
 		Label,
@@ -29,8 +26,7 @@ sap.ui.define([
 		DateRange,
 		MonthPicker,
 		CustomMonthPicker,
-		TimezoneUtil
-	) {
+		TimezoneUtil) {
 		"use strict";
 
 		/**
@@ -44,7 +40,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Element
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @public
 		 * @since 1.92
@@ -278,7 +274,7 @@ sap.ui.define([
 		 */
 		DynamicDateOption.prototype.getGroupHeader = function() {
 			var iGroup = (this.getGroup() > -1 && this.getGroup() < 7) ? this.getGroup() : 0;
-			return Library.getResourceBundleFor("sap.m").getText("DDR_OPTIONS_GROUP_" + iGroup);
+			return sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("DDR_OPTIONS_GROUP_" + iGroup);
 		};
 
 		/**
@@ -307,11 +303,10 @@ sap.ui.define([
 		 * Calculates an absolute date range from the options relative value.
 		 *
 		 * @param {sap.m.DynamicDateRangeValue} oValue A <code>sap.m.DynamicDateRangeValue</code>
-	 	 * @param {string} sCalendarWeekNumbering The type of calendar week numbering
 		 * @returns {sap.ui.core.date.UniversalDate[]} A couple of dates marking the start and the end of the range
 		 * @public
 		 */
-		DynamicDateOption.prototype.toDates = function(oValue, sCalendarWeekNumbering) {
+		DynamicDateOption.prototype.toDates = function(oValue) {
 			throw new Error("Need implementation for method toDates. Option: " + this.getKey());
 		};
 

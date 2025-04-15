@@ -5,8 +5,8 @@
  */
 
 // Provides the default renderer for control sap.m.SliderTooltip
-sap.ui.define(["sap/ui/core/Lib"],
-	function(Library) {
+sap.ui.define(["sap/ui/core/Core"],
+	function(Core) {
 	"use strict";
 
 	/**
@@ -47,7 +47,7 @@ sap.ui.define(["sap/ui/core/Lib"],
 	};
 
 	SliderTooltipRenderer.renderTooltipElement = function (oRM, oControl) {
-		var oRb = Library.getResourceBundleFor("sap.m");
+		var oRb = Core.getLibraryResourceBundle("sap.m");
 
 		oRM.voidStart("input", oControl.getId() + "-input")
 			.class(SliderTooltipRenderer.CSS_CLASS + "Input");

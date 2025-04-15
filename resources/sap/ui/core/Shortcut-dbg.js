@@ -129,7 +129,6 @@ sap.ui.define([
 						fnCallback.apply(null, args);
 					});
 				});
-
 			}
 
 			var oDelegate = {};

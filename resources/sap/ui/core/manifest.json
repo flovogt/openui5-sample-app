@@ -5,7 +5,7 @@
     "type": "library",
     "embeds": [],
     "applicationVersion": {
-      "version": "1.134.0"
+      "version": "1.120.27"
     },
     "title": "The SAPUI5 Core Runtime.",
     "description": "The SAPUI5 Core Runtime.\n\n  Contains the UI5 jQuery plugins (jQuery.sap.*), the Core and all its components,\n  base classes for Controls, Components and the Model View Controller classes.",
@@ -126,7 +126,7 @@
       {
         "name": "cldr",
         "packagedWithMySelf": true,
-        "version": "46.1.0"
+        "version": "43"
       },
       {
         "name": "mobiscroll",
@@ -247,6 +247,11 @@
         "name": "node-lru-cache",
         "packagedWithMySelf": true,
         "version": "2.7.3"
+      },
+      {
+        "name": "tzdata",
+        "packagedWithMySelf": true,
+        "version": "2023c"
       }
     ]
   },
@@ -259,7 +264,7 @@
   },
   "sap.ui5": {
     "dependencies": {
-      "minUI5Version": "1.134",
+      "minUI5Version": "1.120",
       "libs": {}
     },
     "library": {
@@ -377,7 +382,6 @@
           "sap.ui.core.BusyIndicatorSize",
           "sap.ui.core.CalendarType",
           "sap.ui.core.CSSColor",
-          "sap.ui.core.CSSGapShortHand",
           "sap.ui.core.CSSSize",
           "sap.ui.core.CSSSizeShortHand",
           "sap.ui.core.Collision",
@@ -389,7 +393,6 @@
           "sap.ui.core.IconColor",
           "sap.ui.core.ImeMode",
           "sap.ui.core.IndicationColor",
-          "sap.ui.core.ItemSelectionMode",
           "sap.ui.core.MessageType",
           "sap.ui.core.OpenState",
           "sap.ui.core.Orientation",

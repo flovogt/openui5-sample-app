@@ -7,10 +7,9 @@
 sap.ui.define([
 	'./library',
 	'sap/base/Log',
-	'sap/base/i18n/date/CalendarWeekNumbering',
 	'sap/ui/core/Element'
 ],
-function (library, Log, _CalendarWeekNumbering, Element) {
+function (library, Log, Element) {
 	"use strict";
 
 	/**
@@ -27,7 +26,7 @@ function (library, Log, _CalendarWeekNumbering, Element) {
 	 * @extends sap.ui.core.Element
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -68,7 +67,7 @@ function (library, Log, _CalendarWeekNumbering, Element) {
 				 * Note: This property should not be used with firstDayOfWeek property.
 				 * @since 1.110.0
 				 */
-				calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
+				calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null}
 
 			}
 		}
@@ -77,12 +76,11 @@ function (library, Log, _CalendarWeekNumbering, Element) {
 	/**
 	 * Should return the number of columns to be displayed in the grid of the <code>sap.m.SinglePlanningCalendar</code>.
 	 *
-	 * @returns {int} the number of columns to be displayed
 	 * @public
 	 * @abstract
 	 */
 	SinglePlanningCalendarView.prototype.getEntityCount = function () {
-		throw new Error("This method should be implemented in one of the inherited classes.");
+		Log.warning("This method should be implemented in one of the inherited classes.", this);
 	};
 
 	/**
@@ -91,25 +89,23 @@ function (library, Log, _CalendarWeekNumbering, Element) {
 	 * pressing the forward button inside the work week view, the next startDate of a work week will be 7 entities
 	 * (days) away from the current one.
 	 *
-	 * @returns {int} the number of entities to be skipped by scrolling
 	 * @public
 	 * @abstract
 	 */
 	SinglePlanningCalendarView.prototype.getScrollEntityCount = function () {
-		throw new Error("This method should be implemented in one of the inherited classes.");
+		Log.warning("This method should be implemented in one of the inherited classes.", this);
 	};
 
 	/**
 	 * Should calculate the startDate which will be displayed in the <code>sap.m.SinglePlanningCalendar</code>
 	 * based on a given date.
 	 *
-	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate The given date
-	 * @returns {Date|module:sap/ui/core/date/UI5Date} The startDate of the view
+	 * @param {Date|module:sap/ui/core/date/UI5Date} oDate A date instance
 	 * @public
 	 * @abstract
 	 */
 	SinglePlanningCalendarView.prototype.calculateStartDate = function (oDate) {
-		throw new Error("This method should be implemented in one of the inherited classes.");
+		Log.warning("This method should be implemented in one of the inherited classes.", this);
 	};
 
 	return SinglePlanningCalendarView;

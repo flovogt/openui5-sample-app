@@ -36,7 +36,7 @@ sap.ui.define([
 	 * @extends sap.m.SplitContainer
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -167,7 +167,6 @@ sap.ui.define([
 	/**
 	 * Fires the orientationChange event after SplitApp has reacted to the browser orientationChange event.
 	 *
-	 * @deprecated As of version 1.87
 	 * @private
 	 */
 	SplitApp.prototype._onOrientationChange = function(){

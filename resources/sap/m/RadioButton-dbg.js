@@ -8,8 +8,8 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
+	'sap/ui/core/Core',
 	'sap/ui/core/EnabledPropagator',
-	"sap/ui/core/Lib",
 	'sap/ui/core/message/MessageMixin',
 	'sap/m/Label',
 	'sap/ui/core/library',
@@ -19,8 +19,8 @@ sap.ui.define([
 function(
 	library,
 	Control,
+	Core,
 	EnabledPropagator,
-	Library,
 	MessageMixin,
 	Label,
 	coreLibrary,
@@ -37,9 +37,6 @@ function(
 
 	// shortcut for sap.ui.core.TextDirection
 	var TextDirection = coreLibrary.TextDirection;
-
-	// shortcut for sap.m.WrappingType
-	var WrappingType = library.WrappingType;
 
 	var getNextSelectionNumber = (function () {
 		var i = 0;
@@ -94,7 +91,7 @@ function(
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -188,20 +185,8 @@ function(
 				 * Defines the text that appears in the tooltip of the <code>RadioButton</code>. If this is not specified, a default text is shown from the resource bundle.
 				 * @private
 				 */
-				valueStateText: { type: "string", group: "Misc", defaultValue: null, visibility: "hidden" },
+				valueStateText: { type: "string", group: "Misc", defaultValue: null, visibility: "hidden" }
 
-				/**
-				 * Determines the wrapping of the text within the <code>Radio Button</code> label.
-				 * When set to <code>false</code> (default), the label text will be truncated and an ellipsis will be added at the end. If set to <code>true</code>, the label text will wrap.
-				 * @since 1.126
-				 */
-				wrapping: {type : "boolean", group : "Appearance", defaultValue : false},
-
-				/**
-				 * Defines the type of wrapping to be used for the label text (hyphenated or normal).
-				 * @since 1.126
-				 */
-				wrappingType : {type: "sap.m.WrappingType", group : "Appearance", defaultValue : WrappingType.Normal}
 			},
 			events : {
 				/**
@@ -468,7 +453,7 @@ function(
 	 * @returns {sap.ui.core.AccessibilityInfo} The <code>sap.m.RadioButton</code> accessibility information
 	 */
 	RadioButton.prototype.getAccessibilityInfo = function() {
-		var oBundle = Library.getResourceBundleFor("sap.m");
+		var oBundle = Core.getLibraryResourceBundle("sap.m");
 		return {
 			role: "radio",
 			type: oBundle.getText("ACC_CTR_TYPE_RADIO"),
@@ -582,9 +567,7 @@ function(
 		oLabel.setText(sText)
 			.setWidth(!bUseEntireWidth ? this.getWidth() : "auto")
 			.setTextDirection(this.getTextDirection())
-			.setTextAlign(this.getTextAlign())
-			.setWrappingType(this.getWrappingType())
-			.setWrapping(this.getWrapping());
+			.setTextAlign(this.getTextAlign());
 	};
 
 	/**

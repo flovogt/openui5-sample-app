@@ -42,7 +42,7 @@ sap.ui.define([
 		 * @mixes sap.ui.model.odata.v4.ODataBinding
 		 * @public
 		 * @since 1.37.0
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getGroupId as #getGroupId
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getRootBinding as #getRootBinding
 		 * @borrows sap.ui.model.odata.v4.ODataBinding#getUpdateGroupId as #getUpdateGroupId
@@ -85,13 +85,7 @@ sap.ui.define([
 		if (sPath.endsWith("/")) {
 			throw new Error("Invalid path: " + sPath);
 		}
-		this.mScope = undefined;
 		if (mParameters) {
-			if (typeof mParameters.scope === "object") {
-				this.mScope = mParameters.scope;
-				mParameters = {...mParameters};
-				delete mParameters.scope;
-			}
 			this.checkBindingParameters(mParameters,
 				["$$groupId", "$$ignoreMessages", "$$noPatch"]);
 			this.sGroupId = mParameters.$$groupId;
@@ -100,9 +94,6 @@ sap.ui.define([
 		} else {
 			this.sGroupId = undefined;
 			this.bNoPatch = false;
-		}
-		if (this.sPath === "@$ui5.context.isSelected") {
-			this.bNoPatch = true;
 		}
 		this.oCheckUpdateCallToken = undefined;
 		this.oContext = oContext;
@@ -136,7 +127,8 @@ sap.ui.define([
 	 *       when it gets a new type via {@link #setType}, or when the data state is reset via
 	 *       {@link sap.ui.model.odata.v4.ODataModel#resetChanges},
 	 *       {@link sap.ui.model.odata.v4.ODataContextBinding#resetChanges},
-	 *       {@link sap.ui.model.odata.v4.ODataListBinding#resetChanges} or {@link #resetChanges},
+	 *       {@link sap.ui.model.odata.v4.ODataListBinding#resetChanges} or
+	 *       {@link sap.ui.model.odata.v4.ODataPropertyBinding#resetChanges},
 	 *     <li> {@link sap.ui.model.ChangeReason.Refresh Refresh} when the binding is refreshed,
 	 *     <li> {@link sap.ui.model.ChangeReason.Context Context} when the parent context is
 	 *       changed.
@@ -225,7 +217,7 @@ sap.ui.define([
 	 * type information.
 	 * If the binding's path cannot be resolved or if reading the binding's value fails or if the
 	 * value read is invalid (e.g. not a primitive value), the binding's value is reset to
-	 * <code>undefined</code>. As described above, this may initiate a change event depending on the
+	 * <code>undefined</code>. As described above, this may trigger a change event depending on the
 	 * previous value and the <code>bForceUpdate</code> parameter. In the end the data state is
 	 * checked (see {@link sap.ui.model.PropertyBinding#checkDataState}) even if there is no change
 	 * event. If there are multiple synchronous <code>checkUpdateInternal</code> calls the data
@@ -314,19 +306,17 @@ sap.ui.define([
 					sMetaPath = "." + sMetaPath;
 				}
 				return oMetaModel.fetchObject(sMetaPath,
-					oMetaModel.getMetaContext(that.oModel.resolve(sDataPath, that.oContext)),
-					that.mScope && {scope : that.mScope});
-			}).then(function (vValue0) {
-				if (!vValue0 || typeof vValue0 !== "object") {
-					return vValue0;
+					oMetaModel.getMetaContext(that.oModel.resolve(sDataPath, that.oContext)));
+			}).then(function (vValue) {
+				if (!vValue || typeof vValue !== "object") {
+					return vValue;
 				}
 				if (that.sInternalType === "any" && (that.getBindingMode() === BindingMode.OneTime
-						|| !bIsMeta && (that.getBindingMode() === BindingMode.OneWay
-							|| that.sPath[that.sPath.lastIndexOf("/") + 1] === "#"))) {
+						|| (that.sPath[that.sPath.lastIndexOf("/") + 1] === "#" && !bIsMeta))) {
 					if (bIsMeta) {
-						return vValue0;
+						return vValue;
 					} else if (that.bRelative) {
-						return _Helper.publicClone(vValue0);
+						return _Helper.publicClone(vValue);
 					}
 				}
 				Log.error("Accessed value is not primitive", sResolvedPath, sClassName);
@@ -341,27 +331,25 @@ sap.ui.define([
 			});
 			if (bForceUpdate && vValue.isFulfilled()) {
 				if (vType && vType.isFulfilled && vType.isFulfilled()) {
-					this.doSetType(vType.getResult());
+					PropertyBinding.prototype.setType
+						.call(this, vType.getResult(), this.sInternalType);
 				}
 				this.vValue = vValue.getResult();
 			}
 			// Use Promise to become async so that only the latest sync call to checkUpdateInternal
 			// wins
 			vValue = Promise.resolve(vValue);
-		} else if (vValue && typeof vValue === "object") {
-			vValue = _Helper.publicClone(vValue);
 		}
-
 		return SyncPromise.all([vValue, vType]).then(function (aResults) {
 			var oType = aResults[1],
-				vValue0 = aResults[0];
+				vValue = aResults[0];
 
 			if (oCallToken === that.oCheckUpdateCallToken) { // latest call to checkUpdateInternal
 				that.oCheckUpdateCallToken = undefined;
-				that.doSetType(oType);
-				if (oCallToken.forceUpdate || that.vValue !== vValue0) {
+				PropertyBinding.prototype.setType.call(that, oType, that.sInternalType);
+				if (oCallToken.forceUpdate || that.vValue !== vValue) {
 					that.bInitial = false;
-					that.vValue = vValue0;
+					that.vValue = vValue;
 					that._fireChange({reason : sChangeReason || ChangeReason.Change});
 				}
 				that.checkDataState();
@@ -387,7 +375,6 @@ sap.ui.define([
 		this.oModel.bindingDestroyed(this);
 		this.oCheckUpdateCallToken = undefined;
 		this.mQueryOptions = undefined;
-		this.mScope = undefined;
 		this.vValue = undefined;
 
 		asODataBinding.prototype.destroy.call(this);
@@ -408,19 +395,6 @@ sap.ui.define([
 	 */
 	ODataPropertyBinding.prototype.doFetchOrGetQueryOptions = function () {
 		return this.isRoot() ? this.mQueryOptions : undefined;
-	};
-
-	/**
-	 * Sets the given type for this binding while keeping its internal type.
-	 *
-	 * @param {sap.ui.model.Type} oType
-	 *   The type for this binding
-	 *
-	 * @private
-	 * @see sap.ui.model.PropertyBinding#setType
-	 */
-	ODataPropertyBinding.prototype.doSetType = function (oType) {
-		PropertyBinding.prototype.setType.call(this, oType, this.sInternalType);
 	};
 
 	/**
@@ -559,7 +533,7 @@ sap.ui.define([
 	 *   determined, or rejected in case of an error
 	 *
 	 * @public
-	 * @since 1.69.0
+	 * @since 1.69
 	 */
 	ODataPropertyBinding.prototype.requestValue = function () {
 		var that = this;
@@ -673,7 +647,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Sets the (base) context if the binding path is relative. Invokes (@link #fetchCache) to
+	 * Sets the (base) context if the binding path is relative. Triggers (@link #fetchCache) to
 	 * create a cache and {@link #checkUpdate} to check for the current value if the
 	 * context has changed. In case of absolute bindings nothing is done.
 	 *
@@ -695,7 +669,7 @@ sap.ui.define([
 						// Note: this.oType => this.sReducedPath
 						&& _Helper.getMetaPath(this.oModel.resolve(this.sPath, oContext))
 							!== _Helper.getMetaPath(this.sReducedPath)) {
-						this.doSetType(undefined);
+						PropertyBinding.prototype.setType.call(this, undefined, this.sInternalType);
 					}
 					this.sReducedPath = undefined;
 				}
@@ -744,10 +718,7 @@ sap.ui.define([
 	 * be updated on the server, an error is logged to the console and added to the message manager
 	 * as a technical message. Unless preconditions fail synchronously, a
 	 * {@link sap.ui.model.odata.v4.ODataModel#event:propertyChange 'propertyChange'} event is
-	 * fired and provides a promise on the outcome of the asynchronous operation. Since 1.122.0
-	 * this method allows updates to the client-side annotation "@$ui5.context.isSelected". Note:
-	 * Changing the value of a client-side annotation never initiates a PATCH request, no matter
-	 * which <code>sGroupId</code> is given. Thus, it cannot be reverted via {@link #resetChanges}.
+	 * fired and provides a promise on the outcome of the asynchronous operation.
 	 *
 	 * @param {any} vValue
 	 *   The new value which must be primitive
@@ -755,8 +726,7 @@ sap.ui.define([
 	 *   The group ID to be used for this update call; if not specified, the update group ID for
 	 *   this binding (or its relevant parent binding) is used, see {@link #getUpdateGroupId}.
 	 *   Valid values are <code>undefined</code>, '$auto', '$auto.*', '$direct' or application group
-	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}. When writing to a client-side
-	 *   annotation, this parameter is ignored.
+	 *   IDs as specified in {@link sap.ui.model.odata.v4.ODataModel}.
 	 * @throws {Error} If
 	 *   <ul>
 	 *     <li> the binding's root binding is suspended.

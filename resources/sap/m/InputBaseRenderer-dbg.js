@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/Renderer', 'sap/ui/core/library', 'sap/ui/core/ValueStateSupport', 'sap/ui/Device', "sap/ui/core/Lib"],
-	function(ControlBehavior, Renderer, coreLibrary, ValueStateSupport, Device, Library) {
+sap.ui.define(['sap/ui/core/Renderer', 'sap/ui/core/library', 'sap/ui/core/ValueStateSupport', 'sap/ui/Device', 'sap/ui/core/Configuration', "sap/ui/core/Lib"],
+	function(Renderer, coreLibrary, ValueStateSupport, Device, Configuration, Library) {
 	"use strict";
 
 	// shortcut for sap.ui.core.TextDirection
@@ -36,7 +36,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/Renderer', 'sap/ui/co
 		var sValueState = oControl.getValueState(),
 			sTextDir = oControl.getTextDirection(),
 			sTextAlign = Renderer.getTextAlign(oControl.getTextAlign(), sTextDir),
-			bAccessibility = ControlBehavior.isAccessibilityEnabled(),
+			bAccessibility = Configuration.getAccessibility(),
 			aBeginIcons = oControl.getAggregation("_beginIcon") || [],
 			aEndIcons = oControl.getAggregation("_endIcon") || [],
 			aVisibleBeginIcons, aVisibleEndIcons;
@@ -603,7 +603,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/Renderer', 'sap/ui/co
 	/**
 	 * This method is reserved for derived classes to add extra styles for the placeholder, if rendered as label.
 	 *
-	 * @deprecated As of version 1.58.0. This method should not be used anymore as native placeholder is used on all browsers.
+	 * @deprecated Since version 1.58.0.
 	 * @protected
 	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
 	 * @param {sap.m.InputBase} oControl An object representation of the control that should be rendered.
@@ -615,7 +615,7 @@ sap.ui.define(["sap/ui/core/ControlBehavior", 'sap/ui/core/Renderer', 'sap/ui/co
 	 * To be overwritten by subclasses.
 	 * Note that this method should not be used anymore as native placeholder is used on all browsers
 	 *
-	 * @deprecated As of version 1.58.0. This method should not be used anymore as native placeholder is used on all browsers.
+	 * @deprecated Since version 1.58.0.
 	 * @protected
 	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
 	 * @param {sap.m.InputBase} oControl An object representation of the control that should be rendered.

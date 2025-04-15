@@ -6,8 +6,8 @@
 
 // Provides control sap.m.ValueStateHeader.
 sap.ui.define(
-	["./library", "sap/ui/core/Element", "sap/ui/core/library", "sap/ui/Device", "sap/ui/core/Control"],
-	function (library, Element, coreLibrary, Device, Control) {
+	["./library", "sap/ui/core/library", "sap/ui/Device", "sap/ui/core/Core", "sap/ui/core/Control"],
+	function (library, coreLibrary, Device, Core, Control) {
 		"use strict";
 
 		var ValueState = coreLibrary.ValueState;
@@ -23,7 +23,7 @@ sap.ui.define(
 		 *
 		 * @extends sap.ui.core.Control
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @private
@@ -112,7 +112,7 @@ sap.ui.define(
 		ValueStateHeader.prototype.setPopup = function (vPopup) {
 			var that = this;
 			var repositioned = false;
-			var oPopup = (typeof vPopup === "string") ? Element.getElementById(vPopup) : vPopup;
+			var oPopup = (typeof vPopup === "string") ? Core.byId(vPopup) : vPopup;
 
 			this.setAssociation("popup", oPopup);
 
@@ -146,7 +146,7 @@ sap.ui.define(
 		};
 
 		ValueStateHeader.prototype._getAssociatedPopupObject = function () {
-			return Element.getElementById(this.getPopup());
+			return Core.byId(this.getPopup());
 		};
 
 		ValueStateHeader.prototype.onAfterRendering = function () {
@@ -158,7 +158,6 @@ sap.ui.define(
 					setTimeout(function () {
 						if (oPopup._getOpenByDomRef()) {
 							oPopup._fnOrientationChange();
-							oPopup._storeScrollPosition();
 							oPopup.oPopup._applyPosition();
 						}
 					}, 0);

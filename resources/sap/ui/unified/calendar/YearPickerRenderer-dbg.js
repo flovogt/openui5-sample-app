@@ -5,14 +5,12 @@
  */
 
 sap.ui.define([
-	"sap/ui/core/Lib",
-	'sap/ui/unified/calendar/CalendarDate',
-	'sap/ui/unified/calendar/CalendarUtils',
-	'sap/ui/core/date/UniversalDate',
-	'sap/ui/core/format/DateFormat',
-	'sap/ui/core/InvisibleText'
-],
-	function(Library, CalendarDate, CalendarUtils, UniversalDate, DateFormat, InvisibleText) {
+		'sap/ui/unified/calendar/CalendarDate',
+		'sap/ui/unified/calendar/CalendarUtils',
+		'sap/ui/core/date/UniversalDate',
+		'sap/ui/core/format/DateFormat',
+		'sap/ui/core/InvisibleText'],
+	function(CalendarDate, CalendarUtils, UniversalDate, DateFormat, InvisibleText) {
 	"use strict";
 
 	/*
@@ -63,7 +61,7 @@ sap.ui.define([
 			role: "grid",
 			readonly: "true",
 			multiselectable: oYP.getIntervalSelection(),
-			roledescription: Library.getResourceBundleFor("sap.ui.unified").getText("YEAR_PICKER"),
+			roledescription: sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified").getText("YEAR_PICKER"),
 			describedby: oYP._bCalendar ? InvisibleText.getStaticId("sap.ui.unified", "CALENDAR_YEAR_RANGE_PICKER_OPEN_HINT") : ""
 		};
 	};
@@ -117,15 +115,15 @@ sap.ui.define([
 			oRm.openStart("div", sId + "-y" + sYyyymmdd);
 			oRm.class("sapUiCalItem");
 
-			bApplySelection = oYP._isYearSelected(oFirstDate);
-			bApplySelectionBetween = oYP._isYearInsideSelectionRange(oFirstDate);
+			bApplySelection = oYP._fnShouldApplySelection(oFirstDate);
+			bApplySelectionBetween = oYP._fnShouldApplySelectionBetween(oFirstDate);
 
 			if (bApplySelection) {
 				oRm.class("sapUiCalItemSel");
 				mAccProps["selected"] = true;
 			}
 
-			if (bApplySelectionBetween && !bApplySelection) {
+			if (bApplySelectionBetween) {
 				oRm.class("sapUiCalItemSelBetween");
 				mAccProps["selected"] = true;
 			}

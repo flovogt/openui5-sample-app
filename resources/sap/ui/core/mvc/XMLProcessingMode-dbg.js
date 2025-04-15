@@ -4,10 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-/**
- * @fileoverview
- * @deprecated
- */
+ // Provides type sap.ui.core.mvc.XMLProcessingMode
  sap.ui.define([], function () {
 	"use strict";
 

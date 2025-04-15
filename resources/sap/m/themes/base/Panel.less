@@ -6,7 +6,7 @@
 .sapMPanel {
 	overflow: hidden;
 	box-sizing: border-box;
-	/* The following needed for calculation of height for content child */
+	// The following needed for calculation of height for content child
 	position: relative;
 }
 
@@ -23,54 +23,44 @@
 	height: 3rem;
 	line-height: 3rem;
 	margin: 0;
-	-webkit-text-size-adjust: none; /* To improve readability Mobile Safari automatically increases the size of small text so let's disable this */
+
+	/*
+	* To improve readability Mobile Safari automatically increases
+	* the size of small text so let's disable this
+	*/
+	-webkit-text-size-adjust: none;
+
 	font-weight: @sapUiFontHeaderWeight;
-	font-size: var(--sapGroup_Title_FontSize);
-	font-family: var(--sapFontHeaderFamily);
-	color: var(--sapGroup_TitleTextColor);
+	font-size: @sapUiGroupTitleFontSize;
+	font-family: @sapUiFontHeaderFamily;
+	color: @sapUiGroupTitleTextColor;
 }
 
 .sapMPanel {
-
 	.sapMPanelHdr,
 	.sapMTB.sapMPanelHeaderTB {
 		padding-left: 1rem;
 		padding-right: 0.5rem;
-		background-color: var(--sapGroup_TitleBackground);
+		background-color: @sapUiGroupTitleBackground;
 	}
 
 	&.sapMPanelExpandable {
-
-		.sapMPanelHdr,
-		.sapMTB.sapMPanelHeaderTB {
+		.sapMPanelHdr, .sapMTB.sapMPanelHeaderTB {
 			padding-left: 0;
 		}
 	}
 }
 
-.sapUiSizeCompact {
-
-	.sapMPanel {
-		min-height: 2rem;
-
-		.sapMPanelHdr {
-			line-height: 2rem;
-			height: 2rem;
-		}
-
-		.sapMPanelWrappingDiv .sapUiIcon {
-			width: 2rem;
-			height: 1.5rem;
-			line-height: 1.5rem;
-		}
-	}
+.sapUiSizeCompact .sapMPanel .sapMPanelHdr {
+	line-height: 2rem;
+	height: 2rem;
 }
 
 .sapMPanelStickyHeadingDiv {
 	position: sticky;
 	top: 0;
-	z-index: 4; /* The z-index of the Table sticky header is 3, so we need bigger one to make the Panel header on top */
-	background-color: var(--sapBackgroundColor);
+	z-index: 4; /* The z-index of the Table sticky header is 3, so we need bigger one to make the Panel header on top*/
+	background-color: @sapUiBaseBG;
 }
 
 .sapMPanelContent {
@@ -79,7 +69,7 @@
 	overflow: auto;
 	white-space: normal;
 
-	/* This is needed in order to remove the additional outline added by tabindex=-1 */
+	/* This is needed in order to remove the additional outline added by tabindex=-1*/
 	&:focus {
 		outline: none;
 	}
@@ -92,11 +82,12 @@
 .sapMPanelWrappingDiv,
 .sapMPanelWrappingDivTb {
 	position: relative;
-	background-color: var(--sapGroup_TitleBackground);
+	background-color: @sapUiGroupTitleBackground;
 
 	> .sapMBtn {
 		position: absolute;
 		top: 50%;
+		-webkit-transform: translateY(-50%);
 		transform: translateY(-50%);
 		padding-left: 0.25rem;
 		padding-right: 0.25rem;
@@ -104,16 +95,14 @@
 }
 
 .sapMPanelWrappingDiv .sapUiIcon {
-	width: 2.25rem;
-	height: 2.25rem;
-	line-height: 2.25rem;
 	position: absolute;
 	top: 50%;
+	-webkit-transform: translateY(-50%);
 	transform: translateY(-50%);
 	padding: 0.25rem;
 	font-size: 1rem;
 	cursor: inherit;
-	color: var(--sapContent_IconColor);
+	color: @sapUiContentIconColor;
 }
 
 /* if Panel is expandable, we do not wish toolbar to come with own border */
@@ -139,20 +128,19 @@ html.sap-desktop .sapUiFioriObjectPage > section > .sapMPanel {
 .sapMPanel .sapMPanelWrappingDiv .sapMPanelHdr,
 .sapMPanel .sapMPanelWrappingDivTb .sapMIBar.sapMTB {
 	margin-left: 2.75rem;
-	padding-left: 0.25rem;
 
-	> :first-child {
-		margin-left: 0;
+  	>:first-child {
+	  margin-left: 0;
 	}
 }
 
 /* mixin call for creating container content padding classes (arguments: rootContainer, contentSelector) */
 .sapUiContainerContentPadding(~".sapMPanel", ~"> .sapMPanelContent");
 
-.sapMPanelExpandable .sapMPanelWrappingDiv {
 
+.sapMPanelExpandable .sapMPanelWrappingDiv {
 	&:focus {
-		outline: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);
+		outline: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiContentFocusColor;
 		outline-offset: -0.1875rem;
 	}
 

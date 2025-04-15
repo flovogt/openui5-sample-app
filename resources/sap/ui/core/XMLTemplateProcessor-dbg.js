@@ -11,7 +11,6 @@ sap.ui.define([
 	'sap/ui/base/BindingInfo',
 	'sap/ui/core/CustomData',
 	'sap/ui/core/Component',
-	'sap/ui/core/ElementRegistry',
 	'./mvc/View',
 	'./mvc/ViewType',
 	'./mvc/XMLProcessingMode',
@@ -19,7 +18,6 @@ sap.ui.define([
 	'./ExtensionPoint',
 	'./StashedControlSupport',
 	'sap/ui/base/SyncPromise',
-	'sap/base/future',
 	'sap/base/Log',
 	'sap/base/util/ObjectPath',
 	'sap/base/assert',
@@ -35,7 +33,6 @@ function(
 	BindingInfo,
 	CustomData,
 	Component,
-	ElementRegistry,
 	View,
 	ViewType,
 	XMLProcessingMode,
@@ -43,7 +40,6 @@ function(
 	ExtensionPoint,
 	StashedControlSupport,
 	SyncPromise,
-	future,
 	Log,
 	ObjectPath,
 	assert,
@@ -56,7 +52,7 @@ function(
 ) {
 	"use strict";
 
-	function parseScalarType(sType, sValue, sName, oContext, oRequireModules, aTypePromises, mAdditionalBindableValues) {
+	function parseScalarType(sType, sValue, sName, oContext, oRequireModules, aTypePromises) {
 		var bResolveTypesAsync = !!aTypePromises;
 		var oBindingInfo;
 
@@ -66,8 +62,7 @@ function(
 			oRequireModules,
 			/* bResolveTypesAsync: Whether we want the type classes to be resolved,
 			        true if async == true, false otherwise */
-			bResolveTypesAsync,
-			mAdditionalBindableValues);
+			bResolveTypesAsync);
 
 		// asynchronously resolved types result in a Promise we need to unwrap here
 		if (bResolveTypesAsync && oBindingParseResult) {
@@ -92,7 +87,7 @@ function(
 
 				// if the parsed value is not valid, we don't fail but only log an error
 				if (!oType.isValid(vValue)) {
-					future.errorThrows("Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
+					Log.error("[FUTURE FATAL] Value '" + sValue + "' is not valid for type '" + oType.getName() + "'.");
 				}
 			}
 			// else keep original sValue (e.g. for enums)
@@ -213,13 +208,12 @@ function(
 
 	/**
 	 * Creates a function based on the passed mode and callback which applies a callback to each child of a node.
-	 * @param {function} fnCallback The callback to apply
 	 * @param {boolean} bAsync The strategy to choose
+	 * @param {function} fnCallback The callback to apply
 	 * @returns {function} The created function
 	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
-	function getHandleChildrenStrategy(fnCallback, bAsync) {
+	function getHandleChildrenStrategy(bAsync, fnCallback) {
 
 		// sync strategy ensures processing order by just being sync
 		function syncStrategy(node, mOptions) {
@@ -329,10 +323,9 @@ function(
 	 * @param {boolean} bAsync Whether or not to perform the template processing asynchronously
 	 * @returns {Promise} which resolves with the xmlNode
 	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	XMLTemplateProcessor.enrichTemplateIdsPromise = function (xmlNode, oView, bAsync) {
-		return parseTemplate(xmlNode, oView, true, undefined, bAsync).then(function() {
+		return parseTemplate(xmlNode, oView, true, bAsync).then(function() {
 			return xmlNode;
 		});
 	};
@@ -358,11 +351,9 @@ function(
 	 * @param {object} oParseConfig parse configuration options, e.g. settings pre-processor
 	 * @return {Promise} with an array containing Controls and/or plain HTML element strings
 	 * @private
-	 * @ui5-restricted sap.ui.core.Fragment, sap.ui.core.mvc.XMLView
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	XMLTemplateProcessor.parseTemplatePromise = function(xmlNode, oView, bAsync, oParseConfig) {
-		return parseTemplate(xmlNode, oView, false, oParseConfig, bAsync).then(function(vResult) {
+		return parseTemplate(xmlNode, oView, false, bAsync, oParseConfig).then(function(vResult) {
 			// vResult is the result array of the XMLTP's parsing.
 			// Elements in vResult can be:
 			//  * RenderManager Call (Array)
@@ -391,63 +382,40 @@ function(
 	};
 
 	/**
-	 * Checks whether the given module has an invalid module content.
-	 * Invalid in the sense of the XMLTP means: a Promise.
-	 *
-	 * @param {string} sModulePath the module to check for validity
-	 * @param {any} vContent the module content to check for validity
-	 */
-	function validateModuleContent(sModulePath, vContent) {
-		if (vContent instanceof Promise) {
-			throw new Error(`The module '${sModulePath}' returns a Promise where a control class was expected. Promises as module content are not supported. Please also refer to https://ui5.sap.com/#/topic/0cb44d7a147640a0890cefa5fd7c7f8e.`);
-		}
-	}
-
-	/**
 	 * Validate the parsed require context object
 	 *
 	 * The require context object should be an object. Every key in the object should be a valid
-	 * identifier. Every key shouldn't contain '.' or shouldn't start with '$'. For latter case, future message is logged.
-	 * Every value in the object should be a non-empty string.
+	 * identifier (shouldn't contain '.'). Every value in the object should be a non-empty string.
 	 *
 	 * @param {object} oRequireContext The parsed require context
 	 * @return {string} The error message if the validation fails, otherwise it returns undefined
 	 */
 	function validateRequireContext(oRequireContext) {
-		const rIdentifier = /^[a-zA-Z_][a-zA-Z0-9_$]*$/;
-		const oResult = {
-			throwError: false,
-			errorMessage: ""
-		};
+		var sErrorMessage,
+			rIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 
 		if (!oRequireContext || typeof oRequireContext !== "object") {
-			oResult.errorMessage = "core:require in XMLView can't be parsed to a valid object";
-			oResult.throwError = true;
-			return oResult;
-		}
-
-		for (const sKey of Object.keys(oRequireContext)) {
-			if (!rIdentifier.test(sKey)) {
-				// '.' is not allowed to use in sKey
-				oResult.errorMessage = `core:require in XMLView contains an invalid identifier: '${sKey}'`;
-
-				if (!sKey.startsWith("$")) { // otherwise future log
-					oResult.throwError = true;
+			sErrorMessage = "core:require in XMLView can't be parsed to a valid object";
+		} else {
+			Object.keys(oRequireContext).some(function(sKey) {
+				if (!rIdentifier.test(sKey)) {
+					// '.' is not allowed to use in sKey
+					sErrorMessage = "core:require in XMLView contains invalid identifier: '"
+						+ sKey + "'";
+					return true;
 				}
 
-				return oResult;
-			}
-
-			const sValue = oRequireContext[sKey];
-			if (!sValue || typeof sValue !== "string") {
-				// The value should be a non-empty string
-				oResult.errorMessage = `core:require in XMLView contains an invalid value '${sValue}' under key '${sKey}'`;
-				oResult.throwError = true;
-				return oResult;
-			}
-
+				if (!oRequireContext[sKey] || typeof oRequireContext[sKey] !== "string") {
+					// The value should be a non-empty string
+					sErrorMessage = "core:require in XMLView contains invalid value '"
+						+ oRequireContext[sKey] + "'under key '" + sKey + "'";
+					return true;
+				}
+				return false;
+			});
 		}
-		return oResult;
+
+		return sErrorMessage;
 	}
 
 	/**
@@ -459,13 +427,12 @@ function(
 	 *
 	 * @return {Promise|undefined} The promise resolves after all modules are loaded. If the given xml node
 	 *  doesn't have require context defined, undefined is returned.
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
 	function parseAndLoadRequireContext(xmlNode, bAsync) {
 		var sCoreContext = xmlNode.getAttributeNS(CORE_NAMESPACE, "require"),
 			oRequireContext,
 			oModules,
-			oResult;
+			sErrorMessage;
 
 		if (sCoreContext) {
 			try {
@@ -475,15 +442,9 @@ function(
 				throw e;
 			}
 
-			oResult = validateRequireContext(oRequireContext);
-			if (oResult.errorMessage) {
-				const sErrorMessage = `${oResult.errorMessage} on Node: ${xmlNode.nodeName}`;
-
-				if (oResult.throwError) {
-					throw new Error(sErrorMessage);
-				} else {
-					future.fatalThrows(`${sErrorMessage}. Keys that begin with '$' are reserved by the framework.`);
-				}
+			sErrorMessage = validateRequireContext(oRequireContext);
+			if (sErrorMessage) {
+				throw new Error(sErrorMessage + " on Node: " + xmlNode.nodeName);
 			}
 
 			if (!isEmptyObject(oRequireContext)) {
@@ -519,11 +480,7 @@ function(
 		}
 	}
 
-	/**
-	 * @private
-	 * @ui5-transform-hint replace-param bAsync true
-	 */
-	function fnTriggerExtensionPointProvider(oTargetControl, mAggregationsWithExtensionPoints, bAsync) {
+	function fnTriggerExtensionPointProvider(bAsync, oTargetControl, mAggregationsWithExtensionPoints) {
 		var pProvider = SyncPromise.resolve();
 
 		// if no extension points are given, we don't have to do anything here
@@ -598,80 +555,62 @@ function(
 	 * @param {object} oParseConfig parse configuration options, e.g. settings pre-processor
 	 *
 	 * @return {Promise} with an array containing Controls and/or plain HTML element strings
-	 * @ui5-transform-hint replace-param bAsync true
 	 */
-	function parseTemplate(xmlNode, oView, bEnrichFullIds, oParseConfig, bAsync) {
+	function parseTemplate(xmlNode, oView, bEnrichFullIds, bAsync, oParseConfig) {
 		// the output of the template parsing, containing strings and promises which resolve to control or control arrays
 		// later this intermediate state with promises gets resolved to a flat array containing only strings and controls
 		var aResult = [],
 			sInternalPrefix = findNamespacePrefix(xmlNode, UI5_INTERNAL_NAMESPACE, "__ui5"),
 			pResultChain = parseAndLoadRequireContext(xmlNode, bAsync) || SyncPromise.resolve(),
-			collectControl = (pContent) => aResult.push(pContent);
+			rm = {
+				openStart: function(tagName, sId) {
+					aResult.push(["openStart", [tagName, sId]]);
+				},
+				voidStart: function(tagName, sId) {
+					aResult.push(["voidStart", [tagName, sId]]);
+				},
+				style: function(name, value) {
+					aResult.push(["style", [name, value]]);
+				},
+				"class": function(clazz) {
+					aResult.push(["class", [clazz]]);
+				},
+				attr: function(name, value) {
+					aResult.push(["attr", [name, value]]);
+				},
+				openEnd: function() {
+					aResult.push(["openEnd"]);
+				},
+				voidEnd: function() {
+					aResult.push(["voidEnd"]);
+				},
+				text: function(str) {
+					aResult.push(["text", [str]]);
+				},
+				unsafeHtml: function(str) {
+					aResult.push(["unsafeHtml", [str]]);
+				},
+				close: function(tagName) {
+					aResult.push(["close", [tagName]]);
+				},
+				renderControl: function(pContent) {
+					aResult.push(pContent);
+				}
+			};
 
-		// object containing reserved values for binding formatter functions.
-		const mAdditionalBindableValues = {
-			"$control": null,
-			"$controller": oView._oContainingView.oController
-		};
-
-		/**
-		 * @deprecated since version 1.120 because the support of HTML and SVG nodes is deprecated
-		 */
-		const rm = {
-			openStart: function(tagName, sId) {
-				aResult.push(["openStart", [tagName, sId]]);
-			},
-			voidStart: function(tagName, sId) {
-				aResult.push(["voidStart", [tagName, sId]]);
-			},
-			style: function(name, value) {
-				aResult.push(["style", [name, value]]);
-			},
-			"class": function(clazz) {
-				aResult.push(["class", [clazz]]);
-			},
-			attr: function(name, value) {
-				aResult.push(["attr", [name, value]]);
-			},
-			openEnd: function() {
-				aResult.push(["openEnd"]);
-			},
-			voidEnd: function() {
-				aResult.push(["voidEnd"]);
-			},
-			text: function(str) {
-				aResult.push(["text", [str]]);
-			},
-			unsafeHtml: function(str) {
-				aResult.push(["unsafeHtml", [str]]);
-			},
-			close: function(tagName) {
-				aResult.push(["close", [tagName]]);
-			}
-		};
-
-		/**
-		 * @deprecated since 1.120 because the support of HTML and SVG in XMLView is deprecated
-		 */
+		// We might have a set of already resolved "core:require" modules given from outside.
+		// This only happens when a new XMLView instance is used as a wrapper for HTML nodes, in this case
+		// the "core:require" modules need to be propagated down into the nested XMLView.
+		// We now need to merge the set of passed "core:require" modules with the ones defined on our root element,
+		// with our own modules having priority in case of duplicate aliases.
 		if (oParseConfig?.settings?.requireContext) {
-			// We might have a set of already resolved "core:require" modules given from outside.
-			// This only happens when a new XMLView instance is used as a wrapper for HTML nodes, in this case
-			// the "core:require" modules need to be propagated down into the nested XMLView.
-			// We now need to merge the set of passed "core:require" modules with the ones defined on our root element,
-			// with our own modules having priority in case of duplicate aliases.
 			pResultChain = pResultChain.then((mRequireContext) => {
 				return Object.assign({}, oParseConfig.settings.requireContext, mRequireContext);
 			});
 		}
 
-		/**
-		 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
-		 * in the next major release
-		 */
-		(() => {
-			bAsync = bAsync && !!oView._sProcessingMode;
-			Log.debug("XML processing mode is " + (oView._sProcessingMode || "default") + ".", "", "XMLTemplateProcessor");
-		})();
+		bAsync = bAsync && !!oView._sProcessingMode;
+		Log.debug("XML processing mode is " + (oView._sProcessingMode || "default") + ".", "", "XMLTemplateProcessor");
 		Log.debug("XML will be processed " + (bAsync ? "asynchronously" : "synchronously") + ".", "", "XMLTemplateProcessor");
 
 		var bDesignMode = DesignTime.isDesignModeEnabled();
@@ -758,11 +697,7 @@ function(
 
 			// Normalize the view content by wrapping it with either a "View" tag or a "FragmentDefinition" tag to
 			// simplify the parsing process
-			/**
-			 * @ui5-transform-hint replace-local false
-			 */
-			const bCreateViewWrapper = oView.isA("sap.ui.core.mvc.XMLView") && (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE);
-			if (bCreateViewWrapper) {
+			if (oView.isA("sap.ui.core.mvc.XMLView") && (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE)) {
 				// XHTML or SVG nodes are placed into a sub view without having "View" as root tag
 				// Wrap the content into a "View" node
 				oWrapper = node.ownerDocument.createElementNS(CORE_MVC_NAMESPACE, "View");
@@ -806,18 +741,18 @@ function(
 			sNodeName = localName(node);
 			if (oView.isA("sap.ui.core.mvc.XMLView")) {
 				if ((sNodeName !== "View" && sNodeName !== "XMLView") || node.namespaceURI !== CORE_MVC_NAMESPACE) {
-					future.errorThrows("XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
+					Log.error("[FUTURE FATAL] XMLView's root node must be 'View' or 'XMLView' and have the namespace 'sap.ui.core.mvc'" + (sCurrentName ? " (View name: " + sCurrentName + ")" : ""));
 				}
 				// createRegularControls
 				pResultChain = pChain.then(function() {
 					return createRegularControls(node, oView.getMetadata().getClass(), pChain, null, { rootArea: true, rootNode: true });
 				});
 			} else {
-				var handleChildren = getHandleChildrenStrategy(function(node, childNode, mOptions) {
+				var handleChildren = getHandleChildrenStrategy(bAsync, function(node, childNode, mOptions) {
 					if (childNode.nodeType === 1 /* Element Node*/) {
 						return createControls(childNode, mOptions.chain, null /*closest binding*/, undefined /* aggregation info*/, { rootArea: true });
 					}
-				}, bAsync);
+				});
 
 				pResultChain = pChain.then(function() {
 					return handleChildren(node, {
@@ -855,7 +790,7 @@ function(
 					sClassName = oLibrary.name + "." + ((oLibrary.tagNames && oLibrary.tagNames[sLocalName]) || sLocalName);
 				}
 			});
-
+			// TODO guess library from sNamespaceURI and load corresponding lib!?
 			sClassName = sClassName || sNamespaceURI + "." + sLocalName;
 
 			/**
@@ -863,9 +798,9 @@ function(
 			 * @param {sap.ui.core.Control|undefined} fnClass control class or undefined if not returned as module content for its sap.ui.define factory
 			 * @return {sap.ui.core.Control|undefined} the resolved class.
 			 */
-			function validateClass(fnClass, sResourceName) {
+			function validateClass(fnClass) {
 				if (!fnClass) {
-					let sErrorLogMessage = `Control '${sClassName}' did not return a class definition from sap.ui.define.`;
+					let sErrorLogMessage = `[FUTURE FATAL] Control '${sClassName}' did not return a class definition from sap.ui.define.`;
 					/**
 					 * Some modules might not return a class definition, so we fallback to the global namespace.
 					 * This is against the AMD definition, but is required for backward compatibility.
@@ -878,11 +813,8 @@ function(
 						}
 					})();
 
-					future.errorThrows(`XMLTemplateProcessor: ${sErrorLogMessage}`);
+					Log.error(sErrorLogMessage, "", "XMLTemplateProcessor");
 				}
-
-				validateModuleContent(sResourceName, fnClass);
-
 				return fnClass;
 			}
 
@@ -895,22 +827,15 @@ function(
 				 */
 				if (!bAsync) {
 					oClassObject = sap.ui.requireSync(sResourceName); // legacy-relevant: Sync path
-					oClassObject = validateClass(oClassObject, sResourceName);
+					oClassObject = validateClass(oClassObject);
 					return oClassObject;
 				}
 				return new Promise(function(resolve, reject) {
 					sap.ui.require([sResourceName], function(oClassObject) {
-						try {
-							oClassObject = validateClass(oClassObject, sResourceName);
-							resolve(oClassObject);
-						} catch (e) {
-							reject(e);
-						}
+						oClassObject = validateClass(oClassObject);
+						resolve(oClassObject);
 					}, reject);
 				});
-			} else {
-				// even when retrieving a class with sap.ui.require, we should validate the module content
-				validateModuleContent(sResourceName, oClassObject);
 			}
 			return oClassObject;
 		}
@@ -938,22 +863,9 @@ function(
 				bRenderingRelevant = bRootArea && (oView.isA("sap.ui.core.Fragment") || (oAggregation && oAggregation.name === "content")),
 				pResult, i;
 
-			/**
-			 * @ui5-transform-hint replace-local false
-			 */
-			const bRenderText = node.nodeType === 3 /* TEXT_NODE */ && bRenderingRelevant;
-
 			if ( node.nodeType === 1 /* ELEMENT_NODE */ ) {
-				// Using native HTML in future is not allowed. We need to check explicitely in order to throw
-				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE) {
-					future.warningThrows(`${oView.getId()}: Using native HTML content in XMLViews is deprecated.`);
-				}
-				/**
-				 * Differentiate between SAPUI5 and plain-HTML children
-				 * @ui5-transform-hint replace-local false
-				 */
-				const isNativeContent = node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE;
-				if (isNativeContent) {
+				// differentiate between SAPUI5 and plain-HTML children
+				if (node.namespaceURI === XHTML_NAMESPACE || node.namespaceURI === SVG_NAMESPACE ) {
 					if (bRootArea) {
 						if (oAggregation && oAggregation.name !== "content") {
 							Log.error(createErrorInfo(node, "XHTML nodes can only be added to the 'content' aggregation and not to the '" + oAggregation.name + "' aggregation."));
@@ -1045,9 +957,9 @@ function(
 							// For HTMLTemplateElement nodes, skip the associated DocumentFragment node
 							var oContent = node instanceof HTMLTemplateElement ? node.content : node;
 
-							var handleChildren = getHandleChildrenStrategy(function (node, childNode, mOptions) {
+							var handleChildren = getHandleChildrenStrategy(bAsync, function (node, childNode, mOptions) {
 								return createControls(childNode, mOptions.chain, mOptions.closestBinding, mOptions.aggregation, mOptions.config);
-							}, bAsync);
+							});
 
 							pResult = handleChildren(oContent, {
 								chain: pRequireContext,
@@ -1090,16 +1002,9 @@ function(
 									id: id ? getId(oView, node, id) : undefined,
 									xmlNode: node,
 									requireContext: oRequireContext,
-									containingView: oView._oContainingView
+									containingView: oView._oContainingView,
+									processingMode: oView._sProcessingMode // add processing mode, so it can be propagated to subviews inside the HTML block
 								};
-
-								/**
-								 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
-								 * in the next major release
-								 *
-								 * add processing mode, so it can be propagated to subviews inside the HTML block
-								 */
-								mViewParameters.processingMode = oView._sProcessingMode;
 
 								// running with owner component
 								return scopedRunWithOwner(function() {
@@ -1125,14 +1030,14 @@ function(
 				} else  {
 					pResult = createControlOrExtension(node, pRequireContext, oClosestBinding);
 					if (bRenderingRelevant) {
-						collectControl(pResult);
+						rm.renderControl(pResult);
 					}
 					// non-HTML (SAPUI5) control
 					// we must return the result in either bRootArea=true or the bRootArea=false case because we use the result
 					// to add the control to the aggregation of its parent control
 					return pResult;
 				}
-			} else if (bRenderText) {
+			} else if (node.nodeType === 3 /* TEXT_NODE */ && bRenderingRelevant) {
 				if (!oConfig || !oConfig.contentBound) {
 					// content aggregation isn't bound
 					rm.text(node.textContent);
@@ -1357,7 +1262,7 @@ function(
 								try {
 									mMetaContextsInfo = XMLTemplateProcessor._calculatedModelMapping(sValue, oView._oContainingView.oController, true);
 								} catch (e) {
-									future.errorThrows(`Failed to parse metadataContexts in view "${oView}"`,  { cause: e });
+									Log.error("[FUTURE FATAL] " + oView + ":" + e.message);
 								}
 
 								if (mMetaContextsInfo) {
@@ -1404,21 +1309,22 @@ function(
 
 						} else if (oInfo && oInfo._iKind === 0 /* PROPERTY */ ) {
 							// other PROPERTY
-							mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules, aTypePromises, mAdditionalBindableValues);
+							mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules, aTypePromises); // View._oContainingView.oController is null when [...]
 							// FIXME: ._oContainingView might be the original Fragment for an extension fragment or a fragment in a fragment - so it has no controller bit ITS containingView.
 
 						} else if (oInfo && oInfo._iKind === 1 /* SINGLE_AGGREGATION */ && oInfo.altTypes ) {
 							// AGGREGATION with scalar type (altType)
 							if (!bStashedControl) {
-								mSettings[sName] = parseScalarType(oInfo.altTypes[0], sValue, sName, oView._oContainingView.oController, oRequireModules, null, mAdditionalBindableValues);
+								mSettings[sName] = parseScalarType(oInfo.altTypes[0], sValue, sName, oView._oContainingView.oController, oRequireModules);
 							}
-							} else if (oInfo && oInfo._iKind === 2 /* MULTIPLE_AGGREGATION */ ) {
+
+						} else if (oInfo && oInfo._iKind === 2 /* MULTIPLE_AGGREGATION */ ) {
 							if (!bStashedControl) {
 								var oBindingInfo = BindingInfo.parse(sValue, oView._oContainingView.oController, false, false, false, false, oRequireModules);
 								if ( oBindingInfo ) {
 									mSettings[sName] = oBindingInfo;
 								} else {
-									future.errorThrows("" + oView + ": aggregations with cardinality 0..n specifies a non valid BindingInfo (wrong value: " + sName + "='" + sValue + "')");
+									Log.error("[FUTURE FATAL] " + oView + ": aggregations with cardinality 0..n specifies a non valid BindingInfo (wrong value: " + sName + "='" + sValue + "')");
 								}
 							}
 
@@ -1444,7 +1350,7 @@ function(
 									if (vEventHandler) {
 										aEventHandlers.push(vEventHandler);
 									} else  {
-										future.warningThrows("" + oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
+										Log.warning("[FUTURE FATAL] " + oView + ": event handler function \"" + sEventHandler + "\" is not a function or does not exist in the controller.");
 									}
 								});
 
@@ -1454,15 +1360,14 @@ function(
 							}
 						} else if (oInfo && oInfo._iKind === -1) {
 							// SPECIAL SETTING - currently only allowed for:
-							// - "async"
-							// - "type" (value must be in the ViewType enum)
-							if (oMetadata.isA("sap.ui.core.mvc.View") && (sName == "async" || (sName == "type" && ViewType[sValue]))) {
+							// - View's async setting
+							if (oMetadata.isA("sap.ui.core.mvc.View") && sName == "async") {
 								mSettings[sName] = parseScalarType(oInfo.type, sValue, sName, oView._oContainingView.oController, oRequireModules);
 							} else {
-								future.warningThrows("" + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
+								Log.warning("[FUTURE FATAL] " + oView + ": setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "') is not supported");
 							}
 						} else {
-							future.assertThrows(sName === 'xmlns', oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
+							assert(sName === 'xmlns', "[FUTURE FATAL] " + oView + ": encountered unknown setting '" + sName + "' for class " + oMetadata.getName() + " (value:'" + sValue + "')");
 							if (XMLTemplateProcessor._supportInfo) {
 								XMLTemplateProcessor._supportInfo({
 									context : node,
@@ -1507,15 +1412,10 @@ function(
 					Log.error(oError);
 				}
 
-				/**
-				 * @ui5-transform-hint replace-local false
-				 */
-				const bSequentialLegacyMode = oView._sProcessingMode === XMLProcessingMode.SequentialLegacy;
-
 				// [COMPATIBILITY]
 				// sync: we just log the error and keep on processing
 				// asnyc: throw the error, so the parseTemplate Promise will reject
-				if (bAsync && !bSequentialLegacyMode) {
+				if (bAsync && oView._sProcessingMode !== XMLProcessingMode.SequentialLegacy) {
 					throw oError;
 				}
 			});
@@ -1527,7 +1427,7 @@ function(
 			 * @private
 			 */
 			// the actual handleChildren function depends on the processing mode
-			var handleChildren = getHandleChildrenStrategy(handleChild, bAsync);
+			var handleChildren = getHandleChildrenStrategy(bAsync, handleChild);
 
 			/**
 			 * @return {Promise} resolving to an array with 0..n controls created from a node
@@ -1570,43 +1470,29 @@ function(
 							childNode = childNode.cloneNode();
 							// remove stashed attribute as it is an unknown property.
 							oStashedNode.removeAttribute("stashed");
+
 							fnCreateStashedControl = function() {
 								var sControlId = getId(oView, childNode);
 
 								StashedControlSupport.createStashedControl({
 									wrapperId: sControlId,
-									fnCreate: function(bSync) {
+									fnCreate: function() {
+										// EVO-Todo: stashed control-support is still mandatory SYNC
+										// this means we need to switch back the view processing to synchronous too
+										// at this point everything is sync again
 										var bPrevAsync = bAsync;
-
-										/**
-										 * To stay compatible with legacy factories in 1.x, if the view was originally created sync,
-										 * we don't switch to async processing here, even if the unstash() is called async.
-										 * @deprecated
-										 */
-										if (bAsync === false) {
-											bSync = true;
-										}
-
-										// temporarily switch the stashed subtree to async=false in case the unstash() operation is triggered sync.
-										// the scoped var bAsync applies to everything contained in this view, the original value is restored after the unstash operation
-										bAsync = !bSync;
+										bAsync = false;
 
 										try {
-											setUI5Attribute(oStashedNode, "unstash");
-											let vUnstashedControl = handleChild(node, oStashedNode, {
+											return handleChild(node, oStashedNode, {
 												aggregation: oAggregation,
 												allAggregations: mAggregations,
 												chain: SyncPromise.resolve(oRequireContext),
 												closestBinding: oClosestBinding
-											});
-											/**
-											 * @deprecated
-											 */
-											if (bSync) {
-												vUnstashedControl = vUnstashedControl.unwrap();
-											}
-											return vUnstashedControl;
+											}).unwrap();
 										} finally {
+											// EVO-Todo:revert back to the original async/sync behavior
+											// if we moved to the sync path for the stashed control, we might now go back to the async path.
 											bAsync = bPrevAsync;
 										}
 									}
@@ -1680,8 +1566,8 @@ function(
 										mSettings[name].push(oControl);
 									}
 								} else {
-									// 0..1 AGGREGATION
-									assert(!mSettings[name], "multiple aggregates defined for aggregation " + name + " with cardinality 0..1");
+									// 1..1 AGGREGATION
+									assert(!mSettings[name], "multiple aggregates defined for aggregation with cardinality 0..1");
 									mSettings[name] = oControl;
 								}
 							}
@@ -1735,9 +1621,10 @@ function(
 
 					mSettings.type = oClass._sType || sType;
 
-					if (bAsync) {
+					// If the view is owned by an async-component we can propagate the asynchronous creation behavior to the nested views
+					if (bIsAsyncComponent && bAsync) {
 						// legacy check: async=false is not supported with an async-component
-						if (bIsAsyncComponent && mSettings.async === false) {
+						if (mSettings.async === false) {
 							throw new Error(
 								"A nested view contained in a Component implementing 'sap.ui.core.IAsyncContentCreation' is processed asynchronously by default and cannot be processed synchronously.\n" +
 								"Affected Component '" + oOwnerComponent.getMetadata().getComponentName() + "' and View '" + mSettings.viewName + "'."
@@ -1748,31 +1635,33 @@ function(
 							return View.create(mSettings);
 						});
 					} else {
-						/**
-						 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
-						 * in the next major release
-						 *
-						 * Pass processingMode to nested XMLViews
-						 */
+						// Pass processingMode to nested XMLViews
 						if (oClass.getMetadata().isA("sap.ui.core.mvc.XMLView") && oView._sProcessingMode) {
 							mSettings.processingMode = oView._sProcessingMode;
 						}
 
-						vNewControlInstance = scopedRunWithOwner(function() {
-							return View._create(mSettings);
-						});
+						var sViewClass = View._getViewClassName(mSettings, true /* skip error log*/);
+						if (bAsync && sViewClass) {
+							pInstanceCreated = new Promise(function(resolve, reject) {
+								sap.ui.require([sViewClass], resolve, reject);
+							}).then(function() {
+								return scopedRunWithOwner(function() {
+									return View._create(mSettings);
+								});
+							});
+						} else {
+							vNewControlInstance = scopedRunWithOwner(function() {
+								return View._create(mSettings);
+							});
+						}
 					}
 				} else if (oClass.getMetadata().isA("sap.ui.core.Fragment") && bAsync) {
-					/**
-					 * @deprecated because the 'Sequential' Mode is used by default and it's the only mode that will be supported
-					 * in the next major release
-					 *
-					 * Pass processingMode to any fragments except JS
-					 * XML / HTML fragments: might include nested views / fragments,
-					 *  which are processed asynchronously. Therefore the processingMode is needed
-					 * JS fragments: might include synchronously or asynchronously created content. Nevertheless, the execution of the
-					 *  content creation is not in the scope of the xml template processor, therefore the processing mode is not needed
-					 */
+
+					// Pass processingMode to any fragments except JS
+					// XML / HTML fragments: might include nested views / fragments,
+					//  which are processed asynchronously. Therefore the processingMode is needed
+					// JS fragments: might include synchronously or asynchronously created content. Nevertheless, the execution of the
+					//  content creation is not in the scope of the xml template processor, therefore the processing mode is not needed
 					if (sType !== ViewType.JS) {
 						mSettings.processingMode = oView._sProcessingMode;
 					}
@@ -1822,24 +1711,13 @@ function(
 						} else {
 							// the scoped runWithOwner function is only during ASYNC processing!
 							oInstance = scopedRunWithOwner(function () {
-								var oInstance;
-								if (node.getAttributeNS(UI5_INTERNAL_NAMESPACE, "unstash") === "true") {
-									oInstance = ElementRegistry.get(mSettings.id);
-									// If the placeholder has a visible property we set it to false to hide the placeholder.
-									// We must reset the setting to true to make it visible again or reflect the new settings.
-									if (oInstance.setVisible) {
-										oInstance.setVisible(true);
-									}
-									oInstance.applySettings(mSettings);
-								} else {
-									oInstance = new oClass(mSettings);
-								}
+								var oInstance = new oClass(mSettings);
 								return oInstance;
 							});
 						}
 
 						// check if we need to hand the ExtensionPoint info to the ExtensionProvider
-						pProvider = fnTriggerExtensionPointProvider(oInstance, mAggregationsWithExtensionPoints, bAsync);
+						pProvider = fnTriggerExtensionPointProvider(bAsync, oInstance, mAggregationsWithExtensionPoints);
 
 						return oInstance;
 					};

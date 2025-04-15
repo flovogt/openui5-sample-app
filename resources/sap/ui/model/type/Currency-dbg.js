@@ -10,13 +10,12 @@ sap.ui.define([
 	"sap/base/util/each",
 	"sap/base/util/extend",
 	"sap/base/util/isEmptyObject",
-	"sap/ui/core/Lib",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/CompositeType",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException"
-], function(Log, each, extend, isEmptyObject, Library, NumberFormat, CompositeType, FormatException, ParseException,
+], function(Log, each, extend, isEmptyObject, NumberFormat, CompositeType, FormatException, ParseException,
 		ValidateException) {
 	"use strict";
 
@@ -34,7 +33,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions]
@@ -60,7 +59,6 @@ sap.ui.define([
 	 *   Smallest amount allowed excluding the minimum value itself
 	 * @param {number} [oConstraints.maximum]
 	 *   Largest amount allowed excluding the maximum value itself
-	 * @throws {Error} If the <code>oFormatOptions.decimalPadding</code> is set but is not allowed
 	 * @alias sap.ui.model.type.Currency
 	 */
 	var Currency = CompositeType.extend("sap.ui.model.type.Currency", /** @lends sap.ui.model.type.Currency.prototype  */ {
@@ -159,7 +157,7 @@ sap.ui.define([
 
 	Currency.prototype.validateValue = function(vValue) {
 		if (this.oConstraints) {
-			var oBundle = Library.getResourceBundleFor("sap.ui.core"),
+			var oBundle = sap.ui.getCore().getLibraryResourceBundle(),
 				aViolatedConstraints = [],
 				aMessages = [],
 				aValues = vValue,
@@ -241,7 +239,7 @@ sap.ui.define([
 	 * @private
 	 */
 	Currency.prototype.getParseException = function () {
-		var oBundle = Library.getResourceBundleFor("sap.ui.core"),
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle(),
 			sText;
 
 		if (!this.bShowNumber) {

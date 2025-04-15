@@ -8,7 +8,6 @@
 sap.ui.define([
 	'./library',
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
 	'sap/ui/core/delegate/ItemNavigation',
 	'sap/ui/core/library',
 	'sap/ui/base/ManagedObjectObserver',
@@ -19,14 +18,13 @@ sap.ui.define([
 	function(
 		library,
 		Control,
-		Element,
 		ItemNavigation,
 		coreLibrary,
 		ManagedObjectObserver,
 		RadioButton,
 		RadioButtonGroupRenderer,
 		Log
-	) {
+		) {
 			"use strict";
 
 			// shortcut for sap.ui.core.TextDirection
@@ -60,15 +58,10 @@ sap.ui.define([
 			 * <li>Do not put two radio button groups right next to each other as it is difficult to determine which buttons belong to which group.</li>
 			 * </ul>
 			 * @extends sap.ui.core.Control
-			 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
-			 *
-			 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
-			 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
-			 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
-			 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+			 * @implements sap.ui.core.IFormContent
 			 *
 			 * @author SAP SE
-			 * @version 1.134.0
+			 * @version 1.120.27
 			 *
 			 * @constructor
 			 * @public
@@ -78,10 +71,7 @@ sap.ui.define([
 			var RadioButtonGroup = Control.extend("sap.m.RadioButtonGroup", /** @lends sap.m.RadioButtonGroup.prototype */ {
 				metadata : {
 
-					interfaces: [
-						"sap.ui.core.IFormContent",
-						"sap.ui.core.ISemanticFormContent"
-					],
+					interfaces : ["sap.ui.core.IFormContent"],
 					library : "sap.m",
 					designtime: "sap/m/designtime/RadioButtonGroup.designtime",
 					properties : {
@@ -487,14 +477,13 @@ sap.ui.define([
 			 * Removes a radio button from the group.
 			 *
 			 * @public
-			 * @param {int|sap.ui.core.ID|sap.m.RadioButton} vElement The button to remove
 			 * @returns {sap.m.RadioButton} vElement The removed radio button.
 			 */
 			RadioButtonGroup.prototype.removeButton = function(vElement) {
 
 				var iIndex = vElement;
 				if (typeof (vElement) == "string") { // ID of the element is given
-					vElement = Element.getElementById(vElement);
+					vElement = sap.ui.getCore().byId(vElement);
 				}
 				if (typeof (vElement) == "object") { // the element itself is given or has just been retrieved
 					iIndex = this.indexOfButton(vElement);
@@ -712,28 +701,6 @@ sap.ui.define([
 				}
 
 				return iFocusedIndex;
-			};
-
-			// support for SemanticFormElement
-			RadioButtonGroup.prototype.getFormFormattedValue = function() {
-				var aButtons = this.getButtons();
-				var iSelectedIndex = this.getSelectedIndex();
-
-				if (iSelectedIndex >= 0 && iSelectedIndex < aButtons.length) {
-					return aButtons[iSelectedIndex].getText();
-				}
-			};
-
-			RadioButtonGroup.prototype.getFormValueProperty = function () {
-				return "selectedIndex";
-			};
-
-			RadioButtonGroup.prototype.getFormObservingProperties = function() {
-				return ["selectedIndex"];
-			};
-
-			RadioButtonGroup.prototype.getFormRenderAsControl = function () {
-				return false;
 			};
 
 			return RadioButtonGroup;

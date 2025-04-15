@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Lib"],
-	function(Library) {
+sap.ui.define([],
+	function() {
 	"use strict";
 
 
@@ -38,12 +38,8 @@ sap.ui.define(["sap/ui/core/Lib"],
 			aMonths = oCal.getAggregation("month"),
 			sCurrentPicker = oCal.getProperty("_currentPicker"),
 			sWidth = oCal.getWidth(),
-			rb = Library.getResourceBundleFor("sap.ui.unified"),
-			mAccProps = {
-				labelledby: {value: "", append: !oCal._oSpecialDatesControlOrigin},
-				role: oCal._oSpecialDatesControlOrigin ? "" : "group",
-				roledescription: oCal._oSpecialDatesControlOrigin ? "" : rb.getText("CALENDAR_DIALOG")
-			};
+			rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.unified"),
+			mAccProps = {labelledby: {value: "", append: false}};
 
 		oRm.openStart("div", oCal);
 		oRm.class("sapUiCal");

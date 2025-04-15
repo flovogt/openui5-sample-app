@@ -16,7 +16,8 @@ sap.ui.define([
 	 * This controller can be registered using the <code>sap.m.p13n.Engine</code> to persist table column width changes
 	 * and can be used in combination with <code>sap.m.Table</code> and <code>sap.ui.table.Table</code> controls.
 	 *
-	 * @param {object} mSettings Initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 * @param {sap.ui.core.Control} mSettings.control The table instance that is personalized by this controller
 	 *
 	 * @class
@@ -25,7 +26,7 @@ sap.ui.define([
 	 * @extends sap.m.p13n.SelectionController
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @alias sap.m.table.ColumnWidthController
@@ -104,11 +105,7 @@ sap.ui.define([
 	ColumnWidthController.prototype.getCurrentState = function() {
 
 		if (this._bExposeXConfig) {
-			const oXConfig = this.getAdaptationControl().getCurrentState().xConfig;
-			if (oXConfig?.hasOwnProperty("aggregations") && oXConfig.aggregations.hasOwnProperty("columns")) {
-				return { aggregations: { columns: oXConfig.aggregations.columns } };
-			}
-			return {};
+			return this.getAdaptationControl().getCurrentState().xConfig;
 		} else {
 			var oXConfig = xConfigAPI.readConfig(this.getAdaptationControl());
 
@@ -121,17 +118,6 @@ sap.ui.define([
 			return columnWidthState;
 		}
 
-	};
-
-	ColumnWidthController.prototype.formatToInternalState = function(oExternalState) {
-		if (oExternalState?.aggregations?.columns) {
-			return {
-				aggregations: {
-					columns: oExternalState.aggregations.columns
-				}
-			};
-		}
-		return {};
 	};
 
 	/**

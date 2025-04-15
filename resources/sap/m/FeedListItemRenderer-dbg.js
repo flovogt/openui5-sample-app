@@ -5,8 +5,8 @@
  */
 
 // Provides default renderer for the sap.m.FeedListItem
-sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/Device"],
-	function(ListItemBaseRenderer, Localization, Renderer, Device) {
+sap.ui.define(["./ListItemBaseRenderer", "sap/ui/core/Renderer", "sap/ui/Device", "sap/ui/core/Configuration"],
+	function(ListItemBaseRenderer, Renderer, Device, Configuration) {
 	"use strict";
 
 
@@ -45,6 +45,20 @@ sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/c
 		// icon
 		if (oControl.getShowIcon()) {
 			this._writeAvatarControl(oRm, oControl, sMyId);
+		}
+
+		// action button
+		if (oControl.getActions().length > 0) {
+			var isAllActionsNotVisible = oControl.getActions().every(function (oAction) {
+				return oAction.getVisible() === false ;
+			});
+			if (!isAllActionsNotVisible) {
+				oRm.openStart("div", sMyId + "-action-button");
+				oRm.class('sapMFeedListItemActionButton');
+				oRm.openEnd();
+				oRm.renderControl(oControl.getAggregation("_actionButton"));
+				oRm.close("div");
+			}
 		}
 
 		// text (starting with sender)
@@ -112,7 +126,7 @@ sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/c
 			if (oControl.getInfo() || oControl.getTimestamp()) {
 				// info and date
 				oRm.openStart('p').class("sapMFeedListItemFooter").class("sapUiSelectable").openEnd();
-				if (!Localization.getRTL()) {
+				if (!Configuration.getRTL()) {
 					if (oControl.getInfo()) {
 						this._writeInfo(oRm, oControl, sMyId);
 						// Write Interpunct separator if necessary (with spaces before and after)
@@ -144,21 +158,6 @@ sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/c
 			}
 			oRm.close('div');
 		}
-		// action button
-		if (oControl.getActions().length > 0) {
-			var isAllActionsNotVisible = oControl.getActions().every(function (oAction) {
-				return oAction.getVisible() === false ;
-			});
-			if (!isAllActionsNotVisible) {
-				oRm.openStart("div", sMyId + "-action-button");
-				oRm.class('sapMFeedListItemActionButton');
-				oRm.openEnd();
-				oRm.renderControl(oControl.getAggregation("_actionButton"));
-				oRm.close("div");
-			}
-		}
-
-
 		oRm.close('div');
 	};
 

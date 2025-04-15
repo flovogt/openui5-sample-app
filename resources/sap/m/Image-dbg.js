@@ -11,7 +11,6 @@ sap.ui.define([
 	'sap/ui/base/DataType',
 	'sap/base/security/URLListValidator',
 	'./ImageRenderer',
-	"sap/ui/core/Lib",
 	"sap/ui/events/KeyCodes",
 	"sap/ui/thirdparty/jquery",
 	"sap/ui/thirdparty/URI",
@@ -19,7 +18,7 @@ sap.ui.define([
 	"sap/ui/Device",
 	"sap/ui/core/library"
 ],
-	function(library, Control, DataType, URLListValidator, ImageRenderer, Library, KeyCodes, jQuery, URI, encodeCSS, Device, coreLibrary) {
+	function(library, Control, DataType, URLListValidator, ImageRenderer, KeyCodes, jQuery, URI, encodeCSS, Device, coreLibrary) {
 	"use strict";
 
 
@@ -60,10 +59,8 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 * @implements sap.ui.core.IFormContent
 	 *
-	 * @borrows sap.ui.core.IFormContent.getFormDoNotAdjustWidth as #getFormDoNotAdjustWidth
-	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @alias sap.m.Image
@@ -241,8 +238,8 @@ sap.ui.define([
 			events : {
 
 				/**
-				 * Event is fired when the user clicks on the control.
-				 * @deprecated As of version 1.107.0. Use the {@link #event:press press} event instead.
+				 * Event is fired when the user clicks on the control. (This event is deprecated, use the press event instead)
+				 * @deprecated As of version 1.107.0
 				 */
 				tap : {},
 
@@ -890,7 +887,7 @@ sap.ui.define([
 
 		return {
 			role: bHasPressListeners ? "button" : "img",
-			type: Library.getResourceBundleFor("sap.m").getText(bHasPressListeners ? "ACC_CTR_TYPE_BUTTON" : "ACC_CTR_TYPE_IMAGE"),
+			type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText(bHasPressListeners ? "ACC_CTR_TYPE_BUTTON" : "ACC_CTR_TYPE_IMAGE"),
 			description: this.getAlt() || this.getTooltip_AsString() || "",
 			focusable: bHasPressListeners
 		};

@@ -39,7 +39,6 @@ function() {
 					.class("sapFShellBarTitleHidden")
 					.attr("role", "heading")
 					.attr("aria-level", "1")
-					.attr("aria-hidden", "true")
 					.openEnd();
 
 				oRm.text(sTitle).close("div");

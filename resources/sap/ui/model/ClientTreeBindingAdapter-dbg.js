@@ -24,15 +24,13 @@ sap.ui.define([
 		"use strict";
 
 		/**
-		 * Adapter for {@link sap.ui.model.ClientTreeBinding} to add the list binding functionality and use the tree
-		 * structure in list based controls. {@link sap.ui.model.TreeBindingAdapter} is applied before the client model
-		 * specific adapter part is applied.
+		 * Adapter for TreeBindings to add the ListBinding functionality and use the
+		 * tree structure in list based controls.
 		 *
 		 * @alias sap.ui.model.ClientTreeBindingAdapter
-		 * @namespace
-		 *
-		 * @private
-		 * @ui5-restricted sap.m.Tree, sap.ui.table.TreeTable
+		 * @class
+		 * @experimental This module is only for experimental use!
+		 * @protected
 		 */
 		var ClientTreeBindingAdapter = function() {
 

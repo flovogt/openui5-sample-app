@@ -6,6 +6,8 @@
 
 // Provides control sap.m.Table.
 sap.ui.define([
+	"sap/ui/events/KeyCodes",
+	"sap/ui/core/Core",
 	"sap/ui/core/ControlBehavior",
 	"./library",
 	"./ListBase",
@@ -24,7 +26,7 @@ sap.ui.define([
     // jQuery custom selectors ":sapTabbable"
 	"sap/ui/dom/jquery/Selectors"
 ],
-	function(ControlBehavior, library, ListBase, ListItemBase, CheckBox, TableRenderer, BaseObject, ResizeHandler, PasteHelper, jQuery, ListBaseRenderer, Icon, Util, Library, Log) {
+	function(KeyCodes, Core, ControlBehavior, library, ListBase, ListItemBase, CheckBox, TableRenderer, BaseObject, ResizeHandler, PasteHelper, jQuery, ListBaseRenderer, Icon, Util, Library, Log) {
 	"use strict";
 
 
@@ -65,7 +67,7 @@ sap.ui.define([
 	 * @extends sap.m.ListBase
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -441,7 +443,7 @@ sap.ui.define([
 			}
 		}
 
-		if (this._bCheckLastColumnWidth && Util.isThemeApplied()) {
+		if (this._bCheckLastColumnWidth && Core.isThemeApplied()) {
 			window.requestAnimationFrame(this._checkLastColumnWidth.bind(this));
 		}
 	};
@@ -528,9 +530,9 @@ sap.ui.define([
 			this._selectAllCheckBox.destroy();
 			this._selectAllCheckBox = null;
 		}
-		if (this._clearAllIcon) {
-			this._clearAllIcon.destroy();
-			this._clearAllIcon = null;
+		if (this._clearAllButton) {
+			this._clearAllButton.destroy();
+			this._clearAllButton = null;
 		}
 		if (this._aPopinHeaders) {
 			this._aPopinHeaders.forEach(function(oPopinHeader) {
@@ -675,7 +677,6 @@ sap.ui.define([
 			sOldTabIndex = oFocusableCell.getAttribute("tabindex");
 			oFocusableCell.removeAttribute("tabindex");
 		}
-
 		setTimeout(function() {
 			this._bMouseDown = false;
 			sOldTabIndex && oFocusableCell.setAttribute("tabindex", sOldTabIndex);
@@ -683,32 +684,17 @@ sap.ui.define([
 		ListBase.prototype.onmousedown.apply(this, arguments);
 	};
 
-	Table.prototype.onclick = function(oEvent) {
-		if (this.getMultiSelectMode() == "ClearAll" && this.getDomRef("tblHeadModeCol")?.contains(oEvent.target) && !this._clearAllIcon?.hasStyleClass("sapMTableDisableClearAll")) {
-			this.removeSelections(false, true, false);
-		}
-	};
-
 	Table.prototype._onItemNavigationBeforeFocus = function(oUI5Event) {
 		var oEvent = oUI5Event.getParameter("event");
-		var oItemNavigation = oUI5Event.getSource();
-		var iIndex = oUI5Event.getParameter("index");
-
-		if (oEvent.type == "mousedown" && this.getDomRef("tblHeadModeCol")?.contains(oEvent.target)) {
-			oUI5Event.preventDefault();
-
-			oItemNavigation.setFocusedIndex(iIndex + 1);
-			oItemNavigation.getItemDomRefs()[iIndex + 1].focus();
-			return;
-		}
-
 		if (this._bMouseDown && !oEvent.target.hasAttribute("tabindex")) {
 			return;
 		}
 
 		var iFocusedIndex;
 		var iForwardIndex = -1;
+		var iIndex = oUI5Event.getParameter("index");
 		var iColumnCount = this._colHeaderAriaOwns.length + 1;
+		var oItemNavigation = oUI5Event.getSource();
 
 		if (this._bMouseDown) {
 			var iRowIndex = iIndex - iIndex % iColumnCount;
@@ -848,18 +834,23 @@ sap.ui.define([
 	 * @private
 	 * @return {sap.ui.core.Icon} reference to the internal select all checkbox
 	 */
-	Table.prototype._getClearAllIcon = function() {
-		if (!this._clearAllIcon) {
-			this._clearAllIcon = new Icon({
+	Table.prototype._getClearAllButton = function() {
+		if (!this._clearAllButton) {
+			this._clearAllButton = new Icon({
 				id: this.getId() + "-clearSelection",
 				src: "sap-icon://clear-all",
-				decorative: true,
-				noTabStop: true
-			}).setParent(this, null, true);
+				tooltip: Library.getResourceBundleFor("sap.m").getText("TABLE_CLEARBUTTON_TOOLTIP"),
+				decorative: false,
+				press: this.removeSelections.bind(this, false, true, false)
+			}).setParent(this, null, true).addEventDelegate({
+				onAfterRendering: function() {
+					this._clearAllButton.getDomRef().setAttribute("tabindex", -1);
+				}
+			}, this);
 			this.updateSelectAllCheckbox();
 		}
 
-		return this._clearAllIcon;
+		return this._clearAllButton;
 	};
 
 	/**
@@ -918,8 +909,26 @@ sap.ui.define([
 			var bSelected = aItems.length > 0 && iSelectedItemCount == iSelectableItemCount;
 			this.$("tblHeader").find(".sapMTblCellFocusable").addBack().attr("aria-selected", bSelected);
 			this._selectAllCheckBox.setSelected(bSelected);
-		} else if (this._clearAllIcon) {
-			this._clearAllIcon.toggleStyleClass("sapMTableDisableClearAll", !this.getSelectedItems().length);
+		} else if (this._clearAllButton) {
+			this._clearAllButton.toggleStyleClass("sapMTableDisableClearAll", !this.getSelectedItems().length);
+		}
+	};
+
+	/**
+	 * This method is a hook for the RenderManager that gets called
+	 * during the rendering of child Controls. It allows to add,
+	 * remove and update existing accessibility attributes (ARIA) of
+	 * those controls.
+	 *
+	 * @param {sap.ui.core.Control} oElement - The Control that gets rendered by the RenderManager
+	 * @param {object} mAriaProps - The mapping of "aria-" prefixed attributes
+	 * @protected
+	 */
+	Table.prototype.enhanceAccessibilityState = function(oElement, mAriaProps) {
+		if (oElement == this._clearAllButton) {
+			mAriaProps.label = Library.getResourceBundleFor("sap.m").getText("TABLE_ICON_DESELECT_ALL");
+		} else if (oElement == this._selectAllCheckBox) {
+			mAriaProps.label = Library.getResourceBundleFor("sap.m").getText("TABLE_CHECKBOX_SELECT_ALL");
 		}
 	};
 
@@ -997,18 +1006,11 @@ sap.ui.define([
 		return mPosition;
 	};
 
-	Table.prototype.updateAccessbilityOfItems = function() {
-		const iStartIndex = this.hasHeaderRow() ? 1 : 0;
-		this.getVisibleItems().forEach((oItem, iIndex) => {
-			oItem.getFocusDomRef()?.setAttribute("aria-rowindex", iStartIndex + iIndex + 1);
-		});
-	};
-
 	Table.prototype._setHeaderAnnouncement = function() {
 		var oBundle = Library.getResourceBundleFor("sap.m"),
 			sAnnouncement = oBundle.getText("ACC_CTR_TYPE_HEADER_ROW") + " ";
 
-		if (this.getMultiSelectMode() !== "ClearAll" && this.isAllSelectableSelected()) {
+		if (this.isAllSelectableSelected()) {
 			sAnnouncement += oBundle.getText("LIST_ALL_SELECTED");
 		}
 
@@ -1051,7 +1053,7 @@ sap.ui.define([
 	Table.prototype._setNoColumnsMessageAnnouncement = function (oTarget) {
 		if (!this.shouldRenderItems()) {
 			var oNoData = this.getNoData();
-			var sDescription = Library.getResourceBundleFor("sap.m").getText("TABLE_NO_COLUMNS");
+			var sDescription = Core.getLibraryResourceBundle("sap.m").getText("TABLE_NO_COLUMNS");
 			if (oNoData && typeof oNoData !== "string" && oNoData.isA("sap.m.IllustratedMessage")) {
 				sDescription = ListItemBase.getAccessibilityText(this.getAggregation("_noColumnsMessage"));
 			}
@@ -1065,7 +1067,7 @@ sap.ui.define([
 			return;
 		}
 
-		if (oEvent.target.id == this.getId("tblHeader") || this.getDomRef("tblHeadModeCol")?.contains(oEvent.target)) {
+		if (oEvent.target.id == this.getId("tblHeader") || oEvent.target.id == this.getId("tblHeadModeCol")) {
 			// prevent from scrolling
 			oEvent.preventDefault();
 			oEvent.setMarked();
@@ -1074,12 +1076,9 @@ sap.ui.define([
 			var sMultiSelectMode = this.getMultiSelectMode();
 			if (this._selectAllCheckBox && sMultiSelectMode != "ClearAll") {
 				this._selectAllCheckBox.setSelected(!this._selectAllCheckBox.getSelected()).fireSelect();
-			} else if (this._clearAllIcon && sMultiSelectMode == "ClearAll" && !this._clearAllIcon.hasStyleClass("sapMTableDisableClearAll")) {
-				this.removeSelections(false, true, false);
+			} else if (this._clearAllButton && sMultiSelectMode == "ClearAll" && !this._clearAllButton.hasStyleClass("sapMTableDisableClearAll")) {
+				this._clearAllButton.firePress();
 			}
-		} else if (oEvent.target.classList.contains("sapMTblCellFocusable")) {
-			// prevent from scrolling
-			oEvent.preventDefault();
 		}
 	};
 
@@ -1166,7 +1165,7 @@ sap.ui.define([
 	Table.prototype.onpaste = function(oEvent) {
 
 		// Check whether the paste event is already handled by input enabled control and avoid pasting into this input-enabled control when focus is in there.
-		if (oEvent.isMarked() || (/^(input|textarea)$/i.test(document.activeElement.tagName)) /*see DINC0096526*/) {
+		if (oEvent.isMarked() || (/^(input|textarea)$/i.test(oEvent.target.tagName))) {
 			return;
 		}
 
@@ -1411,9 +1410,9 @@ sap.ui.define([
 	Table.prototype.validateAggregation = function(sAggregationName, oObject, bMultiple) {
 		var oResult = ListBase.prototype.validateAggregation.apply(this, arguments);
 
-		/**
-		 * @deprecated as of version 1.120
-		 */
+		/*
+         * @deprecated as of version 1.120
+        */
 		if (sAggregationName === "items" && !BaseObject.isA(oObject, "sap.m.ITableItem")) {
 			Log.error(oObject + " is not a valid items aggregation of " + this + ". Items aggregation in ResponsiveTable control only supports ITableItem.");
 			return oResult;

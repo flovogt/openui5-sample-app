@@ -77,7 +77,10 @@ sap.ui.define([
 	 *
 	 * @author SAP SE
 	 *
-	 * @version 1.134.0
+	 * @version 1.120.27
+	 *
+	 * @experimental Since 1.49.0 This class is experimental and provides only limited functionality. Also the API might be
+	 *               changed in future.
 	 */
 	var AddSimpleFormField = BaseAddViaDelegate.createAddViaDelegateChangeHandler({
 		addProperty: function(mPropertyBag) {
@@ -148,34 +151,22 @@ sap.ui.define([
 		},
 		parentAlias: "_", //ensure to take the fallback
 		fieldSuffix: "", //no suffix needed
-		skipCreateLayout: true //simple form needs field and label separately
+		skipCreateLayout: true, //simple form needs field and label separately
+		supportsDefault: true
 	});
 
 	AddSimpleFormField.getChangeVisualizationInfo = function(oChange, oAppComponent) {
-		const oFormSelector = oChange.getSelector();
-		const oForm = JsControlTreeModifier.bySelector(oFormSelector, oAppComponent);
-		const oRevertData = oChange.getRevertData();
-		const oReturn = {
-			updateRequired: true
-		};
+		var oRevertData = oChange.getRevertData();
 
 		if (oRevertData && oRevertData.labelSelector) {
-			const oLabel = JsControlTreeModifier.bySelector(oRevertData.labelSelector, oAppComponent);
-			oReturn.affectedControls = [oLabel.getParent().getId()];
-			// If the label is currently invisible, the indicator should be on the form (it can't be the group because it could have been headerless)
-			if (!oLabel.getVisible()) {
-				oReturn.displayControls = [oForm];
-			}
-		} else {
-			const oElement = JsControlTreeModifier.bySelector(oChange.getContent().elementSelector, oAppComponent);
-			oReturn.affectedControls = [oChange.getContent().newFieldSelector];
-			// If the element is currently invisible, the indicator should be on on the form (it can't be the group because it could have been headerless)
-			if (!oElement.getVisible()) {
-				oReturn.displayControls = [oForm];
-			}
+			return {
+				affectedControls: [JsControlTreeModifier.bySelector(oRevertData.labelSelector, oAppComponent).getParent().getId()],
+				updateRequired: true
+			};
 		}
-
-		return oReturn;
+		return {
+			affectedControls: [oChange.getContent().newFieldSelector]
+		};
 	};
 
 	AddSimpleFormField.getCondenserInfo = function() {

@@ -7,18 +7,17 @@
 // Provides control sap.m.RatingIndicator.
 sap.ui.define([
 	'./library',
-	"sap/base/i18n/Localization",
 	'sap/ui/core/Control',
-	"sap/ui/core/Lib",
 	'sap/ui/core/StaticArea',
 	'sap/ui/core/theming/Parameters',
 	'./RatingIndicatorRenderer',
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
 	"sap/ui/thirdparty/jquery",
+	"sap/ui/core/Configuration",
 	'sap/ui/core/LabelEnablement'
 ],
-	function(library, Localization, Control, Library, StaticArea, Parameters, RatingIndicatorRenderer, KeyCodes, Log, jQuery, LabelEnablement) {
+	function(library, Control, StaticArea, Parameters, RatingIndicatorRenderer, KeyCodes, Log, jQuery, Configuration, LabelEnablement) {
 	"use strict";
 
 
@@ -47,16 +46,15 @@ sap.ui.define([
 	 * You can display icons in 4 recommended sizes:
 	 * <ul>
 	 * <li>large - 32px</li>
-	 * <li>medium(default) - 24px</li>
-	 * <li>small - 22px</li>
+	 * <li>medium(default) - 22px</li>
+	 * <li>small - 16px</li>
 	 * <li>XS - 12px</li>
 	 * </ul>
-	 * <b>Note:</b> It is not recommended to use the XS size as an editable rating indicator. If an editable rating indicator is needed then it is recommended to set the size S or above to be compliant with minimum touch size.</h4>
 	 * <b>Note:</b> If no icon size is set, the rating indicator will set it according to the content density.</h4>
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -86,7 +84,7 @@ sap.ui.define([
 				value: {type: "float", group: "Behavior", defaultValue: 0, bindable: "bindable"},
 
 				/**
-				 * The Size of the image or icon to be displayed. The default value depends on the theme. Please be sure that the size is corresponding to a full pixel value as some browsers don't support subpixel calculations. Recommended size is 1.5rem (24px) for normal, 1.375rem (22px) for small, and 2rem (32px) for large icons correspondingly.
+				 * The Size of the image or icon to be displayed. The default value depends on the theme. Please be sure that the size is corresponding to a full pixel value as some browsers don't support subpixel calculations. Recommended size is 1.375rem (22px) for normal, 1rem (16px) for small, and 2rem (32px) for large icons correspondingly.
 				 */
 				iconSize: {type: "sap.ui.core.CSSSize", group: "Behavior", defaultValue: null},
 
@@ -199,7 +197,7 @@ sap.ui.define([
 		this._iIconCounter = 0;
 		this._fHoverValue = 0;
 
-		this._oResourceBundle = Library.getResourceBundleFor('sap.m');
+		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle('sap.m');
 	};
 
 	/**
@@ -292,10 +290,17 @@ sap.ui.define([
 			return;
 		}
 
+		var sDensityMode = this._getDensityMode();
+
+		if (sDensityMode === "Compact") {
+			sIconSize = "sapUiRIIconSizeCompact";
+			sIconPaddingSize = "sapUiRIIconPaddingCompact";
+		}
+
 		var mParamеters = Object.assign({
 				// add global styles as default
-				"sapUiRIIconSizeDisplayOnly": "1.5rem",
-				"sapUiRIIconPaddingDisplayOnly": "0.1875rem"
+				"sapUiRIIconSizeDisplayOnly": "1rem",
+				"sapUiRIIconPaddingDisplayOnly": "0.125rem"
 			}, Parameters.get({
 				name: [sIconSize, sIconPaddingSize],
 				callback: function(mParams) {
@@ -429,9 +434,9 @@ sap.ui.define([
 		switch (true) {
 			case (iPxIconSize >= 32):
 				return "L";
-			case (iPxIconSize >= 24):
-				return "M";
 			case (iPxIconSize >= 22):
+				return "M";
+			case (iPxIconSize >= 16):
 				return "S";
 			case (iPxIconSize >= 12):
 				return "XS";
@@ -466,6 +471,7 @@ sap.ui.define([
 	 * @private
 	 */
 	RatingIndicator.prototype._updateUI = function (fValue, bHover) {
+
 		// save a reference on all needed DOM elements
 		var $SelectedDiv = this.$("sel"),
 			$UnselectedContainerDiv = this.$("unsel-wrapper"),
@@ -546,7 +552,7 @@ sap.ui.define([
 			oControlRoot = this.$(),
 			fControlPadding = (oControlRoot.innerWidth() - oControlRoot.width()) / 2,
 			oEventPosition,
-			bRtl = Localization.getRTL();
+			bRtl = Configuration.getRTL();
 
 		if (oEvent.targetTouches) {
 			oEventPosition = oEvent.targetTouches[0];
@@ -956,7 +962,7 @@ sap.ui.define([
 	 * @protected
 	 */
 	RatingIndicator.prototype.getAccessibilityInfo = function () {
-		var oBundle = Library.getResourceBundleFor("sap.m");
+		var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 		return {
 			role: "slider",
 			type: oBundle.getText("ACC_CTR_TYPE_RATING"),

@@ -25,7 +25,7 @@ sap.ui.define(function () {
 		API : "API",
 
 		/**
-		 * Requests associated with the group ID are sent in a batch request which is initiated
+		 * Requests associated with the group ID are sent in a batch request which is triggered
 		 * automatically before rendering.
 		 * @public
 		 */

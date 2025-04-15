@@ -30,27 +30,26 @@
 .sapMSPCMonthWeek > .sapMSPCMonthWeekNumber {
 	text-align: right;
 	box-sizing: border-box;
-	color: var(--sapTextColor);
-	font-family: var(--sapFontFamily);
-	font-size: @sapMFontMediumSize;
-	background-color: lighten(@sapUiContentForegroundColor,7);
 
-	&:hover {
-		background-color: var(--sapList_Hover_Background);
-		cursor: pointer;
-	}
+	color: @sapUiBaseText;
+	font-family: @sapUiFontFamily;
+	font-size: @sapMFontMediumSize;
+
+	background-color: lighten(@sapUiContentForegroundColor,7);
 }
 
 .sapMSPCMonthDay {
 	flex: 1 1;
 	display: flex;
 	flex-direction: column;
-	border: 0.0625rem solid transparent;
-	border-left-color: var(--sapList_BorderColor);
-	border-top-color: var(--sapList_BorderColor);
+
+	border-left: 0.0625rem solid @sapUiListBorderColor;
+	border-top: 0.0625rem solid @sapUiListBorderColor;
 	box-sizing: border-box;
-	background-color: var(--sapList_Background);
+	background-color: @sapUiListBackground;
+
 	position: relative;
+
 	outline: none;
 }
 
@@ -73,27 +72,26 @@
 }
 
 .sapMSPCMonthDay.nonWorkingTimeframe {
-	background-color: var(--sapList_AlternatingBackground);
+	background-color: @sapUiListAlternatingBackground;
 }
 
 .sapMSPCMonthNowMarker {
-	border: 0.125rem solid var(--sapLegend_CurrentDateTime);
+	border: 0.125rem solid @sapUiLegendCurrentDateTime;
 	pointer-events: none;
 	height: inherit;
-
 	.sapMSPCMonthDayNumber {
 		padding-top: 0.4rem;
 	}
 }
 
 html.sap-desktop .sapMSPCMonthDay.sapMSPCMonthDayToday:focus .sapMSPCMonthNowMarker::after {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 0.0625rem;
 	left: 0.0625rem;
 	right: 0.0625rem;
 	bottom: 0.0625rem;
-	border: 0.0625rem dotted var(--sapContent_FocusColor);
+	border: 0.0625rem dotted @sapUiContentFocusColor;
 	pointer-events: none;
 	z-index: 3;
 }
@@ -109,8 +107,9 @@ html.sap-desktop .sapMSPCMonthDay.sapMSPCMonthDayToday:focus .sapMSPCMonthNowMar
 	padding-top: 0.5rem;
 	padding-right: 0.375rem;
 	box-sizing: border-box;
-	color: var(--sapTextColor);
-	font-family: var(--sapFontFamily);
+
+	color: @sapUiBaseText;
+	font-family: @sapUiFontFamily;
 	font-size: @sapMFontMediumSize;
 }
 
@@ -120,9 +119,9 @@ html.sap-desktop .sapMSPCMonthDay.sapMSPCMonthDayToday:focus .sapMSPCMonthNowMar
 	right: 0;
 	padding-right: 0.125rem;
 	text-align: end;
+
 	height: 2.125rem;
 	line-height: 2.125rem;
-	pointer-events: auto;
 }
 
 .sapMSPCMonthGrid .sapMSinglePCPlaceholder {
@@ -157,7 +156,7 @@ html.sap-desktop .sapMSPCMonthDay.sapMSPCMonthDayToday:focus .sapMSPCMonthNowMar
 
 .sapMSPCMonthGrid .sapUiCalendarAppIcon + .sapUiCalendarAppTitle,
 .sapMSPCMonthGrid .sapUiCalendarAppIcon + .sapUiCalendarAppTitle + .sapUiCalendarAppText {
-	padding-left: 0.375rem;
+  padding-left: 0.375rem;
 }
 
 .sapMSPCMonthGrid .sapUiCalendarAppIcon {
@@ -165,43 +164,42 @@ html.sap-desktop .sapMSPCMonthDay.sapMSPCMonthDayToday:focus .sapMSPCMonthNowMar
 }
 
 html.sap-desktop .sapMSPCMonthDay:not(.sapMSPCMonthDayToday):focus::after {
-	content: '';
-	position: absolute;
-	top: 0.0625rem;
-	left: 0.0625rem;
-	right: 0.0625rem;
-	bottom: 0.0625rem;
-	border: 0.0625rem dotted var(--sapContent_FocusColor);
-	pointer-events: none;
-	z-index: 3;
+  content: "";
+  position: absolute;
+  top: 0.0625rem;
+  left: 0.0625rem;
+  right: 0.0625rem;
+  bottom: 0.0625rem;
+  border: 0.0625rem dotted @sapUiContentFocusColor;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .sapMSPCMonthDay.sapMSPCMonthDaySelected.sapMSPCMonthDayToday .sapMSPCMonthNowMarker::before {
-	content: '';
+	content: "";
 	position: absolute;
 	top: 0.165rem;
 	left: 0.165rem;
 	right: 0.165rem;
 	bottom: 0.165rem;
-	border: 0.0625rem solid var(--sapList_SelectionBorderColor);
+	border: 0.0625rem solid @sapList_SelectionBorderColor;
 	pointer-events: none;
 	z-index: 3;
 }
 
 .sapMSPCMonthDay.sapMSPCMonthDaySelected:not(.sapMSPCMonthDayToday) {
-	border: 0.0625rem solid var(--sapList_SelectionBorderColor);
+	border: 0.0625rem solid @sapList_SelectionBorderColor;
 }
 
 .sapMSPCMonthDay.sapMSPCMonthDaySelected {
-	background: var(--sapList_SelectionBackgroundColor);
+	background: @sapList_SelectionBackgroundColor;
 }
 
 .sapMSPCMonthDay.sapMSPCMonthDaySelected:hover {
-	background: var(--sapList_Hover_SelectionBackground);
+	background: @sapList_Hover_SelectionBackground;
 }
 
 .sapUiSizeCompact {
-
 	.sapMSPCMonthDay {
 		height: 7.875rem;
 		min-width: 2.3125rem;
@@ -218,40 +216,14 @@ html.sap-desktop .sapMSPCMonthDay:not(.sapMSPCMonthDayToday):focus::after {
 
 	.sapMSPCMonthGrid .sapMSinglePCAppointmentWrap.sapUiCalendarRowApps .sapUiCalendarApp .sapUiCalendarAppTitle {
 		padding-top: 0.1rem;
-		padding-top: 0;
 	}
-
-	.sapMSPCMonthGrid {
-
-		.sapUiCalendarAppCont {
-
-			.sapUiCalendarAppArrowIcon {
-				top: 0;
-				left: 0;
-				padding-left: 0.25rem;
-			}
-		}
-	}
-
 	.sapMSPCMonthGrid .sapUiCalendarAppIcon {
-		top: initial;
+		top: 0.1rem;
 	}
 
 	.sapMSPCMonthGrid .sapMSPCMonthLnkMore {
 		height: 1.563rem;
 		line-height: 1.563rem;
-	}
-}
-
-.sapMSPCMonthGrid {
-
-	.sapUiCalendarAppCont {
-
-		.sapUiCalendarAppArrowIcon {
-			top: 0;
-			left: 0;
-			padding-left: 0.25rem;
-		}
 	}
 }
 
@@ -265,7 +237,6 @@ html.sap-desktop .sapMSPCMonthDaysapMSPCMonthGrid .specialDateIndicator {
 }
 
 html.sap-phone {
-
 	.sapMSPCMonthGrid > :not(.sapMSinglePCGridContent) {
 		margin-left: 0;
 	}
@@ -283,12 +254,11 @@ html.sap-phone {
 		height: 6.125rem;
 
 		.sapMSPCMonthDay {
-			height: 100%;
-		}
+				height: 100%;
+			}
 	}
 
 	.sapUiSizeCompact {
-
 		.sapMSPCMonthDays.sapMSPCMonthDaysMax0,
 		.sapMSPCMonthDays.sapMSPCMonthDaysMax1,
 		.sapMSPCMonthDays.sapMSPCMonthDaysMax2 {
@@ -307,31 +277,4 @@ html.sap-phone {
 			}
 		}
 	}
-}
-
-@media (max-width: 42rem) {
-
-	.sapMSPCMonthWeek > .sapMSPCMonthWeekNumber {
-		width: 10%;
-	}
-
-	.sapMSPCMonthDay {
-		width: 12.8571%;
-	}
-
-	.sapMSPCMonthGrid .sapMSPCMonthDayNames > .sapUiCalWH {
-		min-width: 12.8571%;
-		width: 12.8571%;
-	}
-
-	.sapMSPCMonthGrid > :not(.sapMSinglePCGridContent) {
-		margin-left: 10%;
-	}
-}
-
-/* Disable text selection while dragging the cursor */
-.sapMSinglePCGrid * {
-	-webkit-user-select: none; /* Safari */
-	-ms-user-select: none; /* IE 10 and IE 11 */
-	user-select: none; /* Standard syntax */
 }

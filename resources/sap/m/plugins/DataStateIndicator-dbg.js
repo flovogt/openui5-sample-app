@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core/Lib", "sap/ui/core/Messaging"],
-	function(PluginBase, ManagedObjectObserver, Library, Messaging) {
+sap.ui.define(["./PluginBase", "sap/ui/core/Core", "sap/ui/base/ManagedObjectObserver"],
+	function(PluginBase, Core, ManagedObjectObserver) {
 	"use strict";
 
 	/**
@@ -19,12 +19,11 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 	 *
 	 * @extends sap.ui.core.Element
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @since 1.73
 	 * @alias sap.m.plugins.DataStateIndicator
-	 * @borrows sap.m.plugins.PluginBase.findOn as findOn
 	 */
 	var DataStateIndicator = PluginBase.extend("sap.m.plugins.DataStateIndicator", /** @lends sap.m.plugins.DataStateIndicator.prototype */ { metadata: {
 		library: "sap.m",
@@ -97,19 +96,13 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 		}
 	}});
 
-	DataStateIndicator.findOn = PluginBase.findOn;
-
-	DataStateIndicator.prototype.init = function() {
-		this._fnOnAggregatedDataStateChange = this._onAggregatedDataStateChange.bind(this);
-	};
-
 	DataStateIndicator.prototype.onActivate = function(oControl) {
 		this._bFiltering = false;
 		var sBindingName = this._getBindingName();
 		var oBinding = oControl.getBinding(sBindingName);
 
 		if (oBinding) {
-			oBinding.attachAggregatedDataStateChange(this._fnOnAggregatedDataStateChange);
+			oBinding.attachAggregatedDataStateChange(this._onAggregatedDataStateChange, this);
 			this._processDataState(oBinding.getDataState());
 		}
 
@@ -122,7 +115,7 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 		var oBinding = oControl.getBinding(sBindingName);
 
 		if (oBinding) {
-			oBinding.detachAggregatedDataStateChange(this._fnOnAggregatedDataStateChange);
+			oBinding.detachAggregatedDataStateChange(this._onAggregatedDataStateChange, this);
 			oBinding.getDataState().getMessages().forEach(function(oMessage) {
 				oMessage.removeControlId(oControl.getId());
 			});
@@ -332,7 +325,7 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 			}
 
 			if (bUpdateMessageModel) {
-				Messaging.getMessageModel().checkUpdate(true, true);
+				Core.getMessageManager().getMessageModel().checkUpdate(true, true);
 			}
 		} else {
 			this.showMessage("");
@@ -424,8 +417,7 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 					design: "Info",
 					content: this._oInfoText,
 					active: this.hasListeners("filterInfoPress"),
-					press: this.fireEvent.bind(this, "filterInfoPress"),
-					ariaLabelledBy: this._oInfoText
+					press: this.fireEvent.bind(this, "filterInfoPress")
 				});
 				this._showFilterInfo();
 			}.bind(this));
@@ -463,17 +455,10 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 	};
 
 	DataStateIndicator.prototype._observeChanges = function(mChange) {
-		const oBindingInfo = mChange.bindingInfo;
-		const oBinding = oBindingInfo.binding;
-
+		var oBinding = mChange.bindingInfo.binding;
 		if (oBinding) {
-			oBinding.detachAggregatedDataStateChange(this._fnOnAggregatedDataStateChange);
-			if (mChange.mutation == "ready") {
-				oBinding.attachAggregatedDataStateChange(this._fnOnAggregatedDataStateChange);
-			}
-		} else if (mChange.mutation == "prepare") {
-			oBindingInfo.events ??= {};
-			oBindingInfo.events.aggregatedDataStateChange ??= this._fnOnAggregatedDataStateChange;
+			var sOperation = (mChange.mutation == "ready") ? "attach" : "detach";
+			oBinding[sOperation + "AggregatedDataStateChange"](this._onAggregatedDataStateChange, this);
 		}
 	};
 
@@ -482,7 +467,7 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 		var oMetadata = this.getControl().getMetadata();
 		var sLibraryName = oMetadata.getLibraryName();
 		var sControlName = oMetadata.getName().split(".").pop().toUpperCase();
-		var oResourceBundle = Library.getResourceBundleFor(sLibraryName);
+		var oResourceBundle = Core.getLibraryResourceBundle(sLibraryName);
 		var sControlBundleText = sControlName + "_" + sBundleText;
 
 		if (oResourceBundle.hasText(sControlBundleText)) {
@@ -493,7 +478,7 @@ sap.ui.define(["./PluginBase", "sap/ui/base/ManagedObjectObserver", "sap/ui/core
 			return oResourceBundle.getText(sBundleText);
 		}
 
-		return Library.getResourceBundleFor("sap.m").getText(sBundleText);
+		return Core.getLibraryResourceBundle("sap.m").getText(sBundleText);
 	};
 
 	/**

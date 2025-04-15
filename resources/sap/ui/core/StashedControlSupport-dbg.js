@@ -5,14 +5,14 @@
  */
 
 // Provides inactive support for controls
-sap.ui.define(["sap/base/assert", "sap/base/Log", "sap/ui/core/Element"],
-	function(assert, Log, Element) {
+sap.ui.define(["sap/base/assert", "sap/ui/core/Element"],
+	function(assert, Element) {
 		"use strict";
 
 		/**
 		 * @class Mixin for Controls which enables stashing of controls declaratively in XMLViews
 		 *
-		 * NOTE: stashing of <code>sap.ui.core.Fragments</code> and <code>sap.ui.core.mvc.View</code> is not supported!
+		 * NOTE: stashingh of <code>sap.ui.core.Fragments</code> and <code>sap.ui.core.mvc.View</code> is not supported!
 		 *
 		 * <code>stashed</code> Controls are created as placeholder control without any content and bindings
 		 * and added to the Control tree. That means it is available with <code>Element.getElementById</code>
@@ -42,7 +42,7 @@ sap.ui.define(["sap/base/assert", "sap/base/Log", "sap/ui/core/Element"],
 		StashedControlSupport.mixInto = function(fnClass) {
 			assert(!fnClass.prototype.unstash, "StashedControlSupport: fnClass already has method 'unstash', sideeffects possible", fnClass.getMetadata().getName());
 			if (fnClass.getMetadata().isA("sap.ui.core.Fragment") || fnClass.getMetadata().isA("sap.ui.core.mvc.View")) {
-				throw new Error("Stashing is not supported for sap.ui.core.Fragment or sap.ui.core.mvc.View");
+				throw new Error("Stashing is not supported for sap.ui.coreFragment or sap.ui.core.mvc.View");
 			}
 			mixInto(fnClass);
 		};
@@ -50,18 +50,12 @@ sap.ui.define(["sap/base/assert", "sap/base/Log", "sap/ui/core/Element"],
 		// private function without validity checks
 		function mixInto(fnClass) {
 			// mix the required methods into the target fnClass
-			/**
-			 * @param {boolean} bAsync Whether to unstash sync or async
-			 * @returns {sap.ui.core.Control|Promise<sap.ui.core.Control>} A Promise resolving with the unstashed Control.
-			 */
-			fnClass.prototype.unstash = function(bAsync) {
+			fnClass.prototype.unstash = function() {
 				if (this.isStashed()) {
-					/**@deprecated */
-					if (!bAsync) {
-						Log.fatal("Unstashing synchronous is no longer supported. Please switch to the asynchronous variant!");
-						return unstash(this);
-					}
-					return unstashAsync(this);
+					var oControl = unstash(this);
+					// we need to set the property to the stashed control
+					oControl.stashed = false;
+					return oControl;
 				}
 				return this;
 			};
@@ -84,43 +78,50 @@ sap.ui.define(["sap/base/assert", "sap/base/Log", "sap/ui/core/Element"],
 				fnDestroy.apply(this, arguments);
 			};
 		}
-		function createStashedInstanceOrPromise(oWrapperControl, bSync) {
+
+		function unstash(oWrapperControl) {
+			var oWrapperParent;
+			var iIndexInParent;
+			var oTargetAggregation;
+
 			var oStashedInfo = stashedControls[oWrapperControl.getId()];
 
 			// find parent of wrapper control
-			var oWrapperParent = oWrapperControl.getParent();
+			oWrapperParent = oWrapperControl.getParent();
+
+			// the wrapper might have been removed from the control tree
+			// in this case we can't find it in any aggregation and will not have an index for removal/insertation
+			if (oWrapperParent) {
+				oTargetAggregation = oWrapperParent.getMetadata().getAggregation(oWrapperControl.sParentAggregationName);
+				iIndexInParent = oTargetAggregation.indexOf(oWrapperParent, oWrapperControl);
+
+				// remove wrapper (removeAggregation does nothing if not in the aggregation)
+				oTargetAggregation.remove(oWrapperParent, oWrapperControl);
+			}
+
+			// always: destroy wrapper and free the id for the actual control instance
+			oWrapperControl.destroy();
 
 			// finally perform the real unstashing by starting the XMLTP again for the stashed part (scoped in XMLTP)
 			var Component = sap.ui.require("sap/ui/core/Component");
 			var oOwnerComponent = Component && oWrapperParent && Component.getOwnerComponentFor(oWrapperParent);
-			var vControls;
+			var aControls;
 			var fnCreate = oStashedInfo.fnCreate;
 
 			if (oOwnerComponent) {
-				vControls = oOwnerComponent.runAsOwner(fnCreate.bind(null, !!bSync));
+				aControls = oOwnerComponent.runAsOwner(fnCreate);
 			} else {
-				vControls = fnCreate(!!bSync);
+				aControls = fnCreate();
 			}
-			return vControls;
-		}
-		/**
-		 * @param {sap.ui.core.Control} oWrapperControl The Control to unstash
-		 * @returns {Promise<sap.ui.core.Control>} A Promise resolving with the unstashed Control
-		 */
-		async function unstashAsync(oWrapperControl) {
-			var aControls = await createStashedInstanceOrPromise(oWrapperControl);
-			delete stashedControls[oWrapperControl.getId()];
-			//TemplateProcessor returns an array. Should contain only one control in the stashed scenario.
-			return aControls[0];
-		}
 
-		/**
-		 * @param {sap.ui.core.Control} oWrapperControl The Control to unstash
-		 * @returns {sap.ui.core.Control} The unstashed Control
-		 * @deprecated
-		 */
-		function unstash(oWrapperControl) {
-			var aControls = createStashedInstanceOrPromise(oWrapperControl, true);
+			// found an index: we can now insert the actual control instance
+			if (iIndexInParent >= 0) {
+				// call hook to create the actual control (multiple controls in case of fragment)
+				aControls.forEach(function(c) {
+					oTargetAggregation.insert(oWrapperParent, c, iIndexInParent);
+				});
+			}
+
 			delete stashedControls[oWrapperControl.getId()];
 			//TemplateProcessor returns an array. Should contain only one control in the stashed scenario.
 			return aControls[0];

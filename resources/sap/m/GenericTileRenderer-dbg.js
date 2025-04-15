@@ -4,8 +4,8 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Theming"],
-	function(library, encodeCSS, Theming) {
+sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Configuration"],
+	function(library, encodeCSS, Configuration) {
 	"use strict";
 
 	// shortcut for sap.m.GenericTileMode
@@ -44,15 +44,14 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 		var sScopeClass;
 		var frameType = oControl.getFrameType();
 		var sAriaRoleDescription = oControl.getAriaRoleDescription();
-		var sAriaRole = oControl.getGridItemRole() || oControl.getAriaRole();
+		var sAriaRole = oControl.getAriaRole();
 		var isHalfFrame = frameType === frameTypes.OneByHalf || frameType === frameTypes.TwoByHalf;
-		var sBGColor = oControl._oBadgeColors["backgroundColor"];
+		var sBGColor = oControl._sBGColor;
 		var bIsIconModeOneByOne = oControl._isIconMode() && frameType === frameTypes.OneByOne;
 		var aLinkTileContent = oControl.getLinkTileContents();
-		var oBadge = oControl.getBadge();
 
 		// Render a link when URL is provided, not in action scope and the state is enabled
-		var bRenderLink = oControl.getUrl() && (!oControl._isInActionScope() || oControl.getMode() === GenericTileMode.IconMode) && sState !== LoadState.Disabled && !oControl._isNavigateActionEnabled();
+		var bRenderLink = oControl.getUrl() && (!oControl._isInActionScope() || oControl.getMode() === GenericTileMode.IconMode) && sState !== LoadState.Disabled && !oControl._isNavigateActionEnabled() && !oControl._isActionMode();
 
 		if (oControl._isInActionScope()) {
 			sScopeClass = encodeCSS("sapMGTScopeActions");
@@ -332,30 +331,14 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 
 			//Render Header Image
 			if (sHeaderImage) {
-				var bIsIconFrameEnabled = oControl.isA("sap.m.ActionTile") && oControl.getProperty("enableIconFrame");
-				if (!bIsIconFrameEnabled) {
-					oControl._oImage.removeStyleClass(ValueColor.None);
-					if (this._sPreviousStyleClass) {
-						oControl._oImage.removeStyleClass(this._sPreviousStyleClass);
-					}
-					this._sPreviousStyleClass = this._isValueColorValid(oControl.getValueColor()) ? oControl.getValueColor() : ValueColor.None;
-					oControl._oImage.addStyleClass(this._sPreviousStyleClass);
-					oRm.renderControl(oControl._oImage);
-				} else {
-					var oIconFrame = oControl._getIconFrame();
-					var bRenderFrameBadge = oControl.isA("sap.m.ActionTile") && oControl.getProperty("badgeIcon") && oControl.getProperty("badgeValueState") ? true : false;
-					if (bRenderFrameBadge) {
-						oIconFrame.setCustomDisplaySize("3rem");
-					}
-
-					oIconFrame.toggleStyleClass("sapMGTIconFrameBadge", bRenderFrameBadge);
-					oRm.renderControl(oIconFrame);
+				oControl._oImage.removeStyleClass(ValueColor.None);
+				if (this._sPreviousStyleClass) {
+					oControl._oImage.removeStyleClass(this._sPreviousStyleClass);
 				}
-			}
+				this._sPreviousStyleClass = this._isValueColorValid(oControl.getValueColor()) ? oControl.getValueColor() : ValueColor.None;
+				oControl._oImage.addStyleClass(this._sPreviousStyleClass);
 
-			var bIsContentPriorityPresent = this._isPriorityPresent(oControl);
-			if (bIsContentPriorityPresent) {
-				oRm.openStart("div", oControl.getId() + "-header-container").class("sapMATHeaderContainer").openEnd();
+				oRm.renderControl(oControl._oImage);
 			}
 
 			this._renderHeader(oRm, oControl);
@@ -376,16 +359,10 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				}
 			}
 
-			if (bIsContentPriorityPresent) {
-				this._renderPriorityText(oRm, oControl);
-			} else if (!(isHalfFrame && isContentPresent) && oControl.getSubheader()) {
+			if (!(isHalfFrame && isContentPresent) && oControl.getSubheader()) {
 				this._renderSubheader(oRm, oControl);
 			}
-
-			if (bIsContentPriorityPresent) {
 				oRm.close("div");
-			}
-			oRm.close("div");
 
 			if ( !oControl._isIconMode() ) { //Restrict creation of Footer for IconMode
 				oRm.openStart("div", oControl.getId() + "-content");
@@ -405,11 +382,7 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				}
 				oRm.openEnd();
 				if (aLinkTileContent.length > 0) {
-					oRm.openStart("div", oControl.getId() + "-linkTileContent").class("sapMGTLinkTileContentWrapper");
-					if (!oControl.getSubheader()) {
-						oRm.class("saMGTLinkSubheaderNotPresent");
-					}
-					oRm.openEnd();
+					oRm.openStart("div", oControl.getId() + "-linkTileContent").class("sapMGTLinkTileContentWrapper").openEnd();
 					for (var i = 0; i < aLinkTileContent.length; i++) {
 						oRm.renderControl(aLinkTileContent[i].getLinkTileContentInstance());
 					}
@@ -433,16 +406,6 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				this._renderInfoContainer(oRm, oControl);
 				oRm.close("div");
 			}
-			if (oControl._isActionMode() && oControl.getActionButtons().length > 0) {
-				//Render Action Buttons, only in ActionMode and in TwoByOne frame type
-				oRm.openStart("div", oControl.getId() + "-actionButtons");
-				oRm.class("sapMGTActionModeContainer");
-				oRm.openEnd();
-				oControl.getActionButtons().forEach(function (oActionButton) {
-					oRm.renderControl(oActionButton);
-				});
-				oRm.close("div");
-			}
 		}
 
 		if (sState !== LoadState.Loaded && sState !== LoadState.Loading) {
@@ -457,85 +420,11 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 		if (oControl._isInActionScope()) {
 			this._renderActionsScope(oRm, oControl);
 		}
-		if (oBadge && (oBadge.getSrc() || oBadge.getText()) && (!oControl._isInActionScope() || oControl._isIconModeOfTypeTwoByHalf() )) {
-			this._renderBadge(oRm,oControl);
-		}
 		if (bRenderLink) {
 			oRm.close("a");
 		} else {
 			oRm.close("div");
 		}
-	};
-
-	/**
-	 * Renders a badge on top of GenericTile.
-	 * @param {sap.ui.core.RenderManager} oRm - The RenderManager instance.
-	 * @param {sap.m.GenericTile} oControl The GenericTile control
-	 * @private
-	 */
-
-	GenericTileRenderer._renderBadge = function(oRm,oControl) {
-		var oBadge = oControl.getBadge();
-		var sBadgeText = oBadge.getText();
-		var bIsIconOnlyPresent = oBadge.getSrc() && !oBadge.getText();
-		var bIsTextOnlyPresent = !oBadge.getSrc() && oBadge.getText();
-		oRm.openStart("div");
-		oRm.class("sapMGTBadge");
-		oRm.class("sapMGTBadgeBackgroundColor" + oBadge.getBackgroundColor());
-		oRm.class("sapMGTBadgeColor" + oBadge.getTextColor());
-		oRm.class("sapMGTBadgeBorderColor" + oBadge.getBorderColor());
-		if (oBadge.getText() && oBadge.getSrc()) {
-			oRm.class("sapMGTBadgeTextPresent");
-		}
-		oRm.class((bIsIconOnlyPresent) ? "sapMGTBadgeOnlyIcon" : null);
-		oRm.class((bIsTextOnlyPresent) ? "sapMGTBadgeOnlyText" : null);
-		oRm.openEnd();
-		if (oBadge.getSrc()) {
-			oRm.renderControl(oControl._oBadgeIcon);
-		}
-		if (sBadgeText) {
-			oRm.openStart("span");
-			oRm.class("sapMGTBadgeText");
-			oRm.openEnd();
-			oRm.text(sBadgeText);
-			oRm.close("span");
-		}
-		if (oControl.getState() != LoadState.Loaded) {
-			oRm.openStart("div");
-			oRm.class("sapMGTBadgeOverlay");
-			oRm.class("sapMGTBadgeBackgroundColor" + oBadge.getBackgroundColor());
-			oRm.openEnd();
-			oRm.close("div");
-		}
-		oRm.close("div");
-	};
-
-	/**
-	 * Checks if the priority is present for a tile.
-	 * Applies only for ActionMode.
-	 *
-	 * @private
-	 * @param {object} oControl - The tile control instance.
-	 * @returns {boolean} - Returns true if the content priority is present; otherwise, returns false.
-	 */
-	GenericTileRenderer._isPriorityPresent = function (oControl) {
-		return oControl.isA("sap.m.ActionTile") && oControl.getProperty("priority") && oControl.getProperty("priorityText");
-	};
-
-	/**
-	 * Renders the priority text for the tile.
-	 *
-	 * @private
-	 * @param {object} oRm - The RenderManager instance.
-	 * @param {object} oControl - The control instance to render.
-	 */
-	GenericTileRenderer._renderPriorityText = function (oRm, oControl) {
-		oRm.openStart("div", oControl.getId() + "-priority-text");
-		oRm.class("sapMTilePriorityValue");
-		oRm.class(oControl.getProperty("priority"));
-		oRm.openEnd();
-		oRm.text(oControl.getProperty("priorityText"));
-		oRm.close("div");
 	};
 
 	/**
@@ -622,9 +511,6 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 			oRm.attr("title", sTooltipText);
 		}
 		oRm.openEnd();
-		if (sState === LoadState.Failed) {
-			oRm.close("div");
-		}
 		switch (sState) {
 			case LoadState.Loading :
 				oControl._oBusy.setBusy(sState == LoadState.Loading);
@@ -652,9 +538,7 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 				break;
 			default :
 		}
-		if (sState !== LoadState.Failed) {
-			oRm.close("div");
-		}
+		oRm.close("div");
 	};
 
 	GenericTileRenderer._renderActionsScope = function(oRm, oControl) {
@@ -692,6 +576,10 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 	GenericTileRenderer._renderHeader = function(oRm, oControl) {
 		oRm.openStart("div", oControl.getId() + "-hdr-text");
 		oRm.class("sapMGTHdrTxt");
+		if (oControl._isActionMode() && this._isValueColorValid(oControl.getValueColor())) {
+			oRm.class("sapMGTCriticalHdrTxt");
+			oRm.class(oControl.getValueColor());
+		}
 		oRm.openEnd();
 		oRm.renderControl(oControl._oTitle);
 		oRm.close("div");
@@ -730,7 +618,7 @@ sap.ui.define(["sap/m/library", "sap/base/security/encodeCSS", "sap/ui/core/Them
 	 * @private
 	 */
 	GenericTileRenderer._isThemeHighContrast = function() {
-		return /(hcw|hcb)/g.test(Theming.getTheme());
+		return /(hcw|hcb)/g.test(Configuration.getTheme());
 	};
 
 	GenericTileRenderer._isNewsContentPresent = function(aTileContent,iLength) {

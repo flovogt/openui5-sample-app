@@ -41,9 +41,8 @@ sap.ui.define(["./Control"],
 	 * <b>Note:</b> This function can only be used <i>within</i> control development. An application cannot add context menu support for instances of controls.
 	 *
 	 * @private
-	 * @ui5-restricted sap.m.Button, sap.m.Page
 	 * @alias sap.ui.core.ContextMenuSupport
-	 * @function
+	 * @mixin
 	 */
 	var ContextMenuSupport = function() {
 		var oContextMenuDelegate;

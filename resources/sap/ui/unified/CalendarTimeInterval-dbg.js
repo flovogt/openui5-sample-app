@@ -6,11 +6,9 @@
 
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/Localization",
 	"sap/m/Popover",
+	"sap/ui/core/Core",
 	'sap/ui/core/Control',
-	"sap/ui/core/Lib",
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'./calendar/Header',
@@ -31,11 +29,9 @@ sap.ui.define([
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/unified/Calendar"
 ], function(
-	Formatting,
-	Localization,
 	Popover,
+	Core,
 	Control,
-	Library,
 	LocaleData,
 	CalendarUtils,
 	Header,
@@ -53,7 +49,7 @@ sap.ui.define([
 	deepEqual,
 	Log,
 	DateRange,
-	UI5Date,
+    UI5Date,
 	Calendar
 ) {
 	"use strict";
@@ -72,7 +68,7 @@ sap.ui.define([
 	 * @class
 	 * Calendar with granularity of time items displayed in one line.
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -261,7 +257,7 @@ sap.ui.define([
 
 	CalendarTimeInterval.prototype._initializeHeader = function() {
 		var oHeader = new Header(this.getId() + "--Head"),
-			oResourceBundle = Library.getResourceBundleFor("sap.m");
+			oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 		oHeader.attachEvent("pressPrevious", this._handlePrevious, this);
 		oHeader.attachEvent("pressNext", this._handleNext, this);
 		this.setAggregation("header", oHeader);
@@ -577,7 +573,7 @@ sap.ui.define([
 	CalendarTimeInterval.prototype.getLocale = function(){
 
 		if (!this._sLocale) {
-			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
+			this._sLocale = Core.getConfiguration().getFormatSettings().getFormatLocale().toString();
 		}
 
 		return this._sLocale;
@@ -1902,7 +1898,7 @@ sap.ui.define([
 			var $Popover = this._oPopup.$();
 			var iOffsetX = Math.floor(($Popover.width() - $Button.width()) / 2);
 
-			this._oPopup.setOffsetX(Localization.getRTL() ? iOffsetX : -iOffsetX);
+			this._oPopup.setOffsetX(Core.getConfiguration().getRTL() ? iOffsetX : -iOffsetX);
 
 			var iOffsetY = $Button.height();
 

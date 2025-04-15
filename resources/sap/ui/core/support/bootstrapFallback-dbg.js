@@ -17,8 +17,7 @@
 	}
 
 	// do nothing if UI5 is already loaded
-	// ui5lint-disable-next-line no-globals
-	if (globalThis.sap?.ui) {
+	if (window.sap && window.sap.ui) {
 		return;
 	}
 

@@ -58,7 +58,7 @@ function(
 	 * @implements sap.f.IShellBar, sap.m.IBar, sap.tnt.IToolHeader
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -199,7 +199,7 @@ function(
 					parameters: {
 						/**
 						 * Reference to the button that has been pressed
-						 * @deprecated Since version 1.121
+						 * @deprecated Since version 1.120
 						 */
 						image : {type: "sap.m.Image"},
 						/**
@@ -527,7 +527,7 @@ function(
 		return this.setProperty("showMenuButton", bShow);
 	};
 
-	/*
+	/**
 	 * Sets the number of upcoming notifications.
 	 *
 	 * @override

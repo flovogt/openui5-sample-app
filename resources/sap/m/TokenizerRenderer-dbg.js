@@ -30,6 +30,11 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 		oRm.openStart("div", oControl);
 
 
+		if (oControl.getEffectiveTabIndex()) {
+			oRm.attr("tabindex", "0");
+		}
+
+
 		oRm.class("sapMTokenizer");
 
 		if (!oControl.getEditable()) {
@@ -38,7 +43,6 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 
 		if (!oControl.getEnabled()) {
 			oRm.class("sapMTokenizerDisabled");
-
 		}
 
 		if (!aTokens.length) {
@@ -123,9 +127,6 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 	 * @param {sap.m.Tokenizer} oControl an object representation of the control that should be rendered
 	 */
 	TokenizerRenderer._renderIndicator = function(oRm, oControl){
-		var bExpanded = !!oControl._oPopup && oControl._oPopup.isOpen();
-		var sPopoverId = oControl._oPopup && oControl._oPopup.getId();
-
 		oRm.openStart("span");
 		oRm.class("sapMTokenizerIndicator");
 
@@ -134,15 +135,6 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 		if (oControl.getHiddenTokensCount() === 0) {
 			oRm.class("sapUiHidden");
 		}
-
-		oRm.attr("role", "button")
-			.attr("aria-haspopup", "dialog")
-			.attr("aria-expanded", bExpanded);
-
-		if (sPopoverId) {
-			oRm.attr("aria-controls", sPopoverId);
-		}
-
 		oRm.openEnd().close("span");
 	};
 

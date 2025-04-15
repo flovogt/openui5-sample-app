@@ -28,14 +28,14 @@ sap.ui.define([
 		"use strict";
 
 		/**
-		 * Adapter for {@link sap.ui.model.TreeBinding} to add the list binding functionality and use the tree structure
-		 * in list based controls.
+		 * Adapter for TreeBindings to add the ListBinding functionality and use the
+		 * tree structure in list based controls.
 		 *
 		 * @alias sap.ui.model.TreeBindingAdapter
-		 * @namespace
+		 * @class
+		 * @experimental This module is only for experimental and internal use!
 		 *
-		 * @private
-		 * @ui5-restricted sap.ui.model.ClientTreeBindingAdapter, sap.ui.model.odata.v2.ODataTreeBindingAdapter
+		 * @protected
 		 */
 		var TreeBindingAdapter = function() {
 

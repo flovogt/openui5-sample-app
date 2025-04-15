@@ -6,7 +6,6 @@
 
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/ui/core/Element",
 	"sap/ui/events/KeyCodes",
 	"sap/base/Log",
 	"sap/base/util/deepEqual",
@@ -26,6 +25,7 @@ sap.ui.define([
 	"sap/m/upload/UploaderHttpRequestMethod",
 	"sap/ui/core/dnd/DragDropInfo",
 	"sap/ui/core/dnd/DropInfo",
+	"sap/m/library",
 	"sap/m/upload/UploadSetToolbarPlaceholder",
 	"sap/m/IllustratedMessage",
 	"sap/m/IllustratedMessageType",
@@ -36,11 +36,13 @@ sap.ui.define([
 	"sap/m/MenuItem",
 	"sap/m/MenuButton",
 	"sap/ui/core/Lib"
-], function(Control, Element, KeyCodes, Log, deepEqual, MobileLibrary, Button, Dialog, List, MessageBox, OverflowToolbar, StandardListItem, Text, ToolbarSpacer, FileUploader, UploadSetItem, Uploader, Renderer, UploaderHttpRequestMethod, DragDropInfo, DropInfo, UploadSetToolbarPlaceholder, IllustratedMessage, IllustratedMessageType, IllustratedMessageSize, Core, InvisibleText, Menu, MenuItem, MenuButton, CoreLib) {
+], function (Control, KeyCodes, Log, deepEqual, MobileLibrary, Button, Dialog, List, MessageBox, OverflowToolbar,
+			 StandardListItem, Text, ToolbarSpacer, FileUploader, UploadSetItem, Uploader, Renderer, UploaderHttpRequestMethod,
+			DragDropInfo, DropInfo, Library, UploadSetToolbarPlaceholder, IllustratedMessage,IllustratedMessageType,
+			IllustratedMessageSize, Core, InvisibleText, Menu, MenuItem, MenuButton, CoreLib) {
 	"use strict";
 
-	var UploadType = MobileLibrary.UploadType;
-	var MenuButtonMode = MobileLibrary.MenuButtonMode;
+	var UploadType = Library.UploadType;
 
 	/**
 	 * Constructor for a new UploadSet.
@@ -51,16 +53,15 @@ sap.ui.define([
 	 * and attach them to your application.<br>
 	 * This control builds on the {@link sap.m.UploadCollection} control, providing better handling of headers
 	 * and requests, unified behavior of instant and deferred uploads, as well as improved progress indication.<br>
-         * We now ensure that the control handles item insertion and deletion if the items aggregation is not bound to a model.
+     * We now ensure that the control handles item insertion and deletion if the items aggregation is not bound to a model.
 	 * It allows the connected model to not only manage the insertion and deletion updates
 	 * but it also helps to avoid template-related issues and ensures better data handling.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 * @constructor
 	 * @public
 	 * @since 1.63
-	 * @deprecated As of version 1.129, replaced by {@link sap.m.plugins.UploadSetwithTable}
 	 * @alias sap.m.upload.UploadSet
 	 */
 	var UploadSet = Control.extend("sap.m.upload.UploadSet", {
@@ -90,20 +91,17 @@ sap.ui.define([
 				mediaTypes: {type: "string[]", defaultValue: null},
 				/**
 				 * Defines custom text for the 'No data' text label.
-				 * @deprecated Since version 1.121. Use illustratedMessage instead.
 				 */
-				noDataText: { type: "string", defaultValue: null, deprecated: true },
+				noDataText: {type: "string", defaultValue: null},
 				/**
 				 * Defines custom text for the 'No data' description label.
-				 * @deprecated Since version 1.121. Use illustratedMessage instead.
 				 */
-				noDataDescription: { type: "string", defaultValue: null, deprecated: true },
+				noDataDescription: {type: "string", defaultValue: null},
 				/**
 				 * Determines which illustration type is displayed when the control holds no data.
-				 * @deprecated Since version 1.121. Use illustratedMessage instead.
 				 * @since 1.117
 				 */
-				noDataIllustrationType: { type: "sap.m.IllustratedMessageType", group: "Appearance", defaultValue: IllustratedMessageType.NoData, deprecated: true },
+				noDataIllustrationType: {type: "sap.m.IllustratedMessageType", group: "Appearance", defaultValue: IllustratedMessageType.NoData},
 				/**
 				 * Defines custom text for the drag and drop text label.
 				 */
@@ -162,7 +160,7 @@ sap.ui.define([
 				 * In addition, if instant upload is set to false the mode sap.m.ListMode.MultiSelect is not supported and will be automatically set to sap.m.ListMode.None.
 				 * @since 1.100.0
 				 */
-				mode: {type: "sap.m.ListMode", group: "Behavior", defaultValue: MobileLibrary.ListMode.MultiSelect},
+				mode: {type: "sap.m.ListMode", group: "Behavior", defaultValue: Library.ListMode.MultiSelect},
 				/**
 				  * Enables CloudFile picker feature to upload files from cloud.
 				  * @experimental Since 1.106.
@@ -208,7 +206,6 @@ sap.ui.define([
 				uploader: {type: "sap.m.upload.Uploader", multiple: false},
 				/**
 			 	 * An illustrated message is displayed when no data is loaded or provided
-				 * @since 1.121
 				 */
 				illustratedMessage: { type: "sap.m.IllustratedMessage", multiple: false }
 			},
@@ -442,7 +439,6 @@ sap.ui.define([
 
 						/**
 						 * The size of a file in MB, that fails to meet the file size restriction specified in the <code>maxFileSize</code> property.
-						 * @since 1.128.0
 						 */
 						fileSize: {type: "float"}
 					}
@@ -543,10 +539,10 @@ sap.ui.define([
 		this._oIllustratedMessage = this.getAggregation("illustratedMessage");
 		if (!this._oIllustratedMessage) {
 			this._oIllustratedMessage = new IllustratedMessage({
-				illustrationType: IllustratedMessageType.NoData,
+				illustrationType: this.getNoDataIllustrationType(),
 				illustrationSize: IllustratedMessageSize.Auto,
-				title: this._oRb.getText("UPLOAD_SET_NO_DATA_TEXT"),
-				description: this.getUploadEnabled() ? this._oRb.getText("UPLOADCOLLECTION_NO_DATA_DESCRIPTION") : " "
+				title: this.getNoDataText(),
+				description: this.getNoDataDescription()
 			});
 		}
 		this._oIllustratedMessage.addIllustrationAriaLabelledBy(this._oInvisibleText.getId());
@@ -626,20 +622,15 @@ sap.ui.define([
 			}.bind(this)
 		};
 		this._oList.addDelegate(this._oListEventDelegate);
-		var aList = this.getList();
 		if (this._bItemRemoved) {
 			this._bItemRemoved = false;
+			var aList = this.getList();
 			var aListItems = aList.getItems();
 			if (aListItems.length > 0) {
 				aListItems[0].focus();
 			} else {
 				aList.getDomRef().querySelector(".sapMUCNoDataPage").focus();
 			}
-		}
-		var oNoDataDom = aList?.getDomRef()?.querySelector(".sapMUCNoDataPage");
-		var iCurrentHeight = oNoDataDom?.offsetHeight;
-		if (iCurrentHeight){
-			oNoDataDom.style.height = iCurrentHeight + "px";
 		}
 
 		if (this.getCloudFilePickerEnabled()) {
@@ -654,24 +645,24 @@ sap.ui.define([
 	 * @private
 	 */
 	UploadSet.prototype._handleClick = function (oEvent, item) {
-		var $Button = oEvent.target.closest("button");
-		var sId = "";
-		if ($Button) {
-			sId = $Button.id;
-		}
-		if (sId.lastIndexOf("editButton") === -1) {
-			if (sId.lastIndexOf("cancelButton") !== -1) {
+        var $Button = oEvent.target.closest("button");
+        var sId = "";
+        if ($Button) {
+            sId = $Button.id;
+        }
+        if (sId.lastIndexOf("editButton") === -1) {
+            if (sId.lastIndexOf("cancelButton") !== -1) {
 				if (item) {
 					this._handleItemEditCancelation(oEvent, item);
 				}
-			} else if (oEvent.target.id.lastIndexOf("thumbnail") < 0 && oEvent.target.id.lastIndexOf("icon") < 0 &&
-				oEvent.target.id.lastIndexOf("deleteButton") < 0 && oEvent.target.id.lastIndexOf("fileNameEdit-inner") < 0) {
-				if (item) {
+            } else if (oEvent.target.id.lastIndexOf("thumbnail") < 0 && oEvent.target.id.lastIndexOf("icon") < 0 &&
+                oEvent.target.id.lastIndexOf("deleteButton") < 0 && oEvent.target.id.lastIndexOf("fileNameEdit-inner") < 0) {
+                if (item) {
 					this._handleItemEditConfirmation(oEvent, item);
 				}
-			}
-		}
-	};
+            }
+        }
+    };
 
 	UploadSet.prototype.onkeydown = function (oEvent) {
 		var oListItem,
@@ -681,7 +672,7 @@ sap.ui.define([
 		if (this._oEditedItem && this._oEditedItem._getFileNameEdit().$("inner")[0] === oEvent.target) {
 			oItem = this._oEditedItem;
 		} else if (oEvent.target) {
-			oListItem = Element.getElementById(oEvent.target.id);
+			oListItem = Core.byId(oEvent.target.id);
 			if (oListItem) {
 				oItem = this._mListItemIdToItemMap[oListItem.getId()];
 			}
@@ -782,12 +773,12 @@ sap.ui.define([
 		var sNoDataText = "";
 		var oIllustratedMessage = this.getAggregation("illustratedMessage");
 		if (!sText) {
-			sNoDataText = oIllustratedMessage.getTitle() + " " + (this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ");
+			sNoDataText = oIllustratedMessage.getTitle() + " " + oIllustratedMessage.getDescription();
 		} else if (sText) {
 			if (bIsDescription) {
 				sNoDataText = oIllustratedMessage.getTitle() + " " + sText;
 			} else {
-				sNoDataText = sText + " " + (this.getUploadEnabled() ? oIllustratedMessage.getDescription() : " ");
+				sNoDataText = sText + " " + oIllustratedMessage.getDescription();
 			}
 		}
 		return sNoDataText;
@@ -847,9 +838,9 @@ sap.ui.define([
 	};
 
 	UploadSet.prototype.removeAggregation = function (sAggregationName, oObject, bSuppressInvalidate) {
-		var oListItem,oItems;
-		Control.prototype.removeAggregation.call(this, sAggregationName, oObject, bSuppressInvalidate);
-		if (sAggregationName === "items" || sAggregationName === "incompleteItems") {
+        var oListItem,oItems;
+        Control.prototype.removeAggregation.call(this, sAggregationName, oObject, bSuppressInvalidate);
+        if (sAggregationName === "items" || sAggregationName === "incompleteItems") {
 			if (typeof oObject === 'number') { // "oObject" is the index now
 				oItems = this.getItems();
 				oListItem = oItems[oObject];
@@ -859,14 +850,14 @@ sap.ui.define([
 					oListItem = oObject.isDestroyStarted() ? oObject : oObject._getListItem();
 				}
 			}
-			var oItem = this.getList().removeAggregation("items", oListItem, bSuppressInvalidate);
-			if (oItem && oObject) {
-				oItem.destroy();
+            var oItem = this.getList().removeAggregation("items", oListItem, bSuppressInvalidate);
+            if (oItem && oObject) {
+                oItem.destroy();
 				oObject.destroy();
-			}
-			this._refreshInnerListStyle();
-		}
-	};
+            }
+            this._refreshInnerListStyle();
+        }
+    };
 
 	UploadSet.prototype.removeAllAggregation = function (sAggregationName, bSuppressInvalidate) {
 		if (sAggregationName === "items") {
@@ -1000,11 +991,11 @@ sap.ui.define([
 	};
 
 	UploadSet.prototype.setMode = function(sMode) {
-		if (sMode === MobileLibrary.ListMode.Delete) {
-			this.setProperty("mode", MobileLibrary.ListMode.None);
+		if (sMode === Library.ListMode.Delete) {
+			this.setProperty("mode", Library.ListMode.None);
 			Log.info("sap.m.ListMode.Delete is not supported by UploadSet. Value has been resetted to 'None'");
-		} else if (sMode === MobileLibrary.ListMode.MultiSelect && !this.getInstantUpload()) {
-			this.setProperty("mode", MobileLibrary.ListMode.None);
+		} else if (sMode === Library.ListMode.MultiSelect && !this.getInstantUpload()) {
+			this.setProperty("mode", Library.ListMode.None);
 			Log.info("sap.m.ListMode.MultiSelect is not supported by UploadSet for Pending Upload. Value has been reset to 'None'");
 		} else {
 			this.setProperty("mode", sMode);
@@ -1017,7 +1008,6 @@ sap.ui.define([
 
 	UploadSet.prototype._getIllustratedMessage = function () {
 		var oAggregation = this.getAggregation("illustratedMessage");
-
 		// Early return if no aggregation or the list is not empty
 		if (!oAggregation || !this._oList || !this._oList.getItems || this._oList.getItems().length) {
 			return oAggregation;
@@ -1058,8 +1048,10 @@ sap.ui.define([
 			oAggregation.setDescription(this.getUploadEnabled() ? this.getDragDropDescription() : " ");
 		} else {
 			oAggregation.setIllustrationType(oIllustratedMessageClone.getIllustrationType());
-			setTitle(oIllustratedMessageClone.getTitle());
-			setDescription(oIllustratedMessageClone.getDescription());
+			const sTitle = oIllustratedMessageClone.getTitle() || this.getProperty("noDataText");
+			const sDescription = oIllustratedMessageClone.getDescription() || this.getProperty("noDataDescription");
+			setTitle(sTitle);
+			setDescription(sDescription);
 
 			// Handle additional content
 			oAggregation.removeAllAdditionalContent();
@@ -1071,7 +1063,6 @@ sap.ui.define([
 				oAggregation.addAdditionalContent(this.getUploadButtonForIllustratedMessage());
 			}
 		}
-
 		return oAggregation;
 	};
 
@@ -1157,7 +1148,7 @@ sap.ui.define([
 		var oDragSession = oEvent.getParameter("dragSession");
 		var oDraggedControl = oDragSession.getDragControl();
 		this._oDragIndicator = true;
-	this._getIllustratedMessage();
+    this._getIllustratedMessage();
 		if (oDraggedControl) {
 			oEvent.preventDefault();
 		}
@@ -1485,7 +1476,7 @@ sap.ui.define([
 		if (!this.isBound('items')){
 			this.insertItem(oItem, 0);
 		}
-		if (this.isBound('items')) {
+                if (this.isBound('items')) {
 			this.removeIncompleteItem(oItem);
 		}
 		oItem.setUploadState(UploadState.Complete);
@@ -1521,7 +1512,7 @@ sap.ui.define([
 	/**
 	 * Edited item confirmation handling.
 	 * @param {object} oEvent Event instance.
-	 * @param {sap.m.upload.UploadSetItem} oItem Item whose editing is to be confirmed.
+	 * @param {UploadSetItem} oItem Item whose editing is to be confirmed.
 	 * @private
 	 */
 	UploadSet.prototype._handleItemEditConfirmation = function (oEvent, oItem) {
@@ -1584,7 +1575,7 @@ sap.ui.define([
 	 * Edited item cancelation handling.
 	 *
 	 * @param {object} oEvent Event instance.
-	 * @param {sap.m.upload.UploadSetItem} oItem Item whose editing is to be canceled.
+	 * @param {UploadSetItem} oItem Item whose editing is to be canceled.
 	 * @private
 	 */
 	UploadSet.prototype._handleItemEditCancelation = function (oEvent, oItem) {
@@ -1623,22 +1614,21 @@ sap.ui.define([
 		if (!oItem.getFileName()) {
 			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_WITHOUT_FILE_NAME_TEXT");
 		} else {
-			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_TEXT", [oItem.getFileName()]);
+			sMessageText = this._oRb.getText("UPLOAD_SET_DELETE_TEXT", oItem.getFileName());
 		}
 		this._oItemToBeDeleted = UploadSetItem._findById(oItem.getId(), this._getAllItems());
-		MessageBox.warning(sMessageText, {
+		MessageBox.show(sMessageText, {
 			id: this.getId() + "-deleteDialog",
 			title: this._oRb.getText("UPLOAD_SET_DELETE_TITLE"),
-			actions: [MessageBox.Action.DELETE, MessageBox.Action.CANCEL],
+			actions: [MessageBox.Action.OK, MessageBox.Action.CANCEL],
 			onClose: this._handleClosedDeleteDialog.bind(this),
 			dialogId: "messageBoxDeleteFile",
-			styleClass: this.hasStyleClass("sapUiSizeCompact") ? "sapUiSizeCompact" : "",
-			emphasizedAction: MessageBox.Action.DELETE
+			styleClass: this.hasStyleClass("sapUiSizeCompact") ? "sapUiSizeCompact" : ""
 		});
 	};
 
 	UploadSet.prototype._handleClosedDeleteDialog = function (sAction) {
-		if (sAction !== MessageBox.Action.DELETE) {
+		if (sAction !== MessageBox.Action.OK) {
 			return;
 		}
 		if (!this.isBound("items")){
@@ -1952,14 +1942,14 @@ sap.ui.define([
 	 */
 	 UploadSet.prototype._setSelectedForItems = function(uploadSetItemsToUpdate, selected) {
 		//Reset all 'selected' values in UploadSetItems
-		if (this.getMode() !== MobileLibrary.ListMode.MultiSelect && selected) {
+		if (this.getMode() !== Library.ListMode.MultiSelect && selected) {
 			var aUploadSetItems = this.getItems();
 			for (var j = 0; j < aUploadSetItems.length; j++) {
 				aUploadSetItems[j].setSelected(false);
 			}
 		}
 		for (var i = 0; i < uploadSetItemsToUpdate.length; i++) {
-			uploadSetItemsToUpdate[i].setSelected((selected === undefined) ? true : !!selected);
+			uploadSetItemsToUpdate[i].setSelected(selected);
 		}
 	};
 
@@ -2096,7 +2086,7 @@ sap.ui.define([
 		if (this.getCloudFilePickerEnabled()) {
 			this._oMenuButton = new MenuButton({
 				text: this._oRb.getText("UPLOAD_SET_DEFAULT_LFP_BUTTON_TEXT"),
-				buttonMode: MenuButtonMode.Split,
+				buttonMode: sap.m.MenuButtonMode.Split,
 				menu: this._getMenuButtonItems(),
 				defaultAction: this._openFileUploaderPicker.bind(this)
 			});
@@ -2269,7 +2259,7 @@ sap.ui.define([
 		// getDropControl returns the valid drop target underneath the drop control, if no dropcontrol available UploadSet control to reset the illustrated message
 		if (!oDragSession || !oDragSession.getDropControl() || (oDragSession && !oEvent.relatedTarget)) {
 			this._oDragIndicator = false;
-	  this._getIllustratedMessage();
+      this._getIllustratedMessage();
 		}
 	};
 

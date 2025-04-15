@@ -57,10 +57,12 @@ sap.ui.define([], function() {
 	JSTokenizer.prototype.error = function(m) {
 
 		// Call error when something is wrong.
-		const err = new SyntaxError(m);
-		err.at = this.at;
-		err.text = this.text;
-		throw err;
+		throw {
+			name: 'SyntaxError',
+			message: m,
+			at: this.at,
+			text: this.text
+		};
 	};
 
 	JSTokenizer.prototype.next = function(c) {
@@ -155,33 +157,32 @@ sap.ui.define([], function() {
 		this.error("Bad string");
 	};
 
-	function isNameCharacter(ch) {
-		return ch === "_" || ch === "$" ||
-			(ch >= "0" && ch <= "9") ||
-			(ch >= "a" && ch <= "z") ||
-			(ch >= "A" && ch <= "Z");
-	}
-
 	JSTokenizer.prototype.name = function() {
 
 		// Parse a name value.
-		var name = '';
+		var name = '',
+			allowed = function(ch) {
+				return ch === "_" || ch === "$" ||
+					(ch >= "0" && ch <= "9") ||
+					(ch >= "a" && ch <= "z") ||
+					(ch >= "A" && ch <= "Z");
+			};
 
-		if (isNameCharacter(this.ch)) {
+		if (allowed(this.ch)) {
 			name += this.ch;
 		} else {
 			this.error("Bad name");
 		}
 
 		while (this.next()) {
-			if (this.ch <= ' ') {
+			if (this.ch === ' ') {
 				this.next();
 				return name;
 			}
 			if (this.ch === ':') {
 				return name;
 			}
-			if (isNameCharacter(this.ch)) {
+			if (allowed(this.ch)) {
 				name += this.ch;
 			} else {
 				this.error("Bad name");
@@ -269,16 +270,8 @@ sap.ui.define([], function() {
 					key = this.number();
 				} else if (this.ch === '"' || this.ch === '\'') {
 					key = this.string();
-				} else if (isNameCharacter(this.ch)) {
-					key = this.name();
 				} else {
-					const contextStart = Math.max(0, this.at - 10);
-					const context = this.text.substring(contextStart, this.at + 10);
-					const positionInContext = this.at - contextStart;
-					this.error(`Syntax error: Unexpected character '${this.ch}'.
-
-${context}
-${' '.repeat(positionInContext - 1)}^`);
+					key = this.name();
 				}
 				this.white();
 				this.next(':');

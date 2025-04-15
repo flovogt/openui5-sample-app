@@ -7,12 +7,13 @@
 // Provides control sap.m.QuickViewPage
 sap.ui.define([
 	"./library",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
-	"sap/ui/core/Lib",
 	"sap/ui/layout/form/SimpleForm",
 	"sap/ui/layout/VerticalLayout",
 	"sap/ui/layout/HorizontalLayout",
+	"sap/m/library",
 	"sap/m/Avatar",
 	"sap/m/Page",
 	"sap/m/Button",
@@ -35,12 +36,13 @@ sap.ui.define([
 	"sap/ui/dom/jquery/Focusable" // jQuery Plugin "firstFocusableDomRef"
 ], function (
 	library,
+	Core,
 	Control,
 	IconPool,
-	Library,
 	SimpleForm,
 	VerticalLayout,
 	HorizontalLayout,
+	mLibrary,
 	Avatar,
 	Page,
 	Button,
@@ -85,10 +87,10 @@ sap.ui.define([
 	// shortcut for sap.m.EmptyIndicator
 	var EmptyIndicatorMode = library.EmptyIndicatorMode;
 
-	var oRB = Library.getResourceBundleFor('sap.m');
+	var oRB = Core.getLibraryResourceBundle('sap.m');
 
 	// shortcut for sap.m.PageBackgroundDesign
-	var PageBackgroundDesign = library.PageBackgroundDesign;
+	var PageBackgroundDesign = mLibrary.PageBackgroundDesign;
 
 	/**
 	 * Constructor for a new QuickViewPage.
@@ -103,7 +105,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -139,7 +141,7 @@ sap.ui.define([
 
 				/**
 				 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
-				 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
+				 * @deprecated As of version 1.111. Attach avatar <code>press</code> event instead.
 				 */
 				crossAppNavCallback: { type: "object", group: "Misc", deprecated: true },
 
@@ -190,7 +192,7 @@ sap.ui.define([
 	 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
 	 *
 	 * When called with a value of <code>null</code> or <code>undefined</code>, the default value of the property will be restored.
-	 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
+	 * @deprecated As of version 1.111.
 	 * @method
 	 * @param {function(): {target: object, params: object}} [oCrossAppNavCallback] New value for property <code>crossAppNavCallback</code>
 	 * @public
@@ -202,7 +204,7 @@ sap.ui.define([
 	 * Gets current value of property {@link #getCrossAppNavCallback crossAppNavCallback}.
 	 *
 	 * Specifies the application which provides target and param configuration for cross-application navigation from the 'page header'.
-	 * @deprecated As of version 1.111. Attach listener to the avatar <code>press</code> event and perform navigation as appropriate in your environment instead.
+	 * @deprecated As of version 1.111.
 	 * @method
 	 * @returns {function(): {target: object, params: object}} Value of property <code>crossAppNavCallback</code>
 	 * @public
@@ -210,10 +212,9 @@ sap.ui.define([
 	 */
 
 	QuickViewPage.prototype.init =  function() {
-		/**
-	 	 * @deprecated As of version 1.111.
-		 */
-		this._initCrossAppNavigationService();
+		if (this._initCrossAppNavigationService) {
+			this._initCrossAppNavigationService();
+		}
 	};
 
 	/**
@@ -465,30 +466,23 @@ sap.ui.define([
 				href: sTitleUrl,
 				target: "_blank"
 			});
+		} else if (this.getCrossAppNavCallback && this.getCrossAppNavCallback() && sTitle) {
+			oTitle = new Link({
+				text: sTitle
+			});
+			oTitle.attachPress(this._crossApplicationNavigation.bind(this));
 		} else if (sTitle) {
 			oTitle = new Title({
 				text: sTitle,
 				level: CoreTitleLevel.H3
 			});
-
-			/**
-			 * @deprecated As of version 1.111.
-			 */
-			if (this.getCrossAppNavCallback()) {
-				oTitle.destroy();
-				oTitle = new Link({
-					text: sTitle
-				});
-				oTitle.attachPress(this._crossApplicationNavigation.bind(this));
-			}
 		}
 
 		this.setPageTitleControl(oTitle);
 
 		if (sDescription) {
 			oDescription = new Text({
-				text: sDescription,
-				maxLines: 2
+				text: sDescription
 			});
 		}
 
@@ -602,10 +596,7 @@ sap.ui.define([
 	 * @private
 	 */
 	QuickViewPage.prototype._crossApplicationNavigation = function () {
-		/**
-		 * @deprecated As of version 1.111.
-		 */
-		if (this.getCrossAppNavCallback() && this.oCrossAppNavigator) {
+		if (this.getCrossAppNavCallback && this.getCrossAppNavCallback() && this.oCrossAppNavigator) {
 			var targetConfigCallback = this.getCrossAppNavCallback();
 			if (typeof targetConfigCallback == "function") {
 				var targetConfig = targetConfigCallback();
@@ -621,11 +612,7 @@ sap.ui.define([
 
 				URLHelper.redirect(href);
 			}
-
-			return;
-		}
-
-		if (this.getTitleUrl()) {
+		} else if (this.getTitleUrl()) {
 			URLHelper.redirect(this.getTitleUrl(), true);
 		}
 	};

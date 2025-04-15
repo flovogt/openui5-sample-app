@@ -6,13 +6,13 @@
 
 sap.ui.define([
 	"sap/ui/base/EventProvider"
-], (EventProvider) => {
+], function (EventProvider) {
 	"use strict";
 
-	const ERROR_INSTANCING = "StateHandlerRegistry: This class is a singleton and should not be used without an AdaptationProvider. Please use 'Engine.getInstance().stateHandlerRegistry' instead";
+	var ERROR_INSTANCING = "StateHandlerRegistry: This class is a singleton and should not be used without an AdaptationProvider. Please use 'Engine.getInstance().stateHandlerRegistry' instead";
 
 	//Singleton storage
-	let oStateHandlerRegistry;
+	var oStateHandlerRegistry;
 
 	/**
 	 * Constructor for a new StateHandlerRegistry.
@@ -21,13 +21,13 @@ sap.ui.define([
 	 * @extends sap.ui.base.EventProvider
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @private
 	 * @since 1.104
 	 * @alias sap.m.p13n.modules.StateHandlerRegistry
 	 */
-	const StateHandlerRegistry = EventProvider.extend("sap.m.p13n.modules.StateHandlerRegistry", {
+	var StateHandlerRegistry = EventProvider.extend("sap.m.p13n.modules.StateHandlerRegistry", {
 		constructor: function() {
 
 			if (oStateHandlerRegistry) {
@@ -91,7 +91,7 @@ sap.ui.define([
 	 *
 	 * @returns {this} Returns the <code>StateHandlerRegistry</code> instance.
 	 */
-	StateHandlerRegistry.getInstance = () => {
+	StateHandlerRegistry.getInstance = function () {
 		if (!oStateHandlerRegistry) {
 			oStateHandlerRegistry = new StateHandlerRegistry();
 		}

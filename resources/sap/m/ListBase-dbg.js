@@ -8,9 +8,9 @@
 sap.ui.define([
 	"sap/base/i18n/Localization",
 	"sap/ui/core/ControlBehavior",
-	"sap/ui/core/RenderManager",
+	"sap/ui/events/KeyCodes",
 	"sap/ui/Device",
-	"sap/ui/model/ChangeReason",
+	"sap/ui/core/Core",
 	"sap/ui/core/Control",
 	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
@@ -35,9 +35,9 @@ sap.ui.define([
 function(
 	Localization,
 	ControlBehavior,
-	RenderManager,
+	KeyCodes,
 	Device,
-	ChangeReason,
+	Core,
 	Control,
 	Element,
 	InvisibleText,
@@ -105,7 +105,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -253,8 +253,7 @@ function(
 				/**
 				 * If set to true, this control remembers and retains the selection of the items after a binding update has been performed (e.g. sorting, filtering).
 				 * <b>Note:</b> This feature works only if two-way data binding for the <code>selected</code> property of the item is not used. It also needs to be turned off if the binding context of the item does not always point to the same entry in the model, for example, if the order of the data in the <code>JSONModel</code> is changed.
-				 * <b>Note:</b> This feature leverages the built-in selection mechanism of the corresponding binding context when the OData V4 model is used. Therefore, all binding-relevant limitations apply in this context as well. For more details, see the {@link sap.ui.model.odata.v4.Context#setSelected setSelected}, the {@link sap.ui.model.odata.v4.ODataModel#bindList bindList}, and the {@link sap.ui.model.odata.v4.ODataMetaModel#requestValueListInfo requestValueListInfo} API documentation. Do not enable this feature when <code>$$SharedRequests</code> or <code>$$clearSelectionOnFilter</code> is active.
-				 * <b>Note:</b> If this property is set to <code>false</code>, a possible binding context update of items (for example, filtering or sorting the list binding) would clear the selection of the items.
+				 * <b>Note:</b> This feature leverages the built-in selection mechanism of the corresponding binding context when the OData V4 model is used. Therefore, all binding-relevant limitations apply in this context as well. For more details, see the {@link sap.ui.model.odata.v4.Context#setSelected setSelected}, the {@link sap.ui.model.odata.v4.ODataModel#bindList bindList}, and the {@link sap.ui.model.odata.v4.ODataMetaModel#requestValueListInfo requestValueListInfo} API documentation. Do not enable this feature when <code>$$SharedRequests</code> is active.
 				 * @since 1.16.6
 				 */
 				rememberSelections : {type : "boolean", group : "Behavior", defaultValue : true},
@@ -631,13 +630,11 @@ function(
 		this._aSelectedPaths = [];
 		this._destroyGrowingDelegate();
 		this._destroyItemNavigation();
-		this._oLastFakeFocusedItem = null;
 	};
 
 	// this gets called only with oData Model when first load or filter/sort
 	ListBase.prototype.refreshItems = function(sReason) {
 		this._bRefreshItems = true;
-		this._clearUnboundSelections(sReason);
 		if (this._oGrowingDelegate) {
 			// inform growing delegate to handle
 			this._oGrowingDelegate.refreshItems(sReason);
@@ -676,8 +673,6 @@ function(
 			this.invalidate();
 		}
 
-		this._clearUnboundSelections(sReason);
-
 		if (this._oGrowingDelegate) {
 			// inform growing delegate to handle
 			this._oGrowingDelegate.updateItems(sReason);
@@ -703,7 +698,6 @@ function(
 			this._updateFinished();
 		}
 
-		this._updateInvisibleGroupText();
 		this._bSkippedInvalidationOnRebind = false;
 	};
 
@@ -766,10 +760,6 @@ function(
 		}
 
 		Control.prototype._bindAggregation.call(this, sName, oBindingInfo);
-
-		if (sName === "items" && this.getModel(oBindingInfo.model).isA("sap.ui.model.odata.v4.ODataModel")) {
-			this.getBinding("items").attachEvent("selectionChanged", onBindingSelectionChanged, this);
-		}
 	};
 
 	ListBase.prototype._onBindingDataRequestedListener = function(oEvent) {
@@ -801,46 +791,6 @@ function(
 			this._oGrowingDelegate._onBindingDataReceivedListener(oEvent);
 		}
 	};
-
-	async function onBindingSelectionChanged(oEvent) {
-		const oContext = oEvent.getParameter("context");
-
-		if (!this._bSelectionMode) {
-			return;
-		}
-
-		if (oContext.getBinding().getHeaderContext() === oContext) {
-			if (oContext.isSelected()) {
-				Log.warning("Selecting the header context does not affect the list selection", this);
-			} else {
-				this.removeSelections(true, true);
-			}
-			return;
-		}
-
-		const sModelName = this.getBindingInfo("items").model;
-		const oItem = this.getItems().find((oItem) => oItem.getBindingContext(sModelName) === oContext);
-
-		if (!oItem) {
-			if (oContext.isSelected()) {
-				Log.warning("Selecting a context that is not related to an existing item does not affect the list selection", this);
-			}
-			return;
-		}
-
-		await Promise.resolve(); // ListItemBase first needs to update its selected property, otherwise the selectionChange event is fired too often.
-
-		const bContextIsSelected = oContext.isSelected();
-		this.setSelectedItem(oItem, bContextIsSelected, bContextIsSelected !== oItem.getSelected());
-
-		if (bContextIsSelected && this.getMode().includes("SingleSelect")) {
-			oContext.getBinding().getAllCurrentContexts().forEach((oCurrentContext) => {
-				if (oCurrentContext !== oContext) {
-					oCurrentContext.setSelected(false);
-				}
-			});
-		}
-	}
 
 	ListBase.prototype.destroyItems = function(bSuppressInvalidate) {
 		// check whether we have items to destroy or not
@@ -955,22 +905,22 @@ function(
 	/**
 	 * Selects or deselects the given list item.
 	 *
-	 * @param {sap.m.ListItemBase} oListItem The list item whose selection is changed
-	 * @param {boolean} [bSelect=true] Sets selected status of the list item provided
-	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
-	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
+	 * @param {sap.m.ListItemBase} oListItem
+	 *         The list item whose selection to be changed. This parameter is mandatory.
+	 * @param {boolean} [bSelect=true]
+	 *         Sets selected status of the list item
+	 * @type this
 	 * @public
 	 */
 	ListBase.prototype.setSelectedItem = function(oListItem, bSelect, bFireEvent) {
 		if (this.indexOfItem(oListItem) < 0) {
 			Log.warning("setSelectedItem is called without valid ListItem parameter on " + this);
-			return this;
+			return;
 		}
 		if (this._bSelectionMode) {
 			oListItem.setSelected((bSelect === undefined) ? true : !!bSelect);
 			bFireEvent && this._fireSelectionChangeEvent([oListItem]);
 		}
-		return this;
 	};
 
 
@@ -998,7 +948,7 @@ function(
 	 * @public
 	 */
 	ListBase.prototype.setSelectedItemById = function(sId, bSelect) {
-		var oListItem = Element.getElementById(sId);
+		var oListItem = Core.byId(sId);
 		return this.setSelectedItem(oListItem, bSelect);
 	};
 
@@ -1045,17 +995,17 @@ function(
 	/**
 	 * Removes visible selections of the current selection mode.
 	 *
-	 * @param {boolean} [bAll=false] If the <code>rememberSelection</code> property is set to <code>true</code>, this control preserves selections after filtering or sorting. Set this parameter to <code>true</code> to remove all selections (as of version 1.16)
-	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
-	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
+	 * @param {boolean} bAll
+	 *         Since version 1.16.3. This control keeps old selections after filter or sorting. Set this parameter "true" to remove all selections.
+	 * @type this
 	 * @public
 	 */
-	ListBase.prototype.removeSelections = function(bAll, bFireEvent, _bDetectBinding) {
+	ListBase.prototype.removeSelections = function(bAll, bFireEvent, bDetectBinding) {
 		var aChangedListItems = [];
 		this._oSelectedItem = null;
 		if (bAll) {
 			this._aSelectedPaths = [];
-			if (!_bDetectBinding) {
+			if (!bDetectBinding) {
 				const oBinding = this.getBinding("items");
 				const aContexts = oBinding?.getAllCurrentContexts?.() || [];
 				aContexts[0]?.setSelected && aContexts.forEach((oContext) => oContext.setSelected(false));
@@ -1067,7 +1017,7 @@ function(
 			}
 
 			// if the selected property is two-way bound then we do not need to update the selection
-			if (_bDetectBinding && oItem.isSelectedBoundTwoWay()) {
+			if (bDetectBinding && oItem.isSelectedBoundTwoWay()) {
 				return;
 			}
 
@@ -1089,8 +1039,7 @@ function(
 	 * <b>Note:</b> If <code>growing</code> is enabled, only the visible items in the list are selected.
 	 * Since version 1.93, the items are not selected if <code>getMultiSelectMode=ClearAll</code>.
 	 *
-	 * @param {boolean} [bFireEvent=false] Determines whether the <code>selectionChange</code> event is fired by this method call (as of version 1.121)
-	 * @returns {this} Reference to <code>this</code> in order to allow method chaining
+	 * @type this
 	 * @public
 	 * @since 1.16
 	 */
@@ -1115,7 +1064,7 @@ function(
 		var iSelectableItemCount = this.getItems().filter(function(oListItem) {
 			return oListItem.isSelectable();
 		}).length;
-		if (bFireEvent && this.getGrowing() && this.getMultiSelectMode() === "SelectAll" && this.getBinding("items")?.getLength() > iSelectableItemCount) {
+		if (bFireEvent && this.getGrowing() && this.getMultiSelectMode() === "SelectAll" && this.getBinding("items").getLength() > iSelectableItemCount) {
 			var oSelectAllDomRef = this._getSelectAllCheckbox ? this._getSelectAllCheckbox() : undefined;
 			if (oSelectAllDomRef) {
 				Util.showSelectionLimitPopover(iSelectableItemCount, oSelectAllDomRef);
@@ -1313,14 +1262,6 @@ function(
 		this._updateSelectedPaths(oListItem, bSelected);
 	};
 
-	// this gets called after the selected property of the ListItem is changed
-	ListBase.prototype.onItemAfterSelectedChange = function(oListItem, bSelected) {
-		this.fireEvent("itemSelectedChange", {
-			listItem: oListItem,
-			selected: bSelected
-		});
-	};
-
 	/*
 	 * Returns items container DOM reference
 	 * @protected
@@ -1353,8 +1294,6 @@ function(
 	 * @protected
 	 */
 	ListBase.prototype.onAfterPageLoaded = function(oGrowingInfo, sChangeReason) {
-		this._updateStickyClasses();
-		this._oLastGroupHeaderBeforeGrowing = null;
 		this._fireUpdateFinished(oGrowingInfo);
 		this.fireGrowingFinished(oGrowingInfo);
 	};
@@ -1411,16 +1350,6 @@ function(
 			/* reset focused position */
 			if (this._oItemNavigation && document.activeElement.id != this.getId("nodata")) {
 				this._oItemNavigation.iFocusedIndex = -1;
-			}
-		}
-	};
-
-	// clear the selection during filtering and sorting if the rememeberSelections is not active and selected property is not two-way bound
-	ListBase.prototype._clearUnboundSelections = function(sReason) {
-		if ((sReason === ChangeReason.Filter || sReason === ChangeReason.Sort || sReason === ChangeReason.Context) && !this.getRememberSelections()) {
-			const oFirstItem = this.getItems(true)[0];
-			if (oFirstItem && !oFirstItem.isSelectedBoundTwoWay()) {
-				this.removeSelections();
 			}
 		}
 	};
@@ -1489,12 +1418,6 @@ function(
 			if (this.getEnableBusyIndicator()) {
 				// only call the setBusy method if enableBusyIndicator=true
 				this.setBusy(false, "listUl");
-
-				// while the control is busy the focus events are blocked by the BlockLayer
-				const oNavigationRoot = this.getNavigationRoot();
-				if (document.activeElement == oNavigationRoot) {
-					jQuery(oNavigationRoot).trigger("focus");
-				}
 			}
 		}
 	};
@@ -1721,7 +1644,7 @@ function(
 			oEvent.code == "Tab" ||
 			this.getMode() !== ListMode.MultiSelect ||
 			!oItem.isSelectable() ||
-			oEvent.key === "F6") {
+			oEvent.which === KeyCodes.F6) {
 			if (this._mRangeSelection) {
 				this._mRangeSelection = null;
 			}
@@ -1748,7 +1671,7 @@ function(
 
 	ListBase.prototype.onItemKeyUp = function(oItem, oEvent) {
 		// end of range selection when SHIFT key is released
-		if (oEvent.key === "Shift") {
+		if (oEvent.which === KeyCodes.SHIFT) {
 			this._mRangeSelection = null;
 		}
 	};
@@ -1774,7 +1697,7 @@ function(
 			iIndex > -1 && this._aSelectedPaths.splice(iIndex, 1);
 		}
 
-		if (oBindingContext.setSelected) {
+		if (oBindingContext.setSelected && !oBindingContext.isTransient()) {
 			oBindingContext.setSelected(bSelect);
 		}
 	};
@@ -1834,7 +1757,7 @@ function(
 		// render swipe content into swipe container if needed
 		if (this._bRerenderSwipeContent) {
 			this._bRerenderSwipeContent = false;
-			var rm = new RenderManager().getInterface();
+			var rm = Core.createRenderManager();
 			rm.render(this.getSwipeContent(), $container.empty()[0]);
 			rm.destroy();
 		}
@@ -2141,29 +2064,31 @@ function(
 	};
 
 	ListBase.prototype.getAccessbilityPosition = function(oItem) {
-		let iSetSize, iPosInSet,
-			aItems = this.getVisibleItems();
+		var iSetSize, iPosInSet,
+			aItems = this.getVisibleItems(),
+			sAriaRole = this.getAriaRole(),
+			bExcludeGroupHeaderFromCount = (sAriaRole === "list" || sAriaRole === "listbox");
 
-		iSetSize = this.getSize();
-		if (this._hasNestedGrouping()) {
-			const aGroupItems = aItems
-				.filter((oItem) =>  oItem.isGroupHeader())
-				.find((oGroupHeader) => {
-					const aGroupedItems = oGroupHeader.getGroupedItems() ?? [];
-					return aGroupedItems.some((sItemId) => sItemId === oItem.getId());
-				});
-
-			if (aGroupItems) {
-				const aGroupItemIds = aGroupItems.getGroupedItems();
-				aItems = aItems.filter((oItem) => aGroupItemIds.includes(oItem.getId()));
-				iSetSize = aItems.length;
-			}
-		} else if (this._skipGroupHeaderFocus()) {
-			aItems = aItems.filter((oItem) => !oItem.isGroupHeader());
+		if (bExcludeGroupHeaderFromCount) {
+			aItems = aItems.filter(function(oItem) {
+				return !oItem.isGroupHeader();
+			});
 		}
 
 		if (oItem) {
 			iPosInSet = aItems.indexOf(oItem) + 1;
+		}
+
+		var oBinding = this.getBinding("items");
+		if (oBinding && this.getGrowing() && this.getGrowingScrollToLoad()) {
+			iSetSize = oBinding.getLength();
+			if (!bExcludeGroupHeaderFromCount && oBinding.isGrouped()) {
+				iSetSize += aItems.filter(function(oItem) {
+					return oItem.isGroupHeader();
+				}).length;
+			}
+		} else {
+			iSetSize = aItems.length;
 		}
 
 		return {
@@ -2172,47 +2097,10 @@ function(
 		};
 	};
 
-	/**
-	 * Updates the accessibility state of all items after the binding update of individual items.
-	 *
-	 * @private
-	 * @ui5-restricted sap.m.GrowingEnablement
-	 */
-	ListBase.prototype.updateAccessbilityOfItems = function() {
-		const iSetSize = this.getSize();
-		this.getVisibleItems().forEach((oItem, iIndex) => {
-			const oFocusDomRef = oItem.getFocusDomRef();
-			oFocusDomRef?.setAttribute("aria-setsize", iSetSize);
-			oFocusDomRef?.setAttribute("aria-posinset", iIndex + 1);
-		});
-	};
-
-	ListBase.prototype.getSize = function() {
-		let aItems = this.getVisibleItems();
-		const bExcludeGroupHeaderFromCount = (this._hasNestedGrouping() || this._skipGroupHeaderFocus());
-
-		if (bExcludeGroupHeaderFromCount) {
-			aItems = aItems.filter((oItem) => !oItem.isGroupHeader());
-		}
-		let iSize = aItems.length;
-
-		const oBinding = this.getBinding("items");
-		if (oBinding && this.getGrowing() && this.getGrowingScrollToLoad()) {
-			iSize = oBinding.getLength();
-			if (!bExcludeGroupHeaderFromCount && oBinding.isGrouped()) {
-				iSize += aItems.filter(function(oItem) {
-					return oItem.isGroupHeader();
-				}).length;
-			}
-		}
-
-		return iSize;
-	};
-
 	// this gets called when the focus is on the item or its content
 	ListBase.prototype.onItemFocusIn = function(oItem, oFocusedControl, oEvent) {
 		// focus and scroll handling for sticky elements
-		this._handleTargetItemFocus(oEvent.target);
+		this._handleStickyItemFocus(oItem.getDomRef());
 
 		if (oItem !== oFocusedControl || oEvent.isMarked("contentAnnouncementGenerated") ||
 			!ControlBehavior.isAccessibilityEnabled()) {
@@ -2226,66 +2114,29 @@ function(
 			this.getNavigationRoot().setAttribute("aria-activedescendant", oItemDomRef.id);
 		} else {
 			// prepare the announcement for the screen reader
-			this.setInvisibleTextAssociation(oItem);
+			var oAccInfo = oItem.getAccessibilityInfo(),
+				oBundle = Library.getResourceBundleFor("sap.m"),
+				sDescription = oAccInfo.type ? oAccInfo.type + " . " : "";
+
+			if (this.isA("sap.m.Table")) {
+				var mPosition = this.getAccessbilityPosition(oItem);
+				sDescription += oBundle.getText("LIST_ITEM_POSITION", [mPosition.posinset, mPosition.setsize]) + " . ";
+			}
+
+			sDescription += oAccInfo.description;
+			this.updateInvisibleText(sDescription, oItemDomRef);
+			return sDescription;
 		}
-	};
-
-	/**
-	 * For the specified list item it updates the invisible text and sets the aria-labelledby association.
-	 *
-	 * @param {sap.m.ListItemBase} oItem The list item whose invisible text association should be set
-	 * @private
-	 */
-	ListBase.prototype.setInvisibleTextAssociation = function(oItem) {
-		var oAccInfo = oItem.getAccessibilityInfo(),
-			oBundle = Library.getResourceBundleFor("sap.m"),
-			sDescription = oAccInfo.type ? oAccInfo.type + " . " : "";
-
-		if (this.isA("sap.m.Table")) {
-			var mPosition = this.getAccessbilityPosition(oItem);
-			sDescription += oBundle.getText("LIST_ITEM_POSITION", [mPosition.posinset, mPosition.setsize]) + " . ";
-		}
-
-		sDescription += oAccInfo.description;
-		this.updateInvisibleText(sDescription, oItem.getDomRef());
 	};
 
 	ListBase.prototype.onItemFocusOut = function(oItem) {
 		this.removeInvisibleTextAssociation(oItem.getDomRef());
 	};
 
-	/**
-	 * For the specified <code>HTMLElement</code> it removes the aria-labelledby association to the invisible text.
-	 *
-	 * @param {HTMLElement} oDomRef The <code>HTMLElement</code> whose invisible text association should be removed
-	 * @private
-	 */
 	ListBase.prototype.removeInvisibleTextAssociation = function(oDomRef) {
 		const oInvisibleText = ListBase.getInvisibleText(),
 			$FocusedItem = jQuery(oDomRef || document.activeElement);
 		$FocusedItem.removeAriaLabelledBy(oInvisibleText.getId());
-	};
-
-	/**
-	 * It simulates focus by adding the corresponding style classes and updating the invisible text association.
-	 * <b>Note</b>: Fake focus is not set when the real focus is inside the list. If the fake focus is set, it gets removed when the real focus lands inside the list.
-	 *
-	 * @param {sap.m.ListItemBase|null} oItem The list item to receive fake focus, null to remove it
-	 * @private
-	 * @ui5-restricted sap.m, sap.ui.mdc
-	 */
-	ListBase.prototype.setFakeFocus = function(oItem) {
-		if (this._oLastFakeFocusedItem) {
-			this._oLastFakeFocusedItem.removeStyleClass("sapMLIBFocused");
-			this.removeInvisibleTextAssociation(this._oLastFakeFocusedItem.getDomRef());
-			this._oLastFakeFocusedItem = null;
-		}
-
-		if (oItem && !this.getDomRef().contains(document.activeElement)) {
-			this._oLastFakeFocusedItem = oItem;
-			oItem.addStyleClass("sapMLIBFocused");
-			this.setInvisibleTextAssociation(oItem);
-		}
 	};
 
 	ListBase.prototype.updateInvisibleText = function(sText, oItemDomRef, bPrepend) {
@@ -2300,8 +2151,6 @@ function(
 		oInvisibleText.setText(sText.trim());
 		$FocusedItem.addAriaLabelledBy(oInvisibleText.getId(), bPrepend);
 	};
-
-	ListBase.prototype._updateInvisibleGroupText = function() {};
 
 	/* Keyboard Handling */
 	ListBase.prototype.getNavigationRoot = function() {
@@ -2389,12 +2238,7 @@ function(
 	 * @since 1.26
 	 */
 	ListBase.prototype.setNavigationItems = function(oItemNavigation, oNavigationRoot) {
-		let sSelector = ".sapMLIB";
-		if (this._skipGroupHeaderFocus()) {
-			// TODO: maybe use aria-roledescription instead, as CustomListItem and StandardListItem do not have MGHLI class
-			sSelector = ".sapMLIB:not(.sapMGHLI)";
-		}
-		var aNavigationItems = jQuery(oNavigationRoot).children(sSelector).get();
+		var aNavigationItems = jQuery(oNavigationRoot).children(".sapMLIB").get();
 		oItemNavigation.setItemDomRefs(aNavigationItems);
 		if (oItemNavigation.getFocusedIndex() == -1) {
 			if (this.getGrowing() && this.getGrowingDirection() == ListGrowingDirection.Upwards) {
@@ -2493,7 +2337,7 @@ function(
 	ListBase.prototype.onsapshow = function(oEvent) {
 		// handle events that are only coming from navigation items and ignore F4
 		if (oEvent.isMarked() ||
-			oEvent.key == "F4" ||
+			oEvent.which == KeyCodes.F4 ||
 			oEvent.target.id != this.getId("trigger") &&
 			!jQuery(oEvent.target).hasClass(this.sNavItemClass)) {
 			return;
@@ -2548,12 +2392,10 @@ function(
 			if (oEvent.shiftKey) {
 				if (bClearAll) {
 					this.removeSelections(false, true);
-					oEvent.setMarked("sapMTableClearAll");
 				}
 			} else if (!bClearAll) {
 				if (this.isAllSelectableSelected()) {
 					this.removeSelections(false, true);
-					oEvent.setMarked("sapMTableClearAll");
 				} else {
 					this.selectAll(true);
 				}
@@ -2625,6 +2467,7 @@ function(
 
 	// Handles focus to reposition the focus to correct place
 	ListBase.prototype.onfocusin = function(oEvent) {
+
 		// ignore self focus
 		if (this._bIgnoreFocusIn) {
 			this._bIgnoreFocusIn = false;
@@ -2635,10 +2478,6 @@ function(
 		// check whether item navigation should be reapplied from scratch
 		if (this._bItemNavigationInvalidated) {
 			this._startItemNavigation();
-		}
-
-		if (this._oLastFakeFocusedItem) {
-			this.setFakeFocus(null);
 		}
 
 		var oTarget = oEvent.target;
@@ -2720,7 +2559,7 @@ function(
 
 		var bExecuteDefault = this.fireBeforeOpenContextMenu({
 			listItem: oLI,
-			column: Element.getElementById(jQuery(oEvent.target).closest(".sapMListTblCell", this.getNavigationRoot()).attr("data-sap-ui-column"))
+			column: Core.byId(jQuery(oEvent.target).closest(".sapMListTblCell", this.getNavigationRoot()).attr("data-sap-ui-column"))
 		});
 		if (bExecuteDefault) {
 			oEvent.setMarked();
@@ -2810,19 +2649,14 @@ function(
 		return this;
 	};
 
-	/**
-	 * Returns the sticky value that is added to the sticky table container.
-	 *
-	 * Numeric values for each possible sticky element:
-	 * 1 - <code>headerToolbar</code>
-	 * 2 - <code>infoToolbar</code>
-	 * 4 - <code>columnHeaders</code>
-	 * 8 - <code>groupHeaders</code>
-	 *
-	 * The sticky value is created by adding up the values of the individual elements.
-	 * For example, sapMSticky15 (1 + 2 + 4 + 8) corresponds to sticky <code>headerToolbar</code>, <code>infoToolbar</code>, <code>columnHeaders</code>, and <code>groupHeaders</code>.
-	 * @returns {number} The sticky value
-	 */
+	// Returns the sticky value to be added to the sticky table container.
+	// sapMSticky7 is the result of sticky headerToolbar, infoToolbar and column headers.
+	// sapMSticky6 is the result of sticky infoToolbar and column headers.
+	// sapMSticky5 is the result of sticky headerToolbar and column headers.
+	// sapMSticky4 is the result of sticky column headers only.
+	// sapMSticky3 is the result of sticky headerToolbar and infoToolbar.
+	// sapMSticky2 is the result of sticky infoToolbar.
+	// sapMSticky1 is the result of sticky headerToolbar.
 	ListBase.prototype.getStickyStyleValue = function() {
 		var aSticky = this.getSticky();
 		if (!aSticky || !aSticky.length) {
@@ -2836,16 +2670,13 @@ function(
 			bHeaderToolbarVisible = sHeaderText || (oHeaderToolbar && oHeaderToolbar.getVisible()),
 			oInfoToolbar = this.getInfoToolbar(),
 			bInfoToolbar = oInfoToolbar && oInfoToolbar.getVisible(),
-			bColumnHeadersVisible = false,
-			bGroupHeaders = false;
+			bColumnHeadersVisible = false;
 
 		if (this.isA("sap.m.Table")) {
 			bColumnHeadersVisible = this.getColumns().some(function(oColumn) {
 				return oColumn.getVisible() && oColumn.getHeader();
 			});
 		}
-
-		bGroupHeaders = this.isGrouped();
 
 		aSticky.forEach(function(sSticky) {
 			if (sSticky === Sticky.HeaderToolbar && bHeaderToolbarVisible) {
@@ -2854,8 +2685,6 @@ function(
 				iStickyValue += 2;
 			} else if (sSticky === Sticky.ColumnHeaders && bColumnHeadersVisible) {
 				iStickyValue += 4;
-			} else if (sSticky === Sticky.GroupHeaders && bGroupHeaders) {
-				iStickyValue += 8;
 			}
 		});
 
@@ -2863,8 +2692,8 @@ function(
 		return this._iStickyValue;
 	};
 
-	// gets the sticky header position and scrolls the page so that the targeted item is completely visible when focused
-	ListBase.prototype._handleTargetItemFocus = function(oTargetItemDomRef) {
+	// gets the sticky header position and scrolls the page so that the item is completely visible when focused
+	ListBase.prototype._handleStickyItemFocus = function(oItemDomRef) {
 		if (!this._iStickyValue) {
 			return;
 		}
@@ -2874,25 +2703,14 @@ function(
 			return;
 		}
 
-		// check the all the sticky elements and get their height
-		var iGHRectHeight = 0,
-			iGHRectBottom = 0,
-			iTHRectHeight = 0,
+		// check the all the sticky element and get their height
+		var iTHRectHeight = 0,
 			iTHRectBottom = 0,
 			iInfoTBarContainerRectHeight = 0,
 			iInfoTBarContainerRectBottom = 0,
 			iHeaderToolbarRectHeight = 0,
 			iHeaderToolbarRectBottom = 0,
 			iStickyFocusOffset = this.getStickyFocusOffset();
-
-		if (this._iStickyValue & 8 /* GroupHeaders */) {
-			var oGroupHeaderDomRef = this.getItems(true).find((oItem) => {
-				return oItem.isGroupHeader();
-			}).getDomRef();
-			var oGroupHeaderRect = oGroupHeaderDomRef.getBoundingClientRect();
-			iGHRectBottom = parseInt(oGroupHeaderRect.bottom);
-			iGHRectHeight = parseInt(oGroupHeaderRect.height);
-		}
 
 		if (this._iStickyValue & 4 /* ColumnHeaders */) {
 			var oTblHeaderDomRef = this.getDomRef("tblHeader").firstChild;
@@ -2920,10 +2738,10 @@ function(
 			}
 		}
 
-		var iItemTop = Math.round(oTargetItemDomRef.getBoundingClientRect().top);
-		if (iGHRectBottom > iItemTop || iTHRectBottom > iItemTop || iInfoTBarContainerRectBottom > iItemTop || iHeaderToolbarRectBottom > iItemTop) {
+		var iItemTop = Math.round(oItemDomRef.getBoundingClientRect().top);
+		if (iTHRectBottom > iItemTop || iInfoTBarContainerRectBottom > iItemTop || iHeaderToolbarRectBottom > iItemTop) {
 			window.requestAnimationFrame(function () {
-				oScrollDelegate.scrollToElement(oTargetItemDomRef, 0, [0, -iGHRectHeight - iTHRectHeight - iInfoTBarContainerRectHeight - iHeaderToolbarRectHeight - iStickyFocusOffset], true);
+				oScrollDelegate.scrollToElement(oItemDomRef, 0, [0, -iTHRectHeight - iInfoTBarContainerRectHeight - iHeaderToolbarRectHeight - iStickyFocusOffset], true);
 			});
 		}
 	};
@@ -3073,20 +2891,14 @@ function(
 			switch (stickyOption) {
 				case Sticky.HeaderToolbar:
 					oControl = this.getHeaderToolbar();
-					oDomRef = oControl?.getDomRef() || this.getDomRef("header");
+					oDomRef = oControl && oControl.getDomRef() || this.getDomRef("header");
 					break;
 				case Sticky.InfoToolbar:
 					oControl = this.getInfoToolbar();
-					oDomRef = oControl?.getDomRef();
+					oDomRef = oControl && oControl.getDomRef();
 					break;
 				case Sticky.ColumnHeaders:
 					oDomRef = this.getDomRef("tblHeader");
-					break;
-				case Sticky.GroupHeaders:
-					//get domRef which is in view currently (Multiple groupHeaders)
-					oDomRef = this.getItems(true).find((oItem) => {
-						return oItem.isGroupHeader();
-					})?.getDomRef();
 					break;
 				default:
 			}
@@ -3109,23 +2921,21 @@ function(
 	};
 
 	ListBase.prototype._onToolbarPropertyChanged = function(oEvent) {
-		if (oEvent.getParameter("name") === "visible") {
-			this._updateStickyClasses();
+		if (oEvent.getParameter("name") !== "visible") {
+			return;
 		}
-	};
 
-	ListBase.prototype._updateStickyClasses = function() {
+		// update the sticky style class
 		var iOldStickyValue = this._iStickyValue,
 			iNewStickyValue = this.getStickyStyleValue();
 
 		if (iOldStickyValue !== iNewStickyValue) {
-			const oDomRef = this.getDomRef();
+			var oDomRef = this.getDomRef();
 			if (oDomRef) {
-				const bSticky = iNewStickyValue > 0;
-				const aClassList = oDomRef.classList;
-				aClassList.toggle("sapMSticky", bSticky);
+				var aClassList = oDomRef.classList;
+				aClassList.toggle("sapMSticky", !!iNewStickyValue);
 				aClassList.remove("sapMSticky" + iOldStickyValue);
-				aClassList.toggle("sapMSticky" + iNewStickyValue, bSticky);
+				aClassList.toggle("sapMSticky" + iNewStickyValue, !!iNewStickyValue);
 			}
 		}
 	};
@@ -3139,14 +2949,6 @@ function(
 	 */
 	ListBase.prototype.getAriaRole = function() {
 		return "list";
-	};
-
-	ListBase.prototype._skipGroupHeaderFocus = function() {
-		return false;
-	};
-
-	ListBase.prototype._hasNestedGrouping = function() {
-		return false;
 	};
 
 	return ListBase;

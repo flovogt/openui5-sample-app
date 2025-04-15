@@ -14,6 +14,7 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/assert",
 	"sap/ui/thirdparty/jquery",
+	"./PDFViewerRenderer",
 	"sap/ui/core/Lib",
 	"sap/m/IllustrationPool"
 ],
@@ -26,6 +27,7 @@ sap.ui.define([
 		Log,
 		assert,
 		jQuery,
+		PDFViewerRenderer1,
 		CoreLib,
 		IllustrationPool
 	) {
@@ -47,7 +49,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 * @since 1.48
 		 *
 		 * @constructor
@@ -187,7 +189,7 @@ sap.ui.define([
 					}
 				},
 
-				renderer: PDFViewerRenderer
+				renderer: PDFViewerRenderer1
 			});
 
 

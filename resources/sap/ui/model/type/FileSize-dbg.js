@@ -7,13 +7,12 @@
 // Provides class sap.ui.model.type.FileSize
 sap.ui.define([
 	"sap/base/util/each",
-	"sap/ui/core/Lib",
 	"sap/ui/core/format/FileSizeFormat",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/SimpleType",
 	"sap/ui/model/ValidateException"
-], function(each, Library, FileSizeFormat, FormatException, ParseException, SimpleType, ValidateException) {
+], function(each, FileSizeFormat, FormatException, ParseException, SimpleType, ValidateException) {
 	"use strict";
 
 	/**
@@ -25,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.SimpleType
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @param {object} [oFormatOptions]
@@ -97,7 +96,7 @@ sap.ui.define([
 			case "string":
 				vResult = this.oOutputFormat.parse(vValue);
 				if (isNaN(vResult)) {
-					oBundle = Library.getResourceBundleFor("sap.ui.core");
+					oBundle = sap.ui.getCore().getLibraryResourceBundle();
 					throw new ParseException(oBundle.getText("FileSize.Invalid"));
 				}
 				break;
@@ -118,7 +117,7 @@ sap.ui.define([
 
 	FileSize.prototype.validateValue = function(vValue) {
 		if (this.oConstraints) {
-			var oBundle = Library.getResourceBundleFor("sap.ui.core"),
+			var oBundle = sap.ui.getCore().getLibraryResourceBundle(),
 				aViolatedConstraints = [],
 				aMessages = [],
 				oInputFormat = this.oInputFormat;

@@ -32,8 +32,8 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *   replace them
 	 * @param {object}
 	 *         [mParameters=null] Additional model specific parameters (optional)
-	 * @param {sap.ui.model.Sorter[]|sap.ui.model.Sorter} [aSorters=[]]
-	 *   The sorters used initially; call {@link #sort} to replace them
+	 * @param {sap.ui.model.Sorter|sap.ui.model.Sorter[]}
+	 *         [aSorters=null] Predefined sorter or an array of sorters (optional)
 	 * @throws {Error} If the {@link sap.ui.model.Filter.NONE} filter instance is contained in
 	 *   <code>aFilters</code> together with other filters
 	 *
@@ -149,12 +149,8 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.filter
-	 * @param {sap.ui.model.Filter[]|sap.ui.model.Filter} [aFilters=[]]
-	 *   The filters to use; in case of type {@link sap.ui.model.FilterType.Application} this replaces the filters given
-	 *   in {@link sap.ui.model.Model#bindTree}; a falsy value is treated as an empty array and thus removes all filters
-	 *   of the specified type
-	 * @param {sap.ui.model.FilterType} [sFilterType]
-	 *   The type of the filter to replace; if no type is given, the behavior depends on the model implementation
+	 * @param {sap.ui.model.Filter|sap.ui.model.Filter[]} aFilters Single sap.ui.model.Filter object or an array of filter objects
+	 * @param {sap.ui.model.FilterType} sFilterType Type of the filter which should be adjusted, if it is not given, the standard behaviour applies
 	 *
 	 * @public
 	 */
@@ -164,9 +160,7 @@ sap.ui.define(['./Binding', './Filter', './Sorter'],
 	 *
 	 * @function
 	 * @name sap.ui.model.TreeBinding.prototype.sort
-	 * @param {sap.ui.model.Sorter[]} [aSorters=[]]
-	 *   The sorters to use; they replace the sorters given in {@link sap.ui.model.Model#bindTree}; a falsy value is
-	 *   treated as an empty array and thus removes all sorters
+	 * @param {sap.ui.model.Sorter[]} aSorters Array of sap.ui.model.Sorter objects
 	 *
 	 * @public
 	 */

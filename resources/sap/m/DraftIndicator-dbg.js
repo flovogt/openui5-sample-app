@@ -8,9 +8,8 @@ sap.ui.define([
 	"sap/ui/core/Control",
 	"sap/m/Label",
 	"sap/m/library",
-	"./DraftIndicatorRenderer",
-	"sap/ui/core/Lib"
-], function(Control, Label, library, DraftIndicatorRenderer, Library) {
+	"./DraftIndicatorRenderer"
+], function(Control, Label, library, DraftIndicatorRenderer) {
 	"use strict";
 
 	// shortcut for sap.m.DraftIndicatorState
@@ -25,9 +24,10 @@ sap.ui.define([
 	 * A draft indicator is {@link sap.m.Label}.
 	 *
 	 * @extends sap.ui.core.Control
+	 * @abstract
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -69,7 +69,7 @@ sap.ui.define([
 		renderer: DraftIndicatorRenderer
 	});
 
-	var oBundle = Library.getResourceBundleFor("sap.m");
+	var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 	DraftIndicator._oTEXTS = {};
 	DraftIndicator._oTEXTS[DraftIndicatorState.Saving] = oBundle.getText("DRAFT_INDICATOR_SAVING_DRAFT");
 	DraftIndicator._oTEXTS[DraftIndicatorState.Saved] = oBundle.getText("DRAFT_INDICATOR_DRAFT_SAVED");

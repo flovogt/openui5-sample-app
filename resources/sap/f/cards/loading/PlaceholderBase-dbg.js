@@ -5,8 +5,9 @@
  */
 sap.ui.define([
 	"sap/ui/core/Control",
+	"sap/ui/core/Core",
 	"sap/f/cards/loading/PlaceholderBaseRenderer"
-], function (Control, PlaceholderBaseRenderer) {
+], function (Control, Core, PlaceholderBaseRenderer) {
 	"use strict";
 
 
@@ -22,7 +23,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @private
@@ -44,7 +45,6 @@ sap.ui.define([
 				/**
 				 * Indicates whether the card has any content
 				 * @private
-				 * @ui5-restricted sap.f.cards.loading.PlaceholderBase
 				 */
 				hasContent: { type: "boolean", defaultValue: true}
 			}

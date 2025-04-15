@@ -30,7 +30,7 @@
 	width: 0.0625rem;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
-	background-color: var(--sapGroup_ContentBorderColor);
+	background-color: @sapUiGroupContentBorderColor;
 	box-sizing: border-box;
 	float: left;
 }
@@ -76,16 +76,21 @@
 	background: transparent;
 	box-sizing: border-box;
 	border: none;
+
 	font-size: 0.875rem;
 	font-style: italic;
-	color: var(--sapField_PlaceholderTextColor);
+	color: @sapField_PlaceholderTextColor;
+
 	padding: 0 0.25rem 0 0.25rem;
 	height: 100%;
 	line-height: normal;
+
 	vertical-align: inherit;
+
 	display: flex;
 	justify-content: start;
 	align-items: center;
+
 	cursor: pointer;
 
 	& > span {
@@ -113,6 +118,7 @@
 
 html.sap-phone .sapMDateTimePopupCont,
 html.sapUiMedia-Std-Phone .sapMDateTimePopupCont {
+
 	height: 100%;
 	min-width: 19.1rem;
 	overflow: auto !important; /* allow scrolling in landscape mode */
@@ -160,10 +166,8 @@ html.sap-phone .sapMDateTimePopupCont.sapMTimePickerDropDown .sapMTimePickerCont
 }
 
 html.sap-phone .sapMDateTimePopupCont {
-	background-color: var(--sapList_Background);
-
+  	background-color: @sapUiListBackground;
 	.sapUiCalContent {
-
 		& > .sapUiCalMonthPicker,
 		& > .sapUiCalYearPicker {
 			width: 100%;
@@ -180,26 +184,22 @@ html.sap-phone .sapMDateTimePopupCont {
 
 html.sapUiMedia-Std-Tablet,
 html.sapUiMedia-StdExt-Tablet {
-
 	.sapMDateTimePopupCont > .sapUiCal:not(.sapUiCalInt) {
 		width: 47%;
 		min-width: 47%;
 	}
-
 	.sapMTimePickerContainer {
 		min-width: 53%;
+		width: 53%;
 	}
 }
 
 html:not(.sapUiMedia-Std-Phone),
 html:not(.sapUiMedia-StdExt-Phone) {
-
 	.sapMDateTimePopup .sapMPopoverCont {
 		overflow: hidden auto !important; /* disable horizontal scrolling when not phone size */
 	}
-
 	.sapMDateTimePopupCont {
-
 		.sapMTPClocksContainer {
 			padding: 0.5rem;
 		}
@@ -220,9 +220,7 @@ html:not(.sapUiMedia-StdExt-Phone) {
 		display: block;
 		height: 100%;
 		padding: 0;
-
-		.sapUiCal .sapUiCalMonthView,
-		.sapUiCal .sapUiCalRow {
+		.sapUiCal .sapUiCalMonthView, .sapUiCal .sapUiCalRow {
 			padding-bottom: 0;
 		}
 	}
@@ -251,10 +249,8 @@ html:not(.sapUiMedia-StdExt-Phone) {
 	}
 
 	.sapMDateTimePopupCont {
-		background-color: var(--sapList_Background);
-
+		  background-color: @sapUiListBackground;
 		.sapUiCalContent {
-
 			& > .sapUiCalMonthPicker,
 			& > .sapUiCalYearPicker {
 				width: 100%;
@@ -263,17 +259,16 @@ html:not(.sapUiMedia-StdExt-Phone) {
 				margin: 0;
 			}
 		}
-
 		.sapMTPClocksContainer {
 			width: 100%;
 			height: auto;
-
 			.sapMTPCButtons,
 			.sapMTPCClocks {
 				margin: 0 auto;
 			}
 		}
 	}
+
 }
 
 html.sapUiMedia-Std-Tablet .sapMDynamicDateRangePopover .sapMDateTimePopupCont > .sapUiCal:not(.sapUiCalInt),
@@ -291,9 +286,7 @@ html.sapUiMedia-StdExt-Tablet .sapMDynamicDateRangePopover .sapMDateTimePopupCon
 }
 
 html.sap-desktop {
-
 	.sapMDateTimePopup {
-
 		.sapMValueStateHeaderRoot {
 			width: 100% !important;
 		}

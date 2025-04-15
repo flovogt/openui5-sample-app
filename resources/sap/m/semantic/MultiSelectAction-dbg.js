@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(['sap/m/semantic/SemanticToggleButton', "sap/ui/core/Lib"], function(SemanticToggleButton, Library) {
+sap.ui.define(['sap/m/semantic/SemanticToggleButton'], function(SemanticToggleButton) {
 	"use strict";
 
 	/**
@@ -19,7 +19,7 @@ sap.ui.define(['sap/m/semantic/SemanticToggleButton', "sap/ui/core/Lib"], functi
 	 * @extends sap.m.semantic.SemanticToggleButton
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -33,7 +33,7 @@ sap.ui.define(['sap/m/semantic/SemanticToggleButton', "sap/ui/core/Lib"], functi
 		}
 	});
 
-	var oBundle = Library.getResourceBundleFor("sap.m");
+	var oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
 
 	/**
 	 * Defines the icon url for each state

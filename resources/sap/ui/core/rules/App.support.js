@@ -5,9 +5,6 @@
  */
 /**
  * Defines Application related support rules.
- *
- * @deprecated since 1.120 No rule will survive as all will throw an error in the future.
- * @fileoverview
  */
 sap.ui.define([
 	"sap/ui/support/library",
@@ -21,6 +18,17 @@ sap.ui.define([
 	var Categories = SupportLib.Categories; // Accessibility, Performance, Memory, ...
 	var Severity = SupportLib.Severity; // Hint, Warning, Error
 	var Audiences = SupportLib.Audiences; // Control, Internal, Application
+
+	var aObsoleteFunctionNames = ["jQuery.sap.require", "$.sap.require", "sap.ui.requireSync", "jQuery.sap.sjax"];
+
+	// avoid spoiling the globalAPIRule by using Object.getOwnPropertyDescriptor
+	if (jQuery && jQuery.sap && Object.getOwnPropertyDescriptor(jQuery.sap, "sjax").value) {
+		aObsoleteFunctionNames.push("jQuery.sap.syncHead",
+			"jQuery.sap.syncGet",
+			"jQuery.sap.syncPost",
+			"jQuery.sap.syncGetText",
+			"jQuery.sap.syncGetJSON");
+	}
 
 	//**********************************************************
 	// Rule Definitions
@@ -59,17 +67,6 @@ sap.ui.define([
 					}
 				}
 			});
-
-			const aObsoleteFunctionNames = ["jQuery.sap.require", "$.sap.require", "sap.ui.requireSync", "jQuery.sap.sjax"];
-			// avoid spoiling the globalAPIRule by using Object.getOwnPropertyDescriptor
-			if (jQuery && jQuery.sap && Object.getOwnPropertyDescriptor(jQuery.sap, "sjax").value) {
-				aObsoleteFunctionNames.push(
-					"jQuery.sap.syncHead",
-					"jQuery.sap.syncGet",
-					"jQuery.sap.syncPost",
-					"jQuery.sap.syncGetText",
-					"jQuery.sap.syncGetJSON");
-			}
 
 			// checks the given module's functions code for invalidContent
 			// returns an array which contains the functions with invalid content
@@ -359,8 +356,6 @@ sap.ui.define([
 
 	/**
 	 * Check for usage of Controller Extension API.
-	 *
-	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	var oControllerExtensionRule = {
 		id: "controllerExtension",
@@ -427,8 +422,6 @@ sap.ui.define([
 
 	/**
 	 * Checks for missing super init() calls on sap.ui.core.UIComponents.
-	 *
-	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperInitRule = {
 		id: "missingInitInUIComponent",
@@ -459,8 +452,6 @@ sap.ui.define([
 
 	/**
 	 * Checks for missing super constructor calls on sap.ui.core.Component and sap.ui.core.mvc.Controller.
-	 *
-	 * @deprecated since 1.120 Will throw an error instead.
 	 */
 	 var oMissingSuperConstructorRule = {
 		id: "missingSuperConstructor",
@@ -510,11 +501,9 @@ sap.ui.define([
 		oJQueryThreeDeprecationRule,
 		/** @deprecated */
 		oJSViewRule,
-		/** @deprecated */
-		oMissingSuperConstructorRule,
-		/** @deprecated */
+
 		oMissingSuperInitRule,
-		/** @deprecated */
+		oMissingSuperConstructorRule,
 		oControllerExtensionRule
 	];
 }, true);

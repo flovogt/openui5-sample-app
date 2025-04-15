@@ -1,8 +1,9 @@
 /******************************************************************
 	Style of the RTA Add IFrame Dialog  - Horizon Theme
 *******************************************************************/
-@_sap_ui_rta_AddIFrame_BorderRadius: @sapUiFieldBorderCornerRadius; //0.25rem
-@_sap_ui_rta_AddIFrame_ButtonHoverBackgroundColor: @sapUiButtonHoverBackground; //#eaecee
+@_sap_ui_rta_AddIFrame_DelimiterLineColor: @sapUiToolbarSeparatorColor; //#d9d9d9
+@_sap_ui_rta_AddIFrame_BorderRadius: @sapUiGroupBorderCornerRadius; //0.5rem
+@_sap_ui_rta_AddIFrame_PreviewTlbarHoverBG: @sapUiButtonHoverBackground; //fff
 
 .sapUiRtaMode {
 	.sapUiRtaAddIFrameDialog {
@@ -18,6 +19,8 @@
 				.sapUiRtaAddIFrameDialogEditUrl {
 					.sapMTextArea {
 						.sapMInputBaseContentWrapper {
+							border: 0.0625rem solid @_sap_ui_rta_AddIFrame_BorderColor; //1px
+							border-radius: @_sap_ui_rta_AddIFrame_BorderRadius;
 							background-image: none;
 						}
 
@@ -40,12 +43,9 @@
 						padding-left: 0;
 						padding-right: 0.125rem;
 
-						.sapUiRtaAddIFrameDialogPreviewButton {
-							&:not(.sapMBtnDisabled):hover {
-								.sapMBtnInner {
-									background-color: @_sap_ui_rta_AddIFrame_ButtonHoverBackgroundColor;
-								}
-							}
+						&.sapMTB:hover,
+						&.sapMTB-Solid-CTX.sapMTB:hover {
+							background-color: @_sap_ui_rta_AddIFrame_PreviewTlbarHoverBG;
 						}
 					}
 				}
@@ -53,6 +53,7 @@
 
 			.sapUiRtaAddIFrameDialogPreviewGrid {
 				border-radius: @_sap_ui_rta_AddIFrame_BorderRadius;
+				padding-bottom: 0.5rem;
 			}
 		}
 	}

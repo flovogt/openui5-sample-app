@@ -11,10 +11,11 @@ sap.ui.define([
 	"sap/ui/base/Object",
 	"sap/ui/core/IconPool",
 	"sap/m/library",
-	"sap/m/OverflowToolbarLayoutData",
-	"sap/ui/core/Messaging",
-	"sap/ui/core/Lib"
-], function(BaseObject, IconPool, mobileLibrary, OverflowToolbarLayoutData, Messaging, Library) {
+	"sap/m/OverflowToolbarLayoutData"
+], function(BaseObject,
+			IconPool,
+			mobileLibrary,
+			OverflowToolbarLayoutData) {
 		"use strict";
 
 	// shortcut for sap.m.OverflowToolbarPriority
@@ -29,7 +30,7 @@ sap.ui.define([
 	* @class
 	* Defines the visual properties and placement for each supported semantic type.
 	*
-	* @version 1.134.0
+	* @version 1.120.27
 	* @private
 	* @since 1.46.0
 	* @alias sap.f.semantic.SemanticConfiguration
@@ -176,7 +177,7 @@ sap.ui.define([
 	*/
 	SemanticConfiguration._oTypeConfigs = (function () {
 		var oTypeConfigs = {},
-			oBundle = Library.getResourceBundleFor("sap.f");
+			oBundle = sap.ui.getCore().getLibraryResourceBundle("sap.f");
 
 		// Title Semantic Text Buttons
 		oTypeConfigs["sap.f.semantic.TitleMainAction"] = {
@@ -340,7 +341,7 @@ sap.ui.define([
 							return aMessages && aMessages.length > 0;
 						}
 					},
-					models: {message: Messaging.getMessageModel()},
+					models: {message: sap.ui.getCore().getMessageManager().getMessageModel()},
 					layoutData: new OverflowToolbarLayoutData({
 						priority: OverflowToolbarPriority.NeverOverflow
 					})

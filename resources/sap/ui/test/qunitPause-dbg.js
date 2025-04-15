@@ -5,7 +5,8 @@
  */
 
 /*global QUnit */
-(function() {
+sap.ui.define("sap/ui/test/qunitPause", [
+], function () {
 	"use strict";
 
 	var PAUSE_RULES = {
@@ -224,7 +225,7 @@
 		});
 	}
 
-	const qunitPause = {
+	return {
 		PAUSE_RULES: PAUSE_RULES,
 		paused: paused,
 		get pauseRule() {
@@ -249,11 +250,4 @@
 		emitResume: emitResume,
 		pollForQUnitDone: pollForQUnitDone
 	};
-
-	setupBeforeQUnit();
-	sap.ui.loader._.defineModuleSync("sap/ui/test/qunitPause.js", qunitPause);
-	/** @deprecated */
-	sap.ui.test ??= {};
-	/** @deprecated */
-	sap.ui.test.qunitPause = qunitPause;
-}());
+}, true);

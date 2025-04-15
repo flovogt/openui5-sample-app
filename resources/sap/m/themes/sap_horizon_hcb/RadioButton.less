@@ -11,7 +11,7 @@
 	}
 
 	&.sapMRbRo .sapMRbBOut {
-		stroke-width: var(--sapElement_BorderWidth);
+		stroke-width: @sapElement_BorderWidth
 	}
 }
 
@@ -34,17 +34,11 @@
 	margin: 0.6875rem;
 }
 
-.sapMRbHasLabel.sapMRb:focus::before {
-	bottom: 0.5rem;
+.sapMRbHasLabel.sapMRb:focus:before {
+	bottom: .5rem;
 	top: 0.5rem;
 	left: 0.5rem;
 	right: 0;
-}
-
-/* Right to left */
-.sapMRbG[dir=rtl] .sapMRbHasLabel.sapMRb:focus::before {
-	left: 0;
-	right: 0.5rem;
 }
 
 .sapMRbHasLabel .sapMRbB {
@@ -52,8 +46,7 @@
 }
 
 /* Align RadioButton in Form with other controls */
-.sapUiForm.sapUiFormEdit-CTX {
-
+.sapUiForm.sapUiFormEdit-CTX{
 	.sapMRb > .sapMRbB {
 		width: 2.1875rem;
 	}
@@ -72,7 +65,7 @@
 		line-height: 2rem;
 	}
 
-	.sapMRb:focus::before {
+	.sapMRb:focus:before {
 		bottom: 0.325rem;
 		top: 0.325rem;
 		left: 0.325rem;
@@ -81,19 +74,18 @@
 }
 
 .sapMRb:not(.sapMRbErr):not(.sapMRbWarn):not(.sapMRbInfo):not(.sapMRbSucc) .sapMRbB.sapMRbHoverable:hover {
-
 	.sapMRbSvg .sapMRbBOut {
-		fill: var(--sapSelectedColor); /* contrast themes specific */
+		fill: @sapUiSelected; // contrast themes specific
 	}
 }
 
 .sapMRb:not(.sapMRbErr):not(.sapMRbWarn):not(.sapMRbInfo):not(.sapMRbSucc) .sapMRbHoverable:hover .sapMRbBOut {
-	stroke: var(--sapField_Hover_BorderColor);
-	fill: var(--sapSelectedColor); /* contrast themes specific */
+	stroke: @sapUiFieldHoverBorderColor;
+	fill: @sapUiSelected; // contrast themes specific
 }
 
-.sapMRb:focus::before {
-	border: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);
+.sapMRb:focus:before {
+	border: @sapUiContentFocusWidth @sapUiContentFocusStyle @sapUiContentFocusColor;
 	bottom: 0.5rem;
 	top: 0.5rem;
 	left: 0.5rem;
@@ -101,19 +93,19 @@
 }
 
 .sapMLIBActive .sapMRbB .sapMRbBOut {
-	border: 1px solid var(--sapList_Active_TextColor);
+	border: 1px solid @sapUiListActiveTextColor;
 }
 
 .sapMLIBActive .sapMRbSel .sapMRbBOut {
-	background-color: var(--sapList_Active_Background);
+	background-color: @sapUiListActiveBackground;
 }
 
 .sapMRbDis {
-	opacity: var(--sapContent_DisabledOpacity);
+	opacity: @sapUiContentDisabledOpacity;
 }
 
 .sapMRbSel .sapMRbBInn {
-	fill: var(--sapContent_IconColor); /* contrast themes specific */
+	fill: @sapUiContentIconColor; // contrast themes specific
 }
 
 .sapMRbB .sapMRbBInn {
@@ -121,95 +113,83 @@
 }
 
 /* Value states */
-.sapMRbErr,
-.sapMRbWarn,
-.sapMRbInfo {
-
+.sapMRbErr, .sapMRbWarn, .sapMRbInfo{
 	.sapMRbB .sapMRbBOut {
-		stroke-dasharray: 4; /* contrast themes specific */
+		stroke-dasharray: 4; // contrast themes specific
 	}
 }
 
 .sapMRbErr.sapMRbSel,
 .sapMRbErr.sapMRbSel.sapMRbRo {
-
 	.sapMRbBInn {
-		fill: var(--sapField_InvalidColor);
+		fill: @sapUiFieldInvalidColor;
 		stroke: none;
 	}
 }
 
 .sapMRbErr,
 .sapMRbErr.sapMRbBTouched {
-
 	.sapMRbB .sapMRbBOut {
-		stroke: var(--sapField_InvalidColor);
-		fill: var(--sapField_InvalidBackground);
+		stroke: @sapUiFieldInvalidColor;
+		fill: @sapUiFieldInvalidBackground;
 	}
 }
 
 .sapMRbWarn.sapMRbSel,
 .sapMRbWarn.sapMRbSel.sapMRbRo {
-
 	.sapMRbBInn {
-		fill: var(--sapField_WarningColor);
+		fill: @sapUiFieldWarningColor;
 		stroke: none;
 	}
 }
 
 .sapMRbWarn,
 .sapMRbWarn.sapMRbBTouched {
-
 	.sapMRbB .sapMRbBOut {
-		stroke: var(--sapField_WarningColor);
-		fill: var(--sapField_WarningBackground);
+		stroke: @sapUiFieldWarningColor;
+		fill: @sapUiFieldWarningBackground;
 	}
 }
 
 .sapMRbSucc.sapMRbSel,
 .sapMRbSucc.sapMRbSel.sapMRbRo {
-
 	.sapMRbBInn {
-		fill: var(--sapField_SuccessColor);
+		fill: @sapUiFieldSuccessColor;
 		stroke: none;
 	}
 }
 
 .sapMRbSucc,
 .sapMRbSucc.sapMRbBTouched {
-
 	.sapMRbB .sapMRbBOut {
-		stroke: var(--sapField_SuccessColor);
-		fill: var(--sapField_SuccessBackground);
+		stroke: @sapUiFieldSuccessColor;
+		fill: @sapUiFieldSuccessBackground;
 	}
 }
 
 .sapMRbInfo.sapMRbSel,
 .sapMRbInfo.sapMRbSel.sapMRbRo {
-
 	.sapMRbBInn {
-		fill: var(--sapField_InformationColor);
+		fill: @sapUiFieldInformationColor;
 		stroke: none;
 	}
 }
 
 .sapMRbInfo,
 .sapMRbInfo.sapMRbBTouched {
-
 	.sapMRbB .sapMRbBOut {
-		stroke: var(--sapField_InformationColor);
-		fill: var(--sapField_InformationBackground);
-		stroke-width: var(--sapField_InformationBorderWidth);
+		stroke: @sapUiFieldInformationColor;
+		fill: @sapUiFieldInformationBackground;
+		stroke-width: @sapUiFieldInformationBorderWidth;
 	}
 }
 
-html[data-sap-ui-browser^='sf'] {
-	/* fix for circle width on zoom in Safari */
+html[data-sap-ui-browser^="sf"] {
+	// fix for circle width on zoom in Safari
 	.sapMRb .sapMRbBOut {
 		stroke-width: 2px;
 	}
-
-	/* fix for circle width on zoom in Safari */
+	// fix for circle width on zoom in Safari
 	.sapMRb.sapMRbRo .sapMRbBOut,
 	.sapMRb.sapMRbInfo .sapMRbBOut {
 		stroke-width: 1px;

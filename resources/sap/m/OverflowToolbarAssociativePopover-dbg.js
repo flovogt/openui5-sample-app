@@ -30,7 +30,7 @@ sap.ui.define(['sap/ui/core/Element', './Popover', './OverflowToolbarAssociative
 	 * @extends sap.m.Popover
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @private
@@ -75,7 +75,7 @@ sap.ui.define(['sap/ui/core/Element', './Popover', './OverflowToolbarAssociative
 			oControlObject;
 
 		if (sResult) {
-			oControlObject = Element.getElementById(sResult);
+			oControlObject = Element.registry.get(sResult);
 			if (oControlObject) {
 				this._postProcessControl(oControlObject);
 			}
@@ -198,7 +198,7 @@ sap.ui.define(['sap/ui/core/Element', './Popover', './OverflowToolbarAssociative
 	 */
 	OverflowToolbarAssociativePopover.prototype._getAllContent = function () {
 		var aAssociatedContent = this.getAssociatedContent().map(function(sId) {
-			return Element.getElementById(sId);
+			return Element.registry.get(sId);
 		});
 
 		if (this.getPlacement() === PlacementType.Top) {

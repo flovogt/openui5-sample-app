@@ -32,8 +32,7 @@ sap.ui.define([
 	'sap/base/Log',
 	'sap/ui/core/ValueStateSupport',
 	"sap/ui/core/InvisibleMessage",
-	"sap/ui/core/Lib",
-	"sap/ui/core/ResizeHandler"
+	"sap/ui/core/Lib"
 ],
 function(
 	Element,
@@ -63,8 +62,7 @@ function(
 	Log,
 	ValueStateSupport,
 	InvisibleMessage,
-	Library,
-	ResizeHandler
+	Library
 ) {
 		"use strict";
 
@@ -107,16 +105,10 @@ function(
 		 * @see {@link fiori:https://experience.sap.com/fiori-design-web/select/ Select}
 		 *
 		 * @extends sap.ui.core.Control
-		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ILabelable
-		 *
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
-		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
-		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
+		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @public
@@ -232,7 +224,7 @@ function(
 					 */
 					selectedItemId: {
 						type: "string",
-						group: "Data",
+						group: "Misc",
 						defaultValue: ""
 					},
 
@@ -509,13 +501,7 @@ function(
 								type: "sap.ui.core.Item"
 							}
 						}
-					},
-
-					/**
-					 * This event is triggered prior to the opening of the <code>sap.m.SelectList</code>.
-					 * @since 1.130
-					 */
-					beforeOpen: {}
+					}
 				},
 				designtime: "sap/m/designtime/Select.designtime"
 			},
@@ -975,8 +961,6 @@ function(
 
 			// call the hook to add additional content to the list
 			this.addContent();
-
-			this.fireEvent("beforeOpen");
 
 			this.addContentToFlex();
 
@@ -1455,34 +1439,6 @@ function(
 			this._referencingLabelsHandlers = [];
 		};
 
-		/**
-		 * Called after rendering.
-		 *
-		 * @private
-		 */
-		Select.prototype._attachResizeHandlers = function () {
-			if (this.getAutoAdjustWidth() && this.getPicker() && this.getPickerType() === "Popover") {
-				this._iResizeHandlerId = ResizeHandler.register(this, this._onResizeRef.bind(this));
-			}
-		};
-
-		/**
-		 * Called after rendering.
-		 *
-		 * @private
-		 */
-		Select.prototype._detachResizeHandlers = function () {
-			if (this._iResizeHandlerId) {
-				ResizeHandler.deregister(this._iResizeHandlerId);
-				this._iResizeHandlerId = null;
-			}
-		};
-
-		Select.prototype._onResizeRef = function() {
-			//we make sure the repositioning of the popup, due to its openBy parent`s eidth change, is supressed
-			this.getPicker().oPopup.setFollowOf(true);
-		};
-
 		Select.prototype.onBeforeRendering = function() {
 			if (!this._oInvisibleMessage) {
 				this._oInvisibleMessage = InvisibleMessage.getInstance();
@@ -1506,8 +1462,6 @@ function(
 		};
 
 		Select.prototype.onAfterRendering = function() {
-			this._detachResizeHandlers();
-			this._attachResizeHandlers();
 
 			// rendering phase is finished
 			this.bRenderingPhase = false;
@@ -1748,9 +1702,8 @@ function(
 				oEvent.setMarked();
 
 				this.close();
+				this._revertSelection();
 			}
-
-			this._revertSelection();
 		};
 
 		/**
@@ -1784,7 +1737,7 @@ function(
 		 * @private
 		 */
 		Select.prototype.onkeydown = function(oEvent) {
-			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
+			if (oEvent.which === KeyCodes.SPACE) {
 				this._bSpaceDown = true;
 			}
 
@@ -1811,7 +1764,7 @@ function(
 				return;
 			}
 
-			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
+			if (oEvent.which === KeyCodes.SPACE) {
 				if (!oEvent.shiftKey && !this._bSupressNextAction) {
 
 					// mark the event for components that needs to know if the event was handled
@@ -2062,7 +2015,7 @@ function(
 				return;
 			}
 
-			var oControl = Element.getElementById(oEvent.relatedControlId),
+			var oControl = Element.registry.get(oEvent.relatedControlId),
 				oFocusDomRef = oControl && oControl.getFocusDomRef();
 
 			if (Device.system.desktop && containsOrEquals(oPicker.getFocusDomRef(), oFocusDomRef)) {
@@ -2121,7 +2074,7 @@ function(
 			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem, true);
 
 			if (typeof vItem === "string") {
-				vItem = Element.getElementById(vItem);
+				vItem = Element.registry.get(vItem);
 			}
 
 			sKey = vItem ? vItem.getKey() : "";
@@ -2466,14 +2419,6 @@ function(
 			return "selectedKey";
 		};
 
-		Select.prototype.getFormObservingProperties = function() {
-			return ["selectedKey"];
-		};
-
-		Select.prototype.getFormRenderAsControl = function () {
-			return false;
-		};
-
 		/**
 		 * Retrieves an item by searching for the given property/value from the aggregation named <code>items</code>.
 		 *
@@ -2682,9 +2627,7 @@ function(
 				}
 				oDelegate = {
 					ontap: function () {
-						if (window.getSelection().type !== "Range") {
-							that.focus();
-						}
+						that.focus();
 					}
 				};
 				that._referencingLabelsHandlers.push({
@@ -2698,7 +2641,7 @@ function(
         Select.prototype._clearReferencingLabelsHandlers = function () {
 			var oLabel;
             this._referencingLabelsHandlers.forEach(function (oHandler) {
-				oLabel = Element.getElementById(oHandler.sLabelId);
+				oLabel = Element.registry.get(oHandler.sLabelId);
 				if (oLabel) {
 					oLabel.removeEventDelegate(oHandler.oDelegate);
 				}
@@ -2721,7 +2664,7 @@ function(
 				return aLabelIDs.indexOf(sId) === iIndex;
 			})
 			.map(function(sLabelID) {
-				return Element.getElementById(sLabelID);
+				return Element.registry.get(sLabelID);
 			})
 			.filter(Boolean);
 
@@ -2886,7 +2829,7 @@ function(
 		 *
 		 * Default value is <code>null</code>.
 		 *
-		 * @param {sap.ui.core.ID | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
+		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code>.
 		 * If the value of <code>null</code> is provided, the first enabled item will be selected (if any items exist).
@@ -2898,7 +2841,7 @@ function(
 
 			if (typeof vItem === "string") {
 				this.setAssociation("selectedItem", vItem, true);
-				vItem = Element.getElementById(vItem);
+				vItem = Element.registry.get(vItem);
 			}
 
 			if (!(vItem instanceof Item) && vItem !== null) {
@@ -3087,7 +3030,7 @@ function(
 		 */
 		Select.prototype.getSelectedItem = function() {
 			var vSelectedItem = this.getAssociation("selectedItem");
-			return (vSelectedItem === null) ? null : Element.getElementById(vSelectedItem) || null;
+			return (vSelectedItem === null) ? null : Element.registry.get(vSelectedItem) || null;
 		};
 
 		/**
@@ -3144,7 +3087,7 @@ function(
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | sap.ui.core.ID | sap.ui.core.Item} vItem The item to be removed or its index or ID.
+		 * @param {int | string | sap.ui.core.Item} vItem The item to be removed or its index or ID.
 		 * @returns {sap.ui.core.Item|null} The removed item or <code>null</code>.
 		 * @public
 		 */
@@ -3315,20 +3258,13 @@ function(
 		};
 
 		/**
-		 * @override
-		 */
-		Select.prototype.getIdForLabel = function () {
-			return this.getId() + "-hiddenInput";
-		};
-
-		/**
-		 * Returns if the control can be bound to a label
+		 * Returns the DOMNode Id of the labelable HTML element for the <code>sap.m.Select</code>.
 		 *
-		 * @returns {boolean} <code>true</code> if the control can be bound to a label
+		 * @return {string} Id of the labelable HTML element
 		 * @public
 		 */
 		Select.prototype.hasLabelableHTMLElement = function () {
-			return true;
+			return this.getId() + "-hiddenSelect";
 		};
 
 		/**

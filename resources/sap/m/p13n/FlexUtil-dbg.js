@@ -3,12 +3,13 @@
  * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
-sap.ui.define([], () => {
+sap.ui.define([
+], function () {
 	"use strict";
 
-	let pWriteAPI;
+	var pWriteAPI;
 
-	const FlexUtil = {
+	var FlexUtil = {
 
 		/**
 		 * Method which reduces a propertyinfo map to changecontent relevant attributes.
@@ -19,17 +20,17 @@ sap.ui.define([], () => {
 		 *
 		 * @returns {object} Object containing reduced content
 		 */
-		_getChangeContent: function(oProperty, aDeltaAttributes) {
+		_getChangeContent: function (oProperty, aDeltaAttributes) {
 
-			const oChangeContent = {};
+			var oChangeContent = {};
 
 			// Index
 			if (oProperty.index >= 0) {
 				oChangeContent.index = oProperty.index;
 			}
 
-			aDeltaAttributes.forEach((sAttribute) => {
-				if (oProperty.hasOwnProperty(sAttribute)) {
+			aDeltaAttributes.forEach(function(sAttribute) {
+				if (oProperty.hasOwnProperty(sAttribute)){
 					oChangeContent[sAttribute] = oProperty[sAttribute];
 				}
 			});
@@ -38,9 +39,9 @@ sap.ui.define([], () => {
 		},
 
 		_hasProperty: function(aPropertyInfo, sName) {
-			return aPropertyInfo.some((oProperty) => {
+			return aPropertyInfo.some(function(oProperty){
 				//First check unique name
-				let bValid = oProperty.name === sName || sName == "$search";
+				var bValid = oProperty.name === sName || sName == "$search";
 
 				//Use path as Fallback
 				bValid = bValid ? bValid : oProperty.path === sName;
@@ -51,7 +52,7 @@ sap.ui.define([], () => {
 
 		createConditionChange: function(sChangeType, oControl, sFieldPath, oCondition) {
 			delete oCondition.filtered;
-			const oConditionChange = {
+			var oConditionChange = {
 				selectorElement: oControl,
 				changeSpecificData: {
 					changeType: sChangeType,
@@ -67,10 +68,10 @@ sap.ui.define([], () => {
 
 		_requireWriteAPI: function() {
 			if (!pWriteAPI) {
-				pWriteAPI = new Promise((resolve, reject) => {
+				pWriteAPI = new Promise(function (resolve, reject) {
 					sap.ui.require([
 						"sap/ui/fl/write/api/ControlPersonalizationWriteAPI"
-					], (ControlPersonalizationWriteAPI) => {
+					], function (ControlPersonalizationWriteAPI) {
 						resolve(ControlPersonalizationWriteAPI);
 					});
 				});
@@ -78,15 +79,13 @@ sap.ui.define([], () => {
 			return pWriteAPI;
 		},
 
-		handleChanges: function(aChanges, bIgnoreVM, bTransient) {
+		handleChanges: function (aChanges, bIgnoreVM, bTransient) {
 
 			if (bTransient) {
-				aChanges.forEach((oChange) => {
-					oChange.transient = true;
-				});
+				aChanges.forEach((oChange) => {oChange.transient = true;});
 			}
 
-			return FlexUtil._requireWriteAPI().then((ControlPersonalizationWriteAPI) => {
+			return FlexUtil._requireWriteAPI().then(function(ControlPersonalizationWriteAPI){
 				return ControlPersonalizationWriteAPI.add({
 					changes: aChanges,
 					ignoreVariantManagement: bIgnoreVM
@@ -94,23 +93,22 @@ sap.ui.define([], () => {
 			});
 		},
 
-		saveChanges: function(oControl, aDirtyChanges) {
-			return FlexUtil._requireWriteAPI().then((ControlPersonalizationWriteAPI) => {
+		saveChanges: function (oControl, aDirtyChanges) {
+			return FlexUtil._requireWriteAPI().then(function(ControlPersonalizationWriteAPI){
 				return ControlPersonalizationWriteAPI.save({
-					selector: oControl,
-					changes: aDirtyChanges
+					selector: oControl, changes: aDirtyChanges
 				});
 			});
 		},
 
 		restore: function(mPropertyBag) {
-			return FlexUtil._requireWriteAPI().then((ControlPersonalizationWriteAPI) => {
+			return FlexUtil._requireWriteAPI().then(function(ControlPersonalizationWriteAPI){
 				return ControlPersonalizationWriteAPI.restore(mPropertyBag);
 			});
 		},
 
 		reset: function(mPropertyBag) {
-			return FlexUtil._requireWriteAPI().then((ControlPersonalizationWriteAPI) => {
+			return FlexUtil._requireWriteAPI().then(function(ControlPersonalizationWriteAPI){
 				return ControlPersonalizationWriteAPI.reset(mPropertyBag);
 			});
 		}

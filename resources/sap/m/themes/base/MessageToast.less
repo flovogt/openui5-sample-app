@@ -13,19 +13,19 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: pre-line;
-	font-size: var(--sapFontSize);
-	font-family: var(--sapFontFamily);
+	font-size: @sapFontSize;
+	font-family: @sapUiFontFamily;
 	font-weight: normal;
 	padding: 1rem;
-	background: var(--sapIndicationColor_9_Background);
-	color: var(--sapContent_ContrastTextColor);
-	box-shadow: var(--sapContent_Lite_Shadow);
-	border-radius: var(--sapElement_BorderCornerRadius);
+	background: @sapUiListBackground;
+	color: @sapUiListTextColor;
+	box-shadow: @sapUiContentShadow2;
+	border-radius: @sapUiElementBorderCornerRadius;
 }
 
 .sapMMessageToast.sapMFocus {
-	outline-width: var(--sapContent_FocusWidth);
-	outline-style: var(--sapContent_FocusStyle);
-	outline-color: var(--sapContent_FocusColor);
-	outline-offset: ~"calc(var(--sapContent_FocusWidth) * -1)";
+	outline-width: @sapUiContentFocusWidth;
+	outline-style: @sapUiContentFocusStyle;
+	outline-color: @sapUiContentFocusColor;
+	outline-offset: -@sapUiContentFocusWidth;
 }

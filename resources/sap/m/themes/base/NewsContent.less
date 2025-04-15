@@ -8,15 +8,15 @@
 	outline: none;
 	width: 100%;
 	height: 3.5625rem;
-	color: var(--sapTile_TextColor);
-	background-color: var(--sapTile_Background);
+	color: @sapUiTileTextColor;
+	background-color: @sapUiTileBackground;
 }
 
 .sapMNwCCTxt {
 	min-height: fit-content;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-family: var(--sapFontFamily);
+	font-family: @sapUiFontFamily;
 	font-weight: normal;
 	margin-top: 0.1875rem;
 	max-width: 20.5rem;
@@ -33,7 +33,6 @@
 
 .Stretch .sapMNwCCTxt {
 	max-width: none;
-
 	.sapMFT {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
@@ -49,28 +48,23 @@
 	-webkit-box-orient: vertical;
 }
 
-.Stretch {
-
-	.sapMTileCnt.News .sapMNwC {
+.Stretch{
+	.sapMTileCnt.News .sapMNwC{
 		height: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-
-		.sapMNwCSbh {
+		.sapMNwCSbh{
 			max-width: none;
 			padding-top: 0.25rem;
-
-			.sapMFT {
+			.sapMFT{
 				word-wrap: break-word;
 				white-space: normal;
 			}
 		}
 	}
-
 	.sapMNwCExtend {
 		height: 100%;
-
 		.sapMFT {
 			display: -webkit-box;
 			-webkit-line-clamp: 1;
@@ -84,20 +78,19 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-family: var(--sapFontFamily);
+	font-family: @sapUiFontFamily;
 	font-weight: normal;
 	max-width: 20.5rem;
 	width: 100%;
 	display: inline-block;
 	line-height: 1.1875rem;
-	color: var(--sapTile_TextColor);
+	color: @sapUiTileTextColor;
 	font-size: @sapMFontMediumSize;
 }
 
-.sapMNwCCTxt .sapMText,
-.sapMNwCCTxt .sapMFT {
+.sapMNwCCTxt .sapMText, .sapMNwCCTxt .sapMFT {
 	font-size: @sapMFontMediumSize;
-	color: var(--sapContent_ContrastTextColor);
+	color: @sapUiContentContrastTextColor;
 	overflow-wrap: break-word;
 	white-space: pre-line;
 }
@@ -106,13 +99,7 @@
 	outline: none;
 }
 
-.sapMNwC:focus {
-	outline: var(--sapContent_FocusWidth) var(--sapContent_FocusStyle) var(--sapContent_FocusColor);
-	outline-offset: 1px;
-}
-
 .sapMTileSmallPhone {
-
 	.sapMNwC {
 		height: 3.188rem;
 	}
@@ -120,15 +107,13 @@
 	.sapMNwCCTxt {
 		max-width: 17.75rem;
 		padding: 0;
-
 		.sapMText {
 			line-height: 1.063rem;
 		}
 	}
 
-	&.sapMGTStretch {
-
-		.sapMNwCCTxt {
+	&.sapMGTStretch{
+		.sapMNwCCTxt{
 			max-width: none;
 		}
 	}
@@ -138,20 +123,19 @@
 		line-height: 1.063rem;
 	}
 
-	.sapMNwCCTxt .sapMText,
-	.sapMNwCSbh {
-		font-size: var(--sapFontSmallSize);
+	.sapMNwCCTxt .sapMText, .sapMNwCSbh {
+		font-size: @sapMFontSmallSize;
 	}
 
 	.sapMTileSmallPhone.Stretch {
-
 		.sapMNwCSbh {
 			padding-top: 0.5rem;
 		}
-
 		.sapMNwCSbh > .sapMFT {
 			white-space: nowrap;
 			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 			text-overflow: ellipsis;
 		}
 	}

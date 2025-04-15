@@ -11,33 +11,31 @@
  * This API is independent from any other part of the UI5 framework. This allows it to be loaded beforehand, if it is needed, to create the UI5 bootstrap
  * dynamically depending on the capabilities of the browser or device.
  *
- * @version 1.134.0
+ * @version 1.120.27
  * @namespace
  * @name sap.ui.Device
  * @public
  */
 
-// Introduce namespace if it does not yet exist
-// ui5lint-disable no-globals
+/*global console */
+
+//Introduce namespace if it does not yet exist
 if (typeof window.sap !== "object" && typeof window.sap !== "function") {
 	window.sap = {};
 }
 if (typeof window.sap.ui !== "object") {
 	window.sap.ui = {};
 }
-// ui5lint-enable no-globals
 
 (function() {
 	"use strict";
 
-	// Skip initialization if API is already available
-	// ui5lint-disable no-globals
+	//Skip initialization if API is already available
 	if (typeof window.sap.ui.Device === "object" || typeof window.sap.ui.Device === "function") {
-		var apiVersion = "1.134.0";
+		var apiVersion = "1.120.27";
 		window.sap.ui.Device._checkAPIVersion(apiVersion);
 		return;
 	}
-	// ui5lint-enable no-globals
 
 	var Device = {};
 
@@ -107,7 +105,7 @@ if (typeof window.sap.ui !== "object") {
 
 	//Only used internal to make clear when Device API is loaded in wrong version
 	Device._checkAPIVersion = function(sVersion) {
-		var v = "1.134.0";
+		var v = "1.120.27";
 		if (v != sVersion) {
 			oLogger.log(WARNING, "Device API version differs: " + v + " <-> " + sVersion);
 		}
@@ -472,15 +470,6 @@ if (typeof window.sap.ui !== "object") {
 	 * @public
 	 */
 	/**
-	 * The name of the browser for reporting use cases.
-	 *
-	 * @see sap.ui.Device.browser.BROWSER
-	 * @name sap.ui.Device.browser.reportingName
-	 * @type string
-	 * @private
-	 * @ui5-restricted sap.ui.core
-	 */
-	/**
 	 * The version of the browser as <code>string</code>.
 	 *
 	 * Might be empty if no version can be determined.
@@ -630,17 +619,8 @@ if (typeof window.sap.ui !== "object") {
 	 * @name sap.ui.Device.browser.BROWSER.ANDROID
 	 * @public
 	 */
-	/**
-	 * Edge stock browser name.
-	 *
-	 * @see sap.ui.Device.browser.name
-	 * @name sap.ui.Device.browser.BROWSER.EDGE
-	 * @private
-	 * @ui5-restricted sap.ui.core
-	 */
 
-	const BROWSER = {
-		"EDGE": "ed",
+	var BROWSER = {
 		"FIREFOX": "ff",
 		"CHROME": "cr",
 		"SAFARI": "sf",
@@ -696,8 +676,7 @@ if (typeof window.sap.ui !== "object") {
 					versionStr: "" + fVersion,
 					version: fVersion,
 					mozilla: true,
-					mobile: oExpMobile.test(sUserAgent),
-					reportingName: BROWSER.FIREFOX
+					mobile: oExpMobile.test(sUserAgent)
 				};
 			} else {
 				// unknown mozilla browser
@@ -716,10 +695,8 @@ if (typeof window.sap.ui !== "object") {
 			}
 			oExpMobile = /Mobile/;
 			var aChromeMatch = sUserAgent.match(/(Chrome|CriOS)\/(\d+\.\d+).\d+/);
-			var aEdgeMatch = sUserAgent.match(/(Edg)\/(\d+\.\d+).\d+/);
 			var aFirefoxMatch = sUserAgent.match(/FxiOS\/(\d+\.\d+)/);
 			var aAndroidMatch = sUserAgent.match(/Android .+ Version\/(\d+\.\d+)/);
-			let sReportingName;
 
 			if (aChromeMatch || aFirefoxMatch || aAndroidMatch) {
 				var sName, sVersion, bMobile;
@@ -727,13 +704,12 @@ if (typeof window.sap.ui !== "object") {
 					sName = BROWSER.CHROME;
 					bMobile = oExpMobile.test(sUserAgent);
 					sVersion = parseFloat(aChromeMatch[2]);
-					sReportingName = aEdgeMatch ? BROWSER.EDGE : BROWSER.CHROME;
 				} else if (aFirefoxMatch) {
-					sName = sReportingName = BROWSER.FIREFOX;
+					sName = BROWSER.FIREFOX;
 					bMobile = true;
 					sVersion = parseFloat(aFirefoxMatch[1]);
 				} else if (aAndroidMatch) {
-					sName = sReportingName = BROWSER.ANDROID;
+					sName = BROWSER.ANDROID;
 					bMobile = oExpMobile.test(sUserAgent);
 					sVersion = parseFloat(aAndroidMatch[1]);
 				}
@@ -744,8 +720,7 @@ if (typeof window.sap.ui !== "object") {
 					versionStr: "" + sVersion,
 					version: sVersion,
 					webkit: true,
-					webkitVersion: webkitVersion,
-					reportingName: sReportingName
+					webkitVersion: webkitVersion
 				};
 			} else { // Safari might have an issue with sUserAgent.match(...); thus changing
 				var oExp = /Version\/(\d+\.\d+).*Safari/;
@@ -754,14 +729,10 @@ if (typeof window.sap.ui !== "object") {
 					oResult =  {
 						name: BROWSER.SAFARI,
 						fullscreen: bStandalone === undefined ? false : bStandalone,
-						/**
-						 * @deprecated as of version 1.98
-						 */
 						webview: /SAPFioriClient/.test(sUserAgent),
 						mobile: oExpMobile.test(sUserAgent),
 						webkit: true,
-						webkitVersion: webkitVersion,
-						reportingName: BROWSER.SAFARI
+						webkitVersion: webkitVersion
 					};
 					var aParts = oExp.exec(sUserAgent);
 					if (aParts) {
@@ -785,8 +756,7 @@ if (typeof window.sap.ui !== "object") {
 				name: "",
 				versionStr: "",
 				version: -1,
-				mobile: false,
-				reportingName: ""
+				mobile: false
 			};
 		}
 
@@ -1951,8 +1921,7 @@ if (typeof window.sap.ui !== "object") {
 	setResizeInfo(Device.resize);
 	setOrientationInfo(Device.orientation);
 
-	// Add API to global namespace
-	// ui5lint-disable-next-line no-globals
+	//Add API to global namespace
 	window.sap.ui.Device = Device;
 
 	// Add handler for orientationchange and resize after initialization of Device API

@@ -5,10 +5,8 @@
  */
 
 // Provides default renderer for control sap.f.AvatarGroupRenderer
-sap.ui.define([
-	"sap/m/AvatarSize",
-	"./library"],
-	function (AvatarSize, library) {
+sap.ui.define(["sap/m/AvatarSize"],
+	function (AvatarSize) {
 		"use strict";
 
 		/**
@@ -35,8 +33,7 @@ sap.ui.define([
 				sAvatarGroupTypeClass = sAvatarGroupClass + sGroupType,
 				aItems = oAvatarGroup.getItems(),
 				bShowMoreButton = oAvatarGroup._shouldShowMoreButton(),
-				bInteractive = oAvatarGroup.getProperty("_interactive"),
-				sTooltip = oAvatarGroup.getTooltip_AsString();
+				bInteractive = oAvatarGroup.getProperty("_interactive");
 
 			oRm.openStart("div", oAvatarGroup)
 				.class(sAvatarGroupClass)
@@ -55,7 +52,7 @@ sap.ui.define([
 				oRm.style("width", "auto");
 			}
 
-			if (sGroupType === library.AvatarGroupType.Group) {
+			if (sGroupType === "Group") {
 				oRm.attr("role", "button");
 			}
 
@@ -64,10 +61,6 @@ sap.ui.define([
 				oRm.style("min-width", sAvatarCustomDisplaySize);
 				oRm.style("font-size", sAvatarCustomFontSize);
 				oRm.style("line-height", sAvatarCustomDisplaySize);
-			}
-
-			if (sTooltip && sGroupType === library.AvatarGroupType.Group) {
-				oRm.attr("title", sTooltip);
 			}
 
 			oRm.openEnd();

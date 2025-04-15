@@ -82,7 +82,6 @@ sap.ui.define([],
 			oRm.class("sapMTimePickerSlider");
 			TimePickerSliderRenderer.addItemValuesCssClass(oRm, oControl);
 			oRm.attr("unselectable", "on");
-			oRm.attr("role", "listitem");
 			oRm.openEnd();
 
 			//render selection frame, same height - border height

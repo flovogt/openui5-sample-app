@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
-sap.ui.define(["sap/ui/core/Lib"], function (Library) {
+sap.ui.define(["sap/ui/core/Core"], function (Core) {
 	"use strict";
 
 	var MessageViewRenderer = {
@@ -14,7 +14,7 @@ sap.ui.define(["sap/ui/core/Lib"], function (Library) {
 	var CSS_CLASS = "sapMMsgView";
 
 	MessageViewRenderer.render = function (oRm, oControl) {
-		var oResourceBundle = Library.getResourceBundleFor("sap.m");
+		var oResourceBundle = Core.getLibraryResourceBundle("sap.m");
 
 		oRm.openStart("section", oControl);
 		oRm.class(CSS_CLASS);

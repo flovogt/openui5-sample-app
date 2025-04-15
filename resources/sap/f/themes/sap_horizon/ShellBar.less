@@ -34,6 +34,56 @@
 		height: 3.25rem;
 	}
 
+	// Copilot
+	.CPImage,
+	& .sapMIBar.sapMTB .CPImage {
+		&:after {
+			position: absolute;
+			content: "";
+			left: 3px;
+			right: 3px;
+			top: 3px;
+			bottom: 3px;
+			outline: none;
+			pointer-events: none;
+			border-radius: 0.5rem;
+		}
+		.color1 {
+			stop-color: #0070F2;
+		}
+		.color2 {
+			stop-color: #EBF8FF;
+		}
+		.opacity7 {
+			stop-opacity:0.7;
+		}
+		.opacity36 {
+			stop-opacity: 0.36;
+		}
+		.opacity2 {
+			stop-opacity: 0.2;
+		}
+		&:focus {
+			outline: @sapUiContentFocusWidth solid @sapUiContentFocusColor;
+			border-radius: 0.375rem;
+			background-color: @sapUiShellActiveBackground;
+			color: @sapUiShellActiveTextColor;
+			&:after {
+				box-shadow: @sapUiContentSelectedShadow;
+			}
+		}
+		&:hover:not(:focus) {
+			background: @sapUiShellHoverBackground;
+
+			&:after {
+				box-shadow: @sapUiContentInteractionShadow;
+			}
+		}
+		html[data-sap-ui-browser^="ie"] &:focus:before {
+			border-color: @sapUiContentContrastFocusColor;
+		}
+	}
+
 	&.sapMPageHeader .sapMIBar,
 	.sapMIBar {
 		height: 3.25rem;
@@ -46,7 +96,6 @@
 		background-color: @sapUiShellActiveBackground;
 		border-color: @sapUiShellActiveBackground;
 	}
-
 	.sapFShellBarProfile:not(:focus):hover {
 		box-shadow: 0 0 0.125rem 0 fade(@sapContent_ShadowColor, 72);
 	}
@@ -61,7 +110,6 @@
 		.sapMBtn:not(:hover) .sapMBtnInner.sapMBtnTransparent::after,
 		.sapMBtnTransparent {
 			color: @sapUiShellTextColor;
-			background: @sapUiButtonLiteBackground;
 		}
 
 		.sapMBtn:hover > .sapMBtnTransparent.sapMBtnHoverable:not(.sapMBtnActive):not(.sapMToggleBtnPressed) bdi,
@@ -71,13 +119,12 @@
 
 		.sapMBtn:hover > .sapMBtnHoverable:not(.sapMBtnActive) {
 			background: @sapUiShellHoverBackground;
-			border: 1px solid @sapUiButtonLiteHoverBorderColor;
-			color: @sapUiShellTextColor;
+			box-shadow: @sapUiContentInteractionShadow;
+			border-color: @sapUiButtonLiteBorderColor;
 		}
 
 		.sapMBtn:hover > .sapMBtnHoverable.sapMBtnActive {
-			background: @sapUiShellActiveBackground;
-			border: 1px solid @sapUiButtonLiteActiveBorderColor;
+			background: @sapUiShellHoverBackground;
 			color: @sapUiShellActiveTextColor;
 		}
 
@@ -108,11 +155,6 @@
 		&:focus {
 			outline-offset: -0.125rem;
 		}
-	}
-
-	//Primary Title
-	.sapFShellBarPrimaryTitle {
-		color: var(--sapShell_SubBrand_TextColor);
 	}
 
 	//Second Title
@@ -206,7 +248,7 @@
 
 			.sapMSFB:hover {
 				background: @sapUiShellHoverBackground;
-				box-shadow: @sapUiButtonLiteHoverBorderColor;
+				box-shadow: @sapUiContentInteractionShadow;
 				border-radius: 1.125rem;
 				height: 1.75rem;
 				color: @sapUiShellInteractiveTextColor;
@@ -233,7 +275,6 @@
 		.sapMSF:not(.sapMSFDisabled):hover .sapMSFF {
 			background-color: @sapUiShellHoverBackground;
 			box-shadow: @sapUiFieldHoverShadow;
-			border-bottom: 1px solid @sapUiFieldHoverBorderColor;
 		}
 
 		.sapMSFI {

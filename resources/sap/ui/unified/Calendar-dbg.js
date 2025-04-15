@@ -5,11 +5,9 @@
  */
 //Provides control sap.ui.unified.Calendar.
 sap.ui.define([
-	"sap/base/i18n/Formatting",
-	"sap/base/i18n/Localization",
-	'sap/base/i18n/date/CalendarType',
+	'sap/ui/core/CalendarType',
 	'sap/ui/core/Control',
-	"sap/ui/core/Element",
+	'sap/ui/core/Core',
 	'sap/ui/core/LocaleData',
 	'sap/ui/unified/calendar/CalendarUtils',
 	'sap/ui/unified/DateTypeRange',
@@ -31,13 +29,12 @@ sap.ui.define([
 	"sap/ui/dom/containsOrEquals",
 	"sap/base/util/deepEqual",
 	"sap/base/Log",
-	"sap/base/i18n/date/CalendarWeekNumbering"
+	"sap/ui/core/Configuration",
+	"sap/ui/core/date/CalendarWeekNumbering"
 ], function(
-	Formatting,
-	Localization,
 	CalendarType,
 	Control,
-	Element,
+	oCore,
 	LocaleData,
 	CalendarUtils,
 	DateTypeRange,
@@ -59,7 +56,8 @@ sap.ui.define([
 	containsOrEquals,
 	deepEqual,
 	Log,
-	_CalendarWeekNumbering // type of `calendarWeekNumbering`
+	Configuration,
+	CalendarWeekNumbering
 ) {
 	"use strict";
 
@@ -78,7 +76,7 @@ sap.ui.define([
 	 * Basic Calendar.
 	 * This calendar is used for DatePickers
 	 * @extends sap.ui.core.Control
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -92,16 +90,12 @@ sap.ui.define([
 		properties : {
 
 			/**
-			 * Determines if an interval of dates can be selected.
-			 *
-			 * <b>Note:</b> This property should be set to <code>false</code> if <code>singleSelection</code> is set to <code>false</code>, as selecting multiple intervals is not supported.
+			 * If set, interval selection is allowed
 			 */
 			intervalSelection : {type : "boolean", group : "Behavior", defaultValue : false},
 
 			/**
-			 * Determines if a single date or single interval, when <code>intervalSelection</code> is set to <code>true</code>, can be selected.
-			 *
-			 * <b>Note:</b> This property should be set to <code>true</code> if <code>intervalSelection</code> is set to <code>true</code>, as selecting multiple intervals is not supported.
+			 * If set, only a single date or interval, if intervalSelection is enabled, can be selected
 			 */
 			singleSelection : {type : "boolean", group : "Behavior", defaultValue : true},
 
@@ -149,14 +143,14 @@ sap.ui.define([
 			 * If not set, the calendar type of the global configuration is used.
 			 * @since 1.34.0
 			 */
-			primaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
+			primaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
 
 			/**
 			 * If set, the days are also displayed in this calendar type
 			 * If not set, the dates are only displayed in the primary calendar type
 			 * @since 1.34.0
 			 */
-			secondaryCalendarType : {type : "sap.base.i18n.date.CalendarType", group : "Appearance"},
+			secondaryCalendarType : {type : "sap.ui.core.CalendarType", group : "Appearance"},
 
 			/**
 			 * Width of Calendar
@@ -220,7 +214,7 @@ sap.ui.define([
 			 * Note: This property should not be used with firstDayOfWeek property.
 			 * @since 1.108.0
 			 */
-			calendarWeekNumbering : { type : "sap.base.i18n.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
+			calendarWeekNumbering : { type : "sap.ui.core.date.CalendarWeekNumbering", group : "Appearance", defaultValue: null},
 
 			/**
 			 * Holds a reference to a UI5Date or JavaScript Date object to define the initially navigated date in the calendar.
@@ -241,43 +235,16 @@ sap.ui.define([
 			selectedDates : {type : "sap.ui.unified.DateRange", multiple : true, singularName : "selectedDate"},
 
 			/**
-			 * Dates or date ranges with type, to visualize special days.
+			 * Dates or date ranges with type, to visualize special days in the <code>Calendar</code>.
+			 * If one day is assigned to more than one Type, only the first one will be used.
 			 *
 			 * To set a single date (instead of a range), set only the <code>startDate</code> property
-			 * of the {@link sap.ui.unified.DateTypeRange} class.
+			 * of the {@link sap.ui.unified.DateRange} class.
 			 *
-			 * <b>Note:</b> If you need a weekly-reccuring non-working days
+			 * <b>Note:</b> Keep in mind that the <code>NonWorking</code> type is for marking specific
+			 * dates or date ranges as non-working, where if you need a weekly-reccuring non-working days
 			 * (weekend), you should use the <code>nonWorkingDays</code> property. Both the non-working
 			 * days (from property) and dates (from aggregation) are visualized the same.
-			 *
-			 * <b>Note:</b> In case there are multiple <code>sap.ui.unified.DateTypeRange</code> instances given for a single date,
-			 * only the first <code>sap.ui.unified.DateTypeRange</code> instance will be used.
-			 * For example, using the following sample, the 1st of November will be displayed as a working day of type "Type10":
-			 *
-			 *
-			 *	<pre>
-			 *	new DateTypeRange({
-			 *		startDate: UI5Date.getInstance(2023, 10, 1),
-			 *		type: CalendarDayType.Type10,
-			 *	}),
-			 *	new DateTypeRange({
-			 *		startDate: UI5Date.getInstance(2023, 10, 1),
-			 *		type: CalendarDayType.NonWorking
-			 *	})
-			 *	</pre>
-			 *
-			 * If you want the first of November to be displayed as a non-working day and also as "Type10," the following should be done:
-			 *	<pre>
-			 *	new DateTypeRange({
-			 *		startDate: UI5Date.getInstance(2023, 10, 1),
-			 *		type: CalendarDayType.Type10,
-			 *		secondaryType: CalendarDayType.NonWorking
-			 *	})
-			 *	</pre>
-			 *
-			 * You can use only one of the following types for a given date: <code>sap.ui.unified.CalendarDayType.NonWorking</code>,
-			 * <code>sap.ui.unified.CalendarDayType.Working</code> or <code>sap.ui.unified.CalendarDayType.None</code>.
-			 * Assigning more than one of these values in combination for the same date will lead to unpredictable results.
 			 *
 			 * @since 1.24.0
 			 */
@@ -524,13 +491,10 @@ sap.ui.define([
 		oYearRangePicker.attachEvent("select", this._selectYearRange, this);
 		oYearRangePicker.setPrimaryCalendarType(this._getPrimaryCalendarType());
 		this.setAggregation("yearRangePicker", oYearRangePicker); // do not invalidate
-
-		oYearRangePicker._setSelectedDatesControlOrigin(this);
 	};
 
 	Calendar.prototype._createMonth = function(sId){
-		var oMonth = new Month(sId, {width: "100%"});
-		this._setMonthCalendarWeekNumbering(oMonth);
+		var oMonth = new Month(sId, {width: "100%", calendarWeekNumbering: this.getCalendarWeekNumbering()});
 		oMonth._bCalendar = true;
 		oMonth.attachEvent("datehovered", this._handleDateHovered, this);
 		oMonth.attachEvent("weekNumberSelect", this._handleWeekNumberSelect, this);
@@ -539,7 +503,7 @@ sap.ui.define([
 	};
 
 	Calendar.prototype._handleWeekNumberSelect = function (oEvent) {
-		const oWeekDays = oEvent.getParameter("weekDays"),
+		var oWeekDays = oEvent.getParameter("weekDays"),
 			bExecuteDefault = this.fireWeekNumberSelect({
 				weekNumber: oEvent.getParameter("weekNumber"),
 				weekDays: oWeekDays
@@ -693,14 +657,6 @@ sap.ui.define([
 		this._oSpecialDatesControlOrigin = oControl;
 	};
 
-	Calendar.prototype._getCalendarWeekNumbering = function () {
-		if (this.isPropertyInitial("calendarWeekNumbering")) {
-			return;
-		}
-
-		return this.getCalendarWeekNumbering();
-	};
-
 	/**
 	 * If used inside DatePicker get the value from the parent
 	 * To not have sync issues...
@@ -766,7 +722,7 @@ sap.ui.define([
 	Calendar.prototype.getLocale = function(){
 
 		if (!this._sLocale) {
-			this._sLocale = new Locale(Formatting.getLanguageTag()).toString();
+			this._sLocale = Configuration.getFormatSettings().getFormatLocale().toString();
 		}
 
 		return this._sLocale;
@@ -837,7 +793,7 @@ sap.ui.define([
 	 * @since 1.34.1
 	 * @public
 	 */
-	Calendar.prototype.getStartDate = function() {
+	Calendar.prototype.getStartDate = function(){
 
 		var oStartDate;
 
@@ -862,21 +818,13 @@ sap.ui.define([
 		this.setProperty("calendarWeekNumbering", sCalendarWeekNumbering);
 
 		for (var i = 0; i < aMonths.length; i++) {
-			this._setMonthCalendarWeekNumbering(aMonths[i]);
+			aMonths[i].setProperty("calendarWeekNumbering", sCalendarWeekNumbering);
 		}
 
 		return this;
 	};
 
-	Calendar.prototype._setMonthCalendarWeekNumbering = function(oMonth) {
-		if (this.isPropertyInitial("calendarWeekNumbering")) {
-			return this;
-		}
-
-		return oMonth.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
-	};
-
-	Calendar.prototype.setMonths = function(iMonths) {
+	Calendar.prototype.setMonths = function(iMonths){
 
 		this._bDateRangeChanged = undefined; // to force rerendering
 		this.setProperty("months", iMonths); // rerender
@@ -895,8 +843,8 @@ sap.ui.define([
 				oMonth.attachEvent("_bindMousemove", _handleBindMousemove, this);
 				oMonth.attachEvent("_unbindMousemove", _handleUnbindMousemove, this);
 				oMonth._bNoThemeChange = true;
+				oMonth.setCalendarWeekNumbering(this.getCalendarWeekNumbering());
 				oMonth.setSecondaryCalendarType(this._getSecondaryCalendarType());
-				this._setMonthCalendarWeekNumbering(oMonth);
 				this.addAggregation("month", oMonth);
 			}
 			this._toggleTwoMonthsInColumnsCSS();
@@ -917,14 +865,11 @@ sap.ui.define([
 			aMonths[0].setProperty("date", null, true);
 		}
 
-		aMonths = this.getAggregation("month");
-		aMonths.forEach((oMonth) => oMonth.setProperty("_renderMonthWeeksOnly", iMonths > 1));
-
 		return this;
 
 	};
 
-	Calendar.prototype.setPrimaryCalendarType = function(sCalendarType) {
+	Calendar.prototype.setPrimaryCalendarType = function(sCalendarType){
 
 		var aMonths = this.getAggregation("month"),
 			oMonth,
@@ -965,8 +910,6 @@ sap.ui.define([
 	};
 
 	Calendar.prototype.setSecondaryCalendarType = function(sCalendarType){
-		var iColumnsPerRow = sCalendarType ? 2 : 3, // when there are two calendar types, the months should be displayed in two columns
-			oMonthPicker = this._getMonthPicker();
 
 		this.setProperty("secondaryCalendarType", sCalendarType);
 
@@ -979,8 +922,7 @@ sap.ui.define([
 			oMonth.setSecondaryCalendarType(sCalendarType);
 		}
 
-		oMonthPicker.setSecondaryCalendarType(sCalendarType);
-		oMonthPicker.setColumns(iColumnsPerRow);
+		this._getMonthPicker().setSecondaryCalendarType(sCalendarType);
 		this._getYearPicker().setSecondaryCalendarType(sCalendarType);
 		this._getYearRangePicker().setSecondaryCalendarType(sCalendarType);
 
@@ -989,12 +931,12 @@ sap.ui.define([
 	};
 
 	Calendar.prototype._getPrimaryCalendarType = function(){
-		return this.getProperty("primaryCalendarType") || Formatting.getCalendarType();
+		return this.getProperty("primaryCalendarType") || Configuration.getCalendarType();
 	};
 
 	/**
 	 * Returns if there is secondary calendar type set and if it is different from the primary one.
-	 * @returns {module:sap/base/i18n/date/CalendarType} if there is secondary calendar type set and if it is different from the primary one
+	 * @returns {string} if there is secondary calendar type set and if it is different from the primary one
 	 */
 	Calendar.prototype._getSecondaryCalendarType = function(){
 		var sSecondaryCalendarType = this.getSecondaryCalendarType();
@@ -1148,60 +1090,6 @@ sap.ui.define([
 	Calendar.prototype.setShowCurrentDateButton = function(bShow){
 		this.getAggregation("header").setVisibleCurrentDateButton(bShow);
 		return this.setProperty("showCurrentDateButton", bShow);
-	};
-
-	/**
-	 * Setter for the property <code>intervalSelection</code>. If set to <code>true</code>, an interval of dates can be selected.
-	 *
-	 * <b>Note:</b> This property should be set to <code>false</code> if <code>singleSelection</code> is set to <code>false</code>, as selecting multiple intervals is not supported.
-	 *
-	 * @param {boolean} bEnabled Indicates if <code>intervalSelection</code> should be enabled
-	 * @returns {this} Reference to <code>this</code> for method chaining
-	 */
-	Calendar.prototype.setIntervalSelection = function(bEnabled){
-		const oMonthPicker = this._getMonthPicker();
-		if (oMonthPicker) {
-			oMonthPicker.setIntervalSelection(bEnabled);
-		}
-
-		const oYearPicker = this._getYearPicker();
-		if (oYearPicker) {
-			oYearPicker.setIntervalSelection(bEnabled);
-		}
-
-		const oYearRangePicker = this._getYearRangePicker();
-		if (oYearRangePicker) {
-			oYearRangePicker.setIntervalSelection(bEnabled);
-		}
-
-		return this.setProperty("intervalSelection", bEnabled);
-	};
-
-	/**
-	 * Setter for the property <code>singleSelection</code>. If set to <code>true</code> only a single date or single interval, when <code>intervalSelection</code> is set to <code>true</code>, can be selected.
-	 *
-	 * <b>Note:</b> This property should be set to <code>true</code> if <code>intervalSelection</code> is set to <code>true</code>, as selecting multiple intervals is not supported.
-	 *
-	 * @param {boolean} bEnabled Indicates if <code>singleSelection</code> should be enabled
-	 * @returns {this} Reference to <code>this</code> for method chaining
-	 */
-	Calendar.prototype.setSingleSelection = function(bEnabled){
-		const oMonthPicker = this._getMonthPicker();
-		if (oMonthPicker) {
-			oMonthPicker.setProperty("_singleSelection", bEnabled);
-		}
-
-		const oYearPicker = this._getYearPicker();
-		if (oYearPicker) {
-			oYearPicker.setProperty("_singleSelection", bEnabled);
-		}
-
-		const oYearRangePicker = this._getYearRangePicker();
-		if (oYearRangePicker) {
-			oYearRangePicker.setProperty("_singleSelection", bEnabled);
-		}
-
-		return this.setProperty("singleSelection", bEnabled);
 	};
 
 	/**
@@ -1429,7 +1317,7 @@ sap.ui.define([
 
 	Calendar.prototype._updateLegendParent = function(){
 		var sLegend = this.getLegend(),
-			oLegend = Element.getElementById(sLegend);
+			oLegend = oCore.byId(sLegend);
 
 		oLegend && oLegend._setParent(this);
 	};
@@ -2388,10 +2276,7 @@ sap.ui.define([
 
 		this.setProperty("_currentPicker", CURRENT_PICKERS.YEAR_RANGE_PICKER);
 
-		oYearRangePicker.getColumns() % 2 !== 0 ?
-			oRangeMidDate.setYear(oRangeMidDate.getYear() + Math.floor(oYearRangePicker.getRangeSize() / 2)) :
-			oRangeMidDate.setYear(oRangeMidDate.getYear());
-
+		oRangeMidDate.setYear(oRangeMidDate.getYear() + Math.floor(oYearRangePicker.getRangeSize() / 2));
 		oYearRangePicker.setDate(oRangeMidDate.toLocalJSDate());
 		this._togglePrevNexYearPicker();
 	};
@@ -2530,8 +2415,8 @@ sap.ui.define([
 	 */
 	Calendar.prototype._toggleTwoMonthsInColumnsCSS = function () {
 		if (this._isTwoMonthsInTwoColumns()) {
-			if (new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "ja" ||
-				new Locale(Localization.getLanguageTag()).getLanguage().toLowerCase() === "zh") {
+			if (oCore.getConfiguration().getLocale().getLanguage().toLowerCase() === "ja" ||
+				oCore.getConfiguration().getLocale().getLanguage().toLowerCase() === "zh") {
 				this.addStyleClass("sapUiCalTwoMonthsTwoColumnsJaZh");
 				this.removeStyleClass("sapUiCalTwoMonthsTwoColumns");
 			} else {
@@ -2629,22 +2514,24 @@ sap.ui.define([
 
 	Calendar.prototype._adjustYearRangeDisplay = function() {
 		var oYearRangePicker = this.getAggregation("yearRangePicker"),
-			sPrimaryCalendarType = this._getPrimaryCalendarType(),
-			sSecondaryCalendarType = this._getSecondaryCalendarType(),
-			bJapaneseCalendar = sPrimaryCalendarType === CalendarType.Japanese || sSecondaryCalendarType === CalendarType.Japanese;
+			sLang = sap.ui.getCore().getConfiguration().getLanguage().toLocaleLowerCase(),
+			sPrimaryCalendarType = this._getPrimaryCalendarType();
 
 		if (!this._getSucessorsPickerPopup()) {
 			// An evaluation about the count of year cells that could fit in the sap.ui.unified.calendar.YearRangePicker
-			// has to be made based not only on the sap/base/i18n/date/CalendarType, but also on the language configuration.
+			// has to be made based not only on the sap.ui.core.CalendarType, but also on the language configuration.
 			// Based on those two criteria a couple of groups with different year cells count would be indicated and we
 			// could cover those scenarios with visual tests afterwards. Currently only the scenario with korean language
 			// is covered.
-			if (bJapaneseCalendar) {
+			if (sPrimaryCalendarType == CalendarType.Japanese) {
 				oYearRangePicker.setColumns(1);
 				oYearRangePicker.setYears(4);
-			} else {
+			} else if (sLang == "ko" || sLang == "ko-kr" || sPrimaryCalendarType != CalendarType.Gregorian) {
 				oYearRangePicker.setColumns(2);
 				oYearRangePicker.setYears(8);
+			} else if (sPrimaryCalendarType == CalendarType.Gregorian) {
+				oYearRangePicker.setColumns(3);
+				oYearRangePicker.setYears(9);
 			}
 		}
 	};
@@ -2843,7 +2730,7 @@ sap.ui.define([
 
 				this._setHeaderText(oDate);
 				this._setPrimaryHeaderMonthButtonText();
-				this._toggleTwoMonthsInColumnsCSS();
+				this._toggleTwoMonthsInTwoColumnsCSS();
 			}
 		}
 

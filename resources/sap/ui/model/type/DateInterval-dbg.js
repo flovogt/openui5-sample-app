@@ -5,15 +5,14 @@
  */
 sap.ui.define([
 	"sap/base/util/isEmptyObject",
-	"sap/ui/core/Lib",
 	"sap/ui/core/date/UI5Date",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/model/CompositeType",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException"
-], function(isEmptyObject, Library, UI5Date, DateFormat, CompositeType, FormatException, ParseException,
-	ValidateException) {
+], function (isEmptyObject, UI5Date, DateFormat, CompositeType, FormatException, ParseException,
+		ValidateException) {
 	"use strict";
 
 	/**
@@ -25,7 +24,7 @@ sap.ui.define([
 	 * @extends sap.ui.model.CompositeType
 	 *
 	 * @author SAP SE
-	 * @version 1.134.0
+	 * @version 1.120.27
 	 *
 	 * @alias sap.ui.model.type.DateInterval
 	 * @param {object} [oFormatOptions]
@@ -186,9 +185,8 @@ sap.ui.define([
 
 				if (!aDates[0] || (!aDates[1] && !this.oFormatOptions.singleIntervalValue)) {
 					// at least one single date should be returned
-					oBundle = Library.getResourceBundleFor("sap.ui.core");
-					throw new ParseException(oBundle.getText("Enter" + this.getName(),
-						[this.oOutputFormat.format(this.oOutputFormat.getSampleValue()[0])]));
+					oBundle = sap.ui.getCore().getLibraryResourceBundle();
+					throw new ParseException(oBundle.getText(this.sName + ".Invalid"));
 				}
 
 				// for client side filtering, ensure to set the end of day for the second value;
@@ -227,7 +225,7 @@ sap.ui.define([
 	 */
 	DateInterval.prototype.validateValue = function (aValues) {
 		var bCheckSecondValue, oCompareValue,
-			oBundle = Library.getResourceBundleFor("sap.ui.core"),
+			oBundle = sap.ui.getCore().getLibraryResourceBundle(),
 			aViolatedConstraints = [],
 			aMessages = [],
 			that = this;

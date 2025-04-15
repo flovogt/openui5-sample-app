@@ -8,8 +8,8 @@ sap.ui.define([
 	'./library',
 	'./SliderUtilities',
 	'./SliderTooltipBase',
-	"sap/ui/core/Lib",
 	'sap/ui/core/library',
+	'sap/ui/core/Core',
 	'./delegate/ValueStateMessage',
 	'sap/ui/core/ValueStateSupport',
 	"sap/ui/core/InvisibleMessage",
@@ -19,8 +19,8 @@ function(
 	Library,
 	SliderUtilities,
 	SliderTooltipBase,
-	Library1,
 	coreLibrary,
+	Core,
 	ValueStateMessage,
 	ValueStateSupport,
 	InvisibleMessage,
@@ -42,7 +42,7 @@ function(
 		 * @extends sap.m.SliderTooltipBase
 		 *
 		 * @author SAP SE
-		 * @version 1.134.0
+		 * @version 1.120.27
 		 *
 		 * @constructor
 		 * @private
@@ -214,7 +214,7 @@ function(
 				return;
 			}
 
-			var oRB = Library1.getResourceBundleFor("sap.m"),
+			var oRB = Core.getLibraryResourceBundle("sap.m"),
 			sValueStateTypeText, sInvisibleMessageAnnounce;
 
 			sValueStateTypeText = oRB.getText("INPUTBASE_VALUE_STATE_" + sValueStateType.toUpperCase());

@@ -3,17 +3,10 @@
 /* Horizon High Contrast Black theme   */
 /* =================================== */
 
-.sapMObjectNumber.sapMLnkLargeReactiveArea:not(.sapMObjectNumberLarge):not(.sapMObjectNumberInverted) {
-	.sapMObjectNumberInner {
-		line-height: 1.5rem;
-	}
-}
-
-@sapMONInformativeElement: var(--sapInformationBackground);
+@sapMONInformativeElement: @sapUiInformationBG;
 
 .sapMObjectNumberInverted {
 	box-sizing: border-box;
-
 	&:not(.sapMObjectNumberLarge) .sapMObjectNumberInner {
 		min-height: 1rem;
 		height: auto;
@@ -21,9 +14,9 @@
 }
 
 .sapMObjectNumberInverted .sapMObjectNumberInner {
-	background-color: var(--sapBackgroundColor);
+	background-color: @sapUiBaseBG;
 	border: 0.0625rem solid;
-	border-radius: var(--sapButton_BorderCornerRadius);
+	border-radius: @sapUiButtonBorderCornerRadius;
 	padding: 0.1875rem 0.25rem;
 	vertical-align: middle;
 }
@@ -31,11 +24,11 @@
 html.sap-desktop .sapMObjectNumberActive:focus {
 
 	.sapMObjectNumberInner::after {
-		top: 0;
+		top: 0px;
 		left: 1px;
 		bottom: -1px;
 		right: 1px;
-		outline: 2px dotted var(--sapContent_FocusColor);
+		outline: 2px dotted @sapUiContentFocusColor;
 	}
 
 	&.sapMObjectNumberInverted .sapMObjectNumberInner::after {
@@ -43,7 +36,7 @@ html.sap-desktop .sapMObjectNumberActive:focus {
 		left: 0.125rem;
 		bottom: 0.0625rem;
 		right: 0.125rem;
-		outline: 0.125rem dotted var(--sapContent_FocusColor);
+		outline: 0.125rem dotted @sapUiContentFocusColor;
 	}
 
 	&.sapMObjectNumberLarge {
@@ -60,7 +53,8 @@ html.sap-desktop .sapMObjectNumberActive:focus {
 			left: 3px;
 			bottom: 3px;
 			right: 3px;
-			outline: 2px dotted var(--sapContent_ContrastFocusColor);
+			outline: 2px dotted @sapContent_ContrastFocusColor;
 		}
+
 	}
 }
