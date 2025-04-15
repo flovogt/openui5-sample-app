@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -112,7 +112,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.11
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -404,6 +404,7 @@ sap.ui.define([
 		this._headerBiggerThanAllowedHeight = false;
 		this._oStickySubheader = null;
 		this._bStickySubheaderInTitleArea = false;
+		this._bIsLastToggleUserInitiated = false;
 		this._oScrollHelper = new ScrollEnablement(this, this.getId() + "-content", {
 			horizontal: false,
 			vertical: true
@@ -503,7 +504,7 @@ sap.ui.define([
 	};
 
 	DynamicPage.prototype.setShowFooter = function (bShowFooter) {
-		var vResult = this.setProperty("showFooter", bShowFooter);
+		var vResult = this.setProperty("showFooter", bShowFooter, /* bSuppressInvalidate */ true);
 
 		this._toggleFooter(bShowFooter);
 
@@ -621,7 +622,7 @@ sap.ui.define([
 		var vResult = this.setProperty("fitContent", bFitContent, true);
 
 		if (exists(this.$())) {
-			this._updateFitContainer();
+			this._toggleScrollingStyles();
 		}
 
 		return vResult;
@@ -796,6 +797,7 @@ sap.ui.define([
 		}
 
 		this.setProperty("headerExpanded", false, true);
+		this._bIsLastToggleUserInitiated = !!bUserInteraction;
 		this._adjustStickyContent();
 		if (this._hasVisibleTitleAndHeader()) {
 			this.$titleArea.addClass(Device.system.phone && oDynamicPageTitle.getSnappedTitleOnMobile() ?
@@ -836,6 +838,7 @@ sap.ui.define([
 		}
 
 		this.setProperty("headerExpanded", true, true);
+		this._bIsLastToggleUserInitiated = !!bUserInteraction;
 		this._adjustStickyContent();
 		if (this._hasVisibleTitleAndHeader()) {
 			this.$titleArea.removeClass(Device.system.phone && oDynamicPageTitle.getSnappedTitleOnMobile() ?
@@ -1370,12 +1373,17 @@ sap.ui.define([
 
 		this.toggleStyleClass("sapFDynamicPageWithScroll", bScrollBarNeeded);
 
-		setTimeout(this._updateFitContainer.bind(this), 0);
+		 // update styles for scrolling after a timeout of 0, in order to obtain the final state
+		 // e.g. after the ResizeHandler looped though *all* resized controls (to notify them) =>
+		 // so all of them completed their adjustments for the new size (notably any nested table adjusted its
+		 // visible rows count upon being notified by ResizeHandler for change of height of its container)
+		setTimeout(this._toggleScrollingStyles.bind(this), 0);
 	};
 
-	DynamicPage.prototype._updateFitContainer = function (bNeedsVerticalScrollBar) {
+	DynamicPage.prototype._toggleScrollingStyles = function (bNeedsVerticalScrollBar) {
 		var bNoScrollBar = typeof bNeedsVerticalScrollBar !== 'undefined' ? !bNeedsVerticalScrollBar : !this._needsVerticalScrollBar();
 
+		this.toggleStyleClass("sapFDynamicPageWithScroll", !bNoScrollBar);
 		this.$contentFitContainer.toggleClass("sapFDynamicPageContentFitContainer", bNoScrollBar);
 	};
 
@@ -1854,7 +1862,7 @@ sap.ui.define([
 
 		// FitContainer needs to be updated, when height is changed and scroll bar appear, to enable calc of original height
 		if (bNeedsVerticalScrollBar) {
-			this._updateFitContainer(bNeedsVerticalScrollBar);
+			this._toggleScrollingStyles(bNeedsVerticalScrollBar);
 		}
 
 		this._adjustSnap();
@@ -1893,9 +1901,29 @@ sap.ui.define([
 			oDynamicPageTitle._onResize(iCurrentWidth);
 		}
 
+		if (this._shouldAutoExpandHeaderOnResize(oEvent)) {
+			this._expandHeader(true, false /* bUserInteraction */);
+			this.getHeader().$().removeClass("sapFDynamicPageHeaderHidden");
+		}
+
 		this._adjustSnap();
 		this._updateTitlePositioning();
 		this._updateMedia(iCurrentWidth);
+	};
+
+	DynamicPage.prototype._shouldAutoExpandHeaderOnResize = function (oResizeEvent) {
+		var oDynamicPageHeader = this.getHeader(),
+			bHeaderSnappedByUser = exists(oDynamicPageHeader) && !this.getHeaderExpanded() && this._bIsLastToggleUserInitiated,
+			bPageResized = oResizeEvent.target === this.getDomRef(),
+			canToggleHeaderOnScroll = this._canSnapHeaderOnScroll.bind(this);
+
+		// auto-expand the header if the user had snapped it but
+		// can no longer expand it neither by scrolling nor by title-click
+		return !this._preserveHeaderStateOnScroll() // header state is not locked
+			&& bHeaderSnappedByUser
+			&& bPageResized
+			&& !this.getToggleHeaderOnTitleClick() // user cannot expand the header by title-click
+			&& !canToggleHeaderOnScroll(); // user cannot expand the header by scrolling
 	};
 
 	/**
@@ -1995,6 +2023,12 @@ sap.ui.define([
 	 */
 	DynamicPage.prototype._onTitlePress = function () {
 		if (this.getToggleHeaderOnTitleClick() && this._hasVisibleTitleAndHeader()) {
+			if (!this.getHeaderExpanded() && this._headerBiggerThanAllowedToBeExpandedInTitleArea() && !this._preserveHeaderStateOnScroll()) {
+				// if the header will expanded and it is bigger than the allowed height to be shown in the title area
+				// we explicitly move it to the content area unless the preserveHeaderStateOnScroll is set
+				// the header is then always displayed in the title are by definition as is always sticky
+				this._moveHeaderToContentArea(true);
+			}
 			this._titleExpandCollapseWhenAllowed(true /* user interaction */);
 			this.getTitle()._focus();
 		}

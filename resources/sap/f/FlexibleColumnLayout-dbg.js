@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -97,7 +97,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.11
+	 * @version 1.120.27
 	 *
 	 * @constructor
 	 * @public
@@ -989,7 +989,11 @@ sap.ui.define([
 	 * @private
 	 */
 	FlexibleColumnLayout.prototype._restoreFocusToColumn = function (sCurrentColumn) {
-		var oElement = this._oColumnFocusInfo[sCurrentColumn];
+		var oElement = this._oColumnFocusInfo[sCurrentColumn],
+			oCurrentColumn = this._getColumnByStringName(sCurrentColumn);
+		if (this._isFocusInCurrentColumn(oCurrentColumn)) {
+			return;
+		}
 
 		if (!oElement || isEmptyObject(oElement)) {
 			// if no element was stored, get first focusable
@@ -1038,6 +1042,16 @@ sap.ui.define([
 		}
 
 		return false;
+	};
+
+	/**
+	 * Checks whether or not the focus is already in the current column
+	 * @param {Object} oCurrentColumn the current column
+	 * @returns {boolean} whether or not the focus is in the current column
+	 * @private
+	 */
+	FlexibleColumnLayout.prototype._isFocusInCurrentColumn = function (oCurrentColumn) {
+		return oCurrentColumn._isFocusInControl(oCurrentColumn);
 	};
 
 	FlexibleColumnLayout.prototype._getControlWidth = function () {
@@ -1601,12 +1615,17 @@ sap.ui.define([
 		this._previewResizedColumnsOnMoveSeparator(iCursonX, true /* resize end */);
 		this._saveResizedColumWidths();
 
-		if (this._oMoveInfo.layout !== this.getLayout()) {
-			this.setLayout(this._oMoveInfo.layout);
-			this._fireStateChange(true, false);
+		if (this._oMoveInfo.layout == this.getLayout()) {
+			this._exitInteractiveResizeMode();
+			return;
 		}
+		this.setLayout(this._oMoveInfo.layout);
 
-		this._exitInteractiveResizeMode();
+		try {
+			this._fireStateChange(true, false);
+		} finally {
+			this._exitInteractiveResizeMode();
+		}
 	};
 
 	/**
@@ -1638,7 +1657,7 @@ sap.ui.define([
 	FlexibleColumnLayout.prototype._enterInteractiveResizeMode = function (bTouch) {
 		var oSeparatorPosition = this._oMoveInfo.separatorPosition;
 
-		this._$overlay.css("display", "block");
+		this.toggleStyleClass("sapFFLActiveResize", true);
 		this._$overlaySeparator.css(oSeparatorPosition.direction, oSeparatorPosition.x);
 		this._oMoveInfo.separator.style.visibility = "hidden";
 
@@ -1652,7 +1671,7 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._exitInteractiveResizeMode = function () {
-		this._$overlay.css("display", "");
+		this.toggleStyleClass("sapFFLActiveResize", false);
 		this._oMoveInfo.separator.style.visibility = "";
 		this._oMoveInfo.separator.focus();
 		this._ignoreMouse = false;

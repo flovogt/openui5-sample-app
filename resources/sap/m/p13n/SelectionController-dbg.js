@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -43,7 +43,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.Object
 	 *
 	 * @author SAP SE
-	 * @version 1.120.11
+	 * @version 1.120.27
 	 *
 	 * @public
 	 * @alias sap.m.p13n.SelectionController
@@ -148,32 +148,49 @@ sap.ui.define([
 		}
 	};
 
-	SelectionController.prototype.getCurrentState = function(){
-		var aState = [], aAggregationItems = this.getAdaptationControl().getAggregation(this.getTargetAggregation()) || [];
-		var oView = getViewForControl(this.getAdaptationControl());
-		aAggregationItems.forEach(function(oItem, iIndex) {
-			var sId = oView ? oView.getLocalId(oItem.getId()) : oItem.getId();
-			var vRelevant = this._fSelector ? this._fSelector(oItem) : oItem.getVisible();
+	SelectionController.prototype._calcPresentState = function() {
+		const aState = [],
+		aAggregationItems = this.getAdaptationControl().getAggregation(this.getTargetAggregation()) || [];
+		const oView = getViewForControl(this.getAdaptationControl());
+		aAggregationItems.forEach((oItem, iIndex) => {
+			const sKey = oItem.data("p13nKey");
+			const sId = oView ? oView.getLocalId(oItem.getId()) : oItem.getId();
+			const vRelevant = sKey || (this._fSelector ? this._fSelector(oItem) : oItem.getVisible());
 			if (vRelevant) {
 				aState.push({
 					key: typeof vRelevant === "boolean" ? sId : vRelevant
 				});
 			}
-		}.bind(this));
+		});
+		return aState;
+	};
 
-		var oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
-		var oItemXConfig = oXConfig.hasOwnProperty("aggregations") ? oXConfig.aggregations[this._sTargetAggregation] : {};
+	SelectionController.prototype.getCurrentState = function() {
+		const aState = this._calcPresentState(); //The state of the control without xConfig
 
-		for (var sKey in oItemXConfig) {
-			var aStateKeys = aState.map(function(o){return o.key;});
-			var iCurrentIndex = aStateKeys.indexOf(sKey);
-			var iNewIndex = oItemXConfig[sKey].position;
-			var bVisible = oItemXConfig[sKey].visible !== false;
-			var bReordered = iNewIndex !== undefined;
+		const oXConfig = xConfigAPI.readConfig(this.getAdaptationControl()) || {};
+		const oItemXConfig = oXConfig.hasOwnProperty("aggregations") ? oXConfig.aggregations[this._sTargetAggregation] : {};
+		const aItemXConfig = [];
+		if (oItemXConfig) {
+			Object.entries(oItemXConfig).forEach(([sKey, oConfig]) => {
+				aItemXConfig.push({key: sKey, position: oConfig.position, visible: oConfig.visible});
+			});
+			aItemXConfig.sort((a, b) => a.position - b.position);
+		}
+		aItemXConfig.sort((a,b) => a.position - b.position);
+
+		aItemXConfig.forEach(({key}) => {
+			const aStateKeys = aState.map((o) => {
+				return o.key;
+			});
+			let iCurrentIndex = aStateKeys.indexOf(key);
+			const iNewIndex = oItemXConfig[key].position;
+			const bVisible = oItemXConfig[key].visible !== false;
+			const bReordered = iNewIndex !== undefined;
 
 			if (bVisible && iCurrentIndex === -1) {
 				aState.push({
-					key: sKey
+					key: key
 				});
 			}
 
@@ -182,11 +199,11 @@ sap.ui.define([
 				aState.splice(iNewIndex, 0, oItem);
 				iCurrentIndex = iNewIndex;
 			}
-			if (oItemXConfig[sKey].visible === false && iCurrentIndex > -1) {
+			if (oItemXConfig[key].visible === false && iCurrentIndex > -1) {
 				aState.splice(iCurrentIndex, 1);
 			}
 
-		}
+		});
 		return aState;
 	};
 
@@ -266,41 +283,86 @@ sap.ui.define([
 	};
 
 	SelectionController.prototype._createMoveChanges = function(aExistingItems, aChangedItems, oControl, sOperation, aDeltaAttributes) {
-		var sKey, nIndex, oItem, aChanges = [];
+		var aChanges = [];
 
-		if (aExistingItems.length === aChangedItems.length) {
+		if (aExistingItems.length !== aChangedItems.length) {
+			return aChanges;
+		}
 
-			var fnSymbol = function(o) {
-				var sDiff = "";
-				aDeltaAttributes.forEach(function(sAttribute) {
-					sDiff = sDiff + o[sAttribute];
-				});
-				return sDiff;
-			};
+		var fnSymbol = function(o) {
+			var sDiff = "";
+			aDeltaAttributes.forEach(function(sAttribute) {
+				sDiff = sDiff + o[sAttribute];
+			});
+			return sDiff;
+		};
 
+		var INSERT_TYPE = "insert";
+		var DELETE_TYPE = "delete";
 
-			var aDiff = diff(aExistingItems, aChangedItems, fnSymbol);
-			var aDeleted = [];
-			for (var i = 0; i < aDiff.length; i++) {
-				if (aDiff[i].type === "delete") {
-					oItem = aExistingItems[aDiff[i].index];
-					aDeleted.push(oItem);
-				} else if (aDiff[i].type === "insert") {
-					sKey = aChangedItems[aDiff[i].index].key || aChangedItems[aDiff[i].index].name;
+		var aDeleted = [];
+		var aInserted = [];
+		var aDiff = diff(aExistingItems, aChangedItems, fnSymbol);
 
-					nIndex = aDiff[i].index;
-					// eslint-disable-next-line no-loop-func
-					aDeleted.forEach(function(oItem) {
-						if (sKey != oItem.key) {
-							var nDelIndex = this._indexOfByKeyName(aExistingItems, oItem.key || oItem.name);
-							if (nDelIndex < aDiff[i].index) {
-								nIndex++;
-							}
+		for (var i = 0; i < aDiff.length; i++) {
+			var sType = aDiff[i].type;
+			if (sType !== DELETE_TYPE && sType !== INSERT_TYPE) {continue;}
+
+			var index = aDiff[i].index;
+			var oItem = aChangedItems[index];
+			if (!oItem) {continue;}
+
+			if (sType === DELETE_TYPE) {
+				aDeleted.push({ ...oItem, index });
+				continue;
+			}
+			if (sType === INSERT_TYPE) {
+				aInserted.push({ ...oItem, index });
+				continue;
+			}
+		}
+
+		for (var j = 0; j < aDiff.length; j++) {
+			if (aDiff[j].type === "insert") {
+				// Due to the way 'var' works, there might be issues regarding in-loop-function definitions and
+				// using loop variables (e.g. like 'j') within functions. This issue is fixed with let and const.
+				// https://eslint.org/docs/latest/rules/no-loop-func
+				(function(nIndex) {
+					var sKey = aChangedItems[nIndex].key || aChangedItems[nIndex].name;
+
+					var fnFilter = function(item) {
+						if (!item) {
+							return false;
 						}
-					}.bind(this));
-					// eslint-enable-next-line no-loop-func
-					aChanges.push(this._createMoveChange(sKey, Math.min(nIndex, aChangedItems.length), sOperation, oControl));
-				}
+						if (item.index >= nIndex) {
+							return false;
+						}
+						return true;
+					};
+
+					// number of items that were deleted before current index
+					var nDeleted = aDeleted.filter(fnFilter).length;
+					// number of items that were inserted before current index
+					var nInserted = aInserted.filter(fnFilter).length;
+
+					var isNotFirstElement = nIndex > 0;
+					var hasDeletions = nDeleted > 0;
+
+					// either take all ins/dels or just take the ones that are before the current index
+					var hasInsertionAbundance = nInserted > nDeleted;
+					var hasDeletionAbundance = nDeleted > nInserted;
+
+					var shouldDecrease = hasInsertionAbundance && hasDeletions && isNotFirstElement;
+					var shouldIncrease = hasDeletionAbundance && isNotFirstElement;
+
+					if (shouldDecrease) {
+						nIndex -= nInserted;
+					} else if (shouldIncrease) {
+						nIndex += nDeleted;
+					}
+
+					aChanges.push(this._createMoveChange(sKey, Math.min(nIndex, aChangedItems.length - 1), sOperation, oControl));
+				}.bind(this))(aDiff[j].index);
 			}
 		}
 

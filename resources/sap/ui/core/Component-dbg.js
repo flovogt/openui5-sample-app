@@ -1,6 +1,6 @@
 /*
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -238,7 +238,7 @@ sap.ui.define([
 	 * @extends sap.ui.base.ManagedObject
 	 * @abstract
 	 * @author SAP SE
-	 * @version 1.120.11
+	 * @version 1.120.27
 	 * @alias sap.ui.core.Component
 	 * @since 1.9.2
 	 */
@@ -1967,7 +1967,7 @@ sap.ui.define([
 			// lazy load the ODataUtils if systemParameter is given
 			var bAddOrigin = false;
 			var ODataUtils;
-			if (sSystemParameter && (bIsV1Model || bIsV2Model)) {
+			if (sSystemParameter && (bIsV1Model || bIsV2Model || bIsV4Model)) {
 				bAddOrigin = true;
 				ODataUtils = sap.ui.require("sap/ui/model/odata/ODataUtils");
 			}

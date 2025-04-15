@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -50,10 +50,10 @@ function() {
 				oControl._aLeftControls.forEach(oRm.renderControl, oRm);
 
 				oRm.close("div");
-
 			}
-			if (oControl._oCopilot) {
-				oRm.renderControl(oControl._oCopilot);
+
+			if (oControl._oManagedSearch && oControl.sCurrentRange === "ExtraLargeDesktop") {
+				oRm.renderControl(oControl._oManagedSearch);
 			}
 
 			if (oControl._aRightControls && oControl._aRightControls.length) {

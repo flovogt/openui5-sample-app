@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2024 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -127,9 +127,9 @@ sap.ui.define([
 				if (oDimensionDetails === undefined) {
 					logUnsupportedPropertyInSelect(oBinding.sPath, sPropertyName, oDimension);
 					bError = true;
-				} else {
-					// eslint-disable-next-line no-use-before-define
-					AnalyticalBinding._updateDimensionDetailsTextProperty(oDimension, sPropertyName, oDimensionDetails);
+				// eslint-disable-next-line no-use-before-define
+				} else if (AnalyticalBinding._updateDimensionDetailsTextProperty(oDimension, sPropertyName,
+						oDimensionDetails)) {
 					continue;
 				}
 			}
@@ -494,7 +494,7 @@ sap.ui.define([
 	 *
 	 * @function
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.getRootContexts
-	 * @param {object|int} mParameters
+	 * @param {object|int} [mParameters=0]
 	 *   Parameter map specifying how the topmost aggregation level shall be fetched. If this
 	 *   parameter map is set, the optional function parameters are ignored. Optionally, instead
 	 *   of a parameter map an integer value can be set to define the parameter
@@ -601,9 +601,9 @@ sap.ui.define([
 	 * @name sap.ui.model.analytics.AnalyticalBinding.prototype.getNodeContexts
 	 * @param {sap.ui.model.Context} oContext
 	 *            Parent context identifying the requested group of child contexts
-	 * @param {object|int} mParameters
+	 * @param {object|int} [mParameters=0]
 	 *            Parameters, specifying the aggregation level for which contexts shall be fetched
-	 *            or (legacy signature variant) index of first child entry to return from the parent context (zero-based)
+	 *            or the index of the first child entry to return from the parent contexts
 	 * @param {int} mParameters.level
 	 *            Level number for oContext, because it might occur at multiple levels; context with group ID <code>"/"</code> has level 0
 	 * @param {int} [mParameters.numberOfExpandedLevels=0]
@@ -645,7 +645,7 @@ sap.ui.define([
 			iLevel = mParameters.level;
 			iNumberOfExpandedLevels = mParameters.numberOfExpandedLevels;
 			bSupressRequest = mParameters.supressRequest;
-		} else { // due to compatibility; can be removed if table is adapted
+		} else {
 			iStartIndex = arguments[1];
 			iLength = arguments[2];
 			iThreshold = arguments[3];
@@ -5002,6 +5002,8 @@ sap.ui.define([
 	 * @param {object} oDimension The dimension
 	 * @param {string} sPropertyName The property name
 	 * @param {object} oDimensionDetails The dimension details
+	 * @returns {boolean} Whether the given property name is the given dimension's text property and therefore has been
+	 *   added to the given dimension details.
 	 *
 	 * @private
 	 */
@@ -5009,7 +5011,11 @@ sap.ui.define([
 		const oTextProperty = oDimension.getTextProperty();
 		if (oTextProperty && oTextProperty.name === sPropertyName) {
 			oDimensionDetails.textPropertyName = sPropertyName;
+
+			return true;
 		}
+
+		return false;
 	};
 
 	/**
