@@ -1,7 +1,7 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"github>ui5/renovate-config#manifest-support-ui5versionnumber"
+		"github>ui5/renovate-config#v1.1.0"
 	],
 	"separateMinorPatch": true,
 	"lockFileMaintenance": {
