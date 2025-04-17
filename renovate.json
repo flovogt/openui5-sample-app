@@ -26,7 +26,7 @@
 			"enabled": false
 	    },
 		{
-			"matchDepNames": ["openui5"],
+			"matchDepNames": ["sapui5"],
 			"automerge": false,
 			"commitMessagePrefix": "deps:",
 			"commitMessageAction": "Update"
