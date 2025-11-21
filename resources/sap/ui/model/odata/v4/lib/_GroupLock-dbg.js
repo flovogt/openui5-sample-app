@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -28,7 +28,8 @@ sap.ui.define([
 	 * @param {boolean} [bModifying]
 	 *   Whether the reason for the group lock is a modifying request
 	 * @param {number} [iSerialNumber=Infinity]
-	 *   A serial number which may be used on unlock
+	 *   A {@link #getSerialNumber serial number} which may be used on unlock, or <code>NaN</code>
+	 *   if none should be used
 	 * @param {function} [fnCancel]
 	 *   Function that is called when the group lock is canceled
 	 * @throws {Error}
@@ -99,9 +100,10 @@ sap.ui.define([
 	 * Returns the serial number.
 	 *
 	 * @returns {number}
-	 *   The serial number
+	 *   The serial number or <code>NaN</code> if none should be used
 	 *
 	 * @public
+	 * @see #getUnlockedCopy
 	 */
 	_GroupLock.prototype.getSerialNumber = function () {
 		return this.iSerialNumber;
@@ -112,13 +114,17 @@ sap.ui.define([
 	 * lock on which {@link #unlock} has already been called (e.g. when one group is used to create
 	 * multiple requests).
 	 *
+	 * @param {boolean} [bNoSerialNumber]
+	 *   Whether to replace the old serial number with <code>NaN</code> instead of keeping it
 	 * @returns {sap.ui.model.odata.v4.lib._GroupLock}
 	 *   The group lock
 	 *
 	 * @public
+	 * @see #getSerialNumber
 	 */
-	_GroupLock.prototype.getUnlockedCopy = function () {
-		return new _GroupLock(this.sGroupId, this.oOwner, false, false, this.iSerialNumber);
+	_GroupLock.prototype.getUnlockedCopy = function (bNoSerialNumber) {
+		return new _GroupLock(this.sGroupId, this.oOwner, false, false,
+			bNoSerialNumber ? NaN : this.iSerialNumber);
 	};
 
 	/**
@@ -196,7 +202,7 @@ sap.ui.define([
 	 * Returns a promise that is resolved when this lock does no longer block the given group ID.
 	 *
 	 * @param {string} sGroupId The group ID
-	 * @returns {sap.ui.base.SyncPromise|undefined}
+	 * @returns {sap.ui.base.SyncPromise<void>|undefined}
 	 *   A promise or <code>undefined</code> if the lock does not block this group
 	 *
 	 * @public

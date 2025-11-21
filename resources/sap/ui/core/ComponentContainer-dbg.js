@@ -1,33 +1,32 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.ui.core.ComponentContainer.
 sap.ui.define([
+	'sap/base/future',
 	'sap/ui/base/ManagedObject',
 	'./Control',
 	'./Component',
 	'./library',
-	"./ComponentContainerRenderer",
-	"sap/base/Log",
-	"sap/ui/core/Configuration"
-],
-	function(
-		ManagedObject,
-		Control,
-		Component,
-		library,
-		ComponentContainerRenderer,
-		Log,
-		Configuration
-	) {
+	"./ComponentContainerRenderer"
+], function(
+	future,
+	ManagedObject,
+	Control,
+	Component,
+	library,
+	ComponentContainerRenderer
+) {
 	"use strict";
 
 
 	var ComponentLifecycle = library.ComponentLifecycle;
 
+	// retrieve default propagated properties from a fresh MO (which then is garbage collected)
+	const { oPropagatedProperties: defaultPropagatedProperties } = new ManagedObject();
 
 	/**
 	 * Constructor for a new ComponentContainer.
@@ -61,7 +60,7 @@ sap.ui.define([
 	 * See also {@link module:sap/ui/core/ComponentSupport}.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @public
 	 * @alias sap.ui.core.ComponentContainer
@@ -135,7 +134,7 @@ sap.ui.define([
 				/**
 				 * Flag, whether to auto-prefix the ID of the nested Component or not. If
 				 * this property is set to true the ID of the Component will be prefixed
-				 * with the ID of the ComponentContainer followed by a single dash.
+				 * with the ID of the ComponentContainer followed by a single hyphen.
 				 * This property can only be applied initially.
 				 */
 				autoPrefixId : {type : "boolean", defaultValue: false},
@@ -230,7 +229,7 @@ sap.ui.define([
 					oOldComponent.destroy();
 				} else {
 					// cleanup the propagated properties in case of not destroying the component
-					oComponentContainer._propagateProperties(true, oOldComponent, ManagedObject._oEmptyPropagatedProperties, true);
+					oComponentContainer._propagateProperties(true, oOldComponent, defaultPropagatedProperties, true);
 				}
 			}
 			// set the new component
@@ -333,7 +332,7 @@ sap.ui.define([
 	 * to the component will be set and the models will be propagated if defined.
 	 * If the <code>usage</code> property is set the ComponentLifecycle is processed like a "Container" lifecycle.
 	 *
-	 * @param {string|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
+	 * @param {sap.ui.core.ID|sap.ui.core.UIComponent} vComponent ID of an element which becomes the new target of this component association. Alternatively, an element instance may be given.
 	 * @return {this} the reference to <code>this</code> in order to allow method chaining
 	 * @public
 	 */
@@ -406,7 +405,7 @@ sap.ui.define([
 			if (oOwnerComponent) {
 				mConfig = oOwnerComponent._enhanceWithUsageConfig(sUsageId, mConfig);
 			} else {
-				Log.error("[FUTURE FATAL] ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
+				future.errorThrows("ComponentContainer \"" + this.getId() + "\" does have a \"usage\", but no owner component!");
 			}
 		}
 
@@ -422,7 +421,27 @@ sap.ui.define([
 		}
 
 		// Finally, create the component instance
-		return Component._createComponent(mConfig, oOwnerComponent);
+		function createComponent() {
+			/**
+			 * @ui5-transform-hint replace-local true
+			 */
+			const bAsync = mConfig.async;
+			if (bAsync === true) {
+				return Component.create(mConfig);
+			} else {
+				return sap.ui.component(mConfig); // legacy-relevant: use deprecated factory for sync use case only
+			}
+		}
+
+		if (oOwnerComponent) {
+			if (!oOwnerComponent.isActive()) {
+				throw new Error("Creation of component '" + mConfig.name + "' is not possible due to inactive owner component '" + oOwnerComponent.getId() + "'");
+			}
+			// create the nested component in the context of this component
+			return oOwnerComponent.runAsOwner(createComponent);
+		} else {
+			return createComponent();
+		}
 	};
 
 	/*
@@ -457,7 +476,7 @@ sap.ui.define([
 					delete this._oComponentPromise;
 					// listeners can prevent the default log entry
 					if ( this.fireComponentFailed({ reason: oReason }) ) {
-						Log.error("[FUTURE FATAL] Failed to load component for container " + this.getId(), oReason);
+						future.errorThrows("Failed to load component for container " + this.getId(), { cause: oReason});
 					}
 				}.bind(this));
 			} else if (oComponent) {
@@ -507,8 +526,18 @@ sap.ui.define([
 	 */
 	ComponentContainer.prototype.propagateProperties = function (vName) {
 		var oComponent = this.getComponentInstance();
-		if (oComponent && this.getPropagateModel()) {
-			this._propagateProperties(vName, oComponent);
+		if (oComponent) {
+			if (this.getPropagateModel()) {
+				this._propagateProperties(vName, oComponent);
+			} else if (oComponent.getParent() == null) {
+				const { aPropagationListeners } = this._getPropertiesToPropagate();
+				const oProperties = {
+					oModels: {},
+					oBindingContexts: {},
+					aPropagationListeners
+				};
+				this._propagateProperties(false, oComponent, oProperties, false, vName, true);
+			}
 		}
 		Control.prototype.propagateProperties.apply(this, arguments);
 	};

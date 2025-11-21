@@ -1,13 +1,14 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	"sap/m/library",
 	"sap/ui/Device",
 	"sap/ui/core/library",
-	"sap/ui/core/Lib"
+	"sap/ui/core/Lib",
+	"sap/ui/core/IconPool" // side effect: required when calling RenderManager#icon
 ], function (library, Device, coreLibrary, Library) {
 	"use strict";
 
@@ -51,7 +52,6 @@ sap.ui.define([
 			oEndButton = oDialog.getEndButton(),
 			sState = oDialog.getState(),
 			bStretch = oDialog.getStretch(),
-			bStretchOnPhone = oDialog.getStretchOnPhone() && Device.system.phone,
 			oValueStateText = oDialog.getAggregation("_valueState"),
 			oFooter = oDialog.getFooter();
 
@@ -78,7 +78,14 @@ sap.ui.define([
 			oRM.class("sapMDialogTouched");
 		}
 
-		if (bStretch || bStretchOnPhone) {
+		if (bStretch) {
+			oRM.class("sapMDialogStretched");
+		}
+
+		/**
+		 * @deprecated As of version 1.11.2
+		 */
+		if (!bStretch && oDialog.getStretchOnPhone() && Device.system.phone) {
 			oRM.class("sapMDialogStretched");
 		}
 
@@ -105,7 +112,7 @@ sap.ui.define([
 		}
 
 		oRM.accessibilityState(oDialog, {
-			role: sRole,
+			role: sRole.toLowerCase(),
 			modal: true
 		});
 
@@ -152,9 +159,8 @@ sap.ui.define([
 		oRM.openEnd();
 
 		if (Device.system.desktop) {
-
 			if (oDialog.getResizable() && !bStretch) {
-				oRM.icon("sap-icon://resize-corner", ["sapMDialogResizeHandler"], {"title": "", "aria-label": ""});
+				DialogRenderer.renderResizeHandle(oRM);
 			}
 
 			// Invisible element which is used to determine when desktop keyboard navigation
@@ -172,7 +178,9 @@ sap.ui.define([
 			oRM.openStart("header")
 				.openEnd();
 			if (oHeader) {
-				oHeader._applyContextClassFor("header");
+				if (oHeader._applyContextClassFor) {
+					oHeader._applyContextClassFor("header");
+				}
 				oRM.openStart("div")
 					.class("sapMDialogTitleGroup");
 
@@ -192,7 +200,9 @@ sap.ui.define([
 			}
 
 			if (oSubHeader && oSubHeader.getVisible()) {
-				oSubHeader._applyContextClassFor("subheader");
+				if (oSubHeader._applyContextClassFor) {
+					oSubHeader._applyContextClassFor("subheader");
+				}
 				oRM.openStart("div")
 					.class("sapMDialogSubHeader")
 					.openEnd()
@@ -235,10 +245,14 @@ sap.ui.define([
 				.class("sapMDialogFooter")
 				.openEnd();
 			if (oFooter) {
-				oFooter._applyContextClassFor("footer");
+				if (oFooter._applyContextClassFor) {
+					oFooter._applyContextClassFor("footer");
+				}
 				oRM.renderControl(oFooter);
 			} else {
-				oDialog._oToolbar._applyContextClassFor("footer");
+				if (oDialog._oToolbar._applyContextClassFor) {
+					oDialog._oToolbar._applyContextClassFor("footer");
+				}
 				oRM.renderControl(oDialog._oToolbar);
 			}
 			oRM.close("footer");
@@ -259,6 +273,15 @@ sap.ui.define([
 		oRM.close("div");
 	};
 
-	return DialogRenderer;
+	DialogRenderer.renderResizeHandle = function(oRM) {
+		oRM.openStart("div")
+			.class("sapMDialogResizeHandle")
+			.openEnd();
 
+		oRM.icon("sap-icon://resize-corner", ["sapMDialogResizeHandleIcon"], { "title": null, "aria-label": null });
+
+		oRM.close("div");
+	};
+
+	return DialogRenderer;
 }, /* bExport= */ true);

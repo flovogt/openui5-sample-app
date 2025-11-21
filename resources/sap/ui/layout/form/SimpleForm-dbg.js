@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,6 +8,7 @@
 sap.ui.define([
 	'sap/ui/core/Control',
 	'sap/ui/base/ManagedObjectObserver',
+	"sap/ui/core/Element",
 	'sap/ui/layout/library',
 	'./Form',
 	'./FormContainer',
@@ -19,6 +20,7 @@ sap.ui.define([
 ], function(
 	Control,
 	ManagedObjectObserver,
+	Element,
 	library,
 	Form,
 	FormContainer,
@@ -58,7 +60,7 @@ sap.ui.define([
 	 * <code>{@link sap.ui.layout.form.FormContainer FormContainer}</code> elements and <code>{@link sap.ui.layout.form.FormElement FormElement}</code> elements,
 	 * but the complexity in the API is not exposed to the user.
 	 * <ul>
-	 * <li>A new <code>sap.ui.core.Title</code> element or <code>Toolbar</code> control starts a new group (<code>{@link sap.ui.layout.form.FormContainer FormContainer}</code>) in the form.</li>
+	 * <li>A new {@link sap.ui.core.Title Title} element or <code>Toolbar</code> control starts a new group (<code>{@link sap.ui.layout.form.FormContainer FormContainer}</code>) in the form.</li>
 	 * <li>A new <code>Label</code> control starts a new row (<code>{@link sap.ui.layout.form.FormElement FormElement}</code>) in the form.</li>
 	 * <li>All other controls will be assigned to the row (<code>{@link sap.ui.layout.form.FormElement FormElement}</code>) that started with the last label.</li>
 	 * </ul>
@@ -67,7 +69,7 @@ sap.ui.define([
 	 * <b>Note:</b> If a more complex form is needed, use the <code>{@link sap.ui.layout.form.Form Form}</code> control instead.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -119,8 +121,9 @@ sap.ui.define([
 				 * The labels and fields might be misaligned, the labels might be rendered in the wrong mode,
 				 * and the spacing between the single controls might be wrong.
 				 * Also, controls that do not fit the mode might be rendered incorrectly.
+				 * In addition to that, wrong screen reader announcements might occur.
 				 */
-				editable : {type : "boolean", group : "Misc", defaultValue : null},
+				editable : {type : "boolean", group : "Misc", defaultValue : false},
 
 				/**
 				 * Specifies the min-width in pixels of the label in all form rows.
@@ -273,7 +276,7 @@ sap.ui.define([
 				singleContainerFullSize : {type : "boolean", group : "Misc", defaultValue : true},
 
 				/**
-				 * Breakpoint between Medium size and Large size.
+				 * Breakpoint between large size and extra large size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.34.0
@@ -281,7 +284,7 @@ sap.ui.define([
 				breakpointXL : {type : "int", group : "Misc", defaultValue : 1440},
 
 				/**
-				 * Breakpoint between Medium size and Large size.
+				 * Breakpoint between medium size and large size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.16.3
@@ -289,7 +292,7 @@ sap.ui.define([
 				breakpointL : {type : "int", group : "Misc", defaultValue : 1024},
 
 				/**
-				 * Breakpoint between Small size and Medium size.
+				 * Breakpoint between small size and medium size.
 				 *
 				 * <b>Note:</b> This property is only used if a <code>ResponsiveGridLayout</code> is used as a layout.
 				 * @since 1.16.3
@@ -311,34 +314,34 @@ sap.ui.define([
 				/**
 				 * The content of the form is structured in the following way:
 				 * <ul>
-				 * <li>Add a <code>sap.ui.core.Title</code> element or <code>Toolbar</code> control to start a new group (<code>{@link sap.ui.layout.form.FormContainer FormContainer}</code>).</li>
+				 * <li>Add a {@link sap.ui.core.Title Title} element or <code>Toolbar</code> control to start a new group (<code>{@link sap.ui.layout.form.FormContainer FormContainer}</code>).</li>
 				 * <li>Add a <code>Label</code> control to start a new row (<code>{@link sap.ui.layout.form.FormElement FormElement}</code>).</li>
 				 * <li>Add controls as input fields, text fields or other as needed.</li>
 				 * <li>Use <code>LayoutData</code> to influence the layout for special cases in the single controls.
 				 * For example, if a <code>ColumnLayout</code> is used as a layout,
 				 * the form content is weighted using 4 cells for the labels and 8 cells for the field part, for large size.
 				 * If there is only little space, the labels are above the fields and each field uses 12 cells.
-				 * If your input controls should influence their width, you can add <code>sap.ui.layout.ColumnElementData</code>
-				 * to them via <code>setLayoutData</code> method.
-				 * Ensure that the sum of the weights in the <code>ColumnElementData</code> is not more than 12,
+				 * If your input controls should influence their width, you can add {@link sap.ui.layout.form.ColumnElementData ColumnElementData}
+				 * to them via the {@link #setLayoutData setLayoutData} method.
+				 * Ensure that the sum of the weights in the {@link sap.ui.layout.form.ColumnElementData ColumnElementData} is not more than 12,
 				 * as this is the total width of the input control part of each form row.</li>
 				 * </ul>
-				 * Example for a row where the <code>Input</code> uses 6 cells and the second <code>Input</code> uses 2 cells (using <code>ColumnElementData</code>):
+				 * Example for a row where the {@link sap.m.Input Input} uses 6 cells and the second {@link sap.m.Input Input} uses 2 cells (using {@link sap.ui.layout.form.ColumnElementData ColumnElementData}):
 				 * <pre>
 				 * new sap.m.Label({text:"Label"});
-				 * new sap.m.Input({value:"6 cells", layoutData: new sap.ui.layout.ColumnElementData({cellsLarge: 6, cellsSmall: 8})}),
-				 * new sap.m.Input({value:"2 cells", layoutData: new sap.ui.layout.ColumnElementData({cellsLarge: 2, cellsSmall: 4})}),
+				 * new sap.m.Input({value:"6 cells", layoutData: new sap.ui.layout.form.ColumnElementData({cellsLarge: 6, cellsSmall: 8})}),
+				 * new sap.m.Input({value:"2 cells", layoutData: new sap.ui.layout.form.ColumnElementData({cellsLarge: 2, cellsSmall: 4})}),
 				 * </pre>
 				 *
-				 * For example, if a <code>ResponsiveGridLayout</code> is used as a layout, there are 12 cells in one row.
+				 * For example, if a {@link sap.ui.layout.ResponsiveGridLayout ResponsiveGridLayout} is used as a layout, there are 12 cells in one row.
 				 * Depending on the screen size the labels use the defined <code>labelSpan</code>.
 				 * The remaining cells are used for the fields (and <code>emptySpan</code> if defined).
 				 * The available cells are distributed to all fields in the row. If one field should use a fixed number of cells
-				 * you can add <code>sap.ui.layout.GridData</code> to them via <code>setLayoutData</code> method.
+				 * you can add {@link sap.ui.layout.GridData GridData} to them via the {@link #setLayoutData setLayoutData} method.
 				 * If there are additional fields in the row they will get the remaining cells.
 				 * </ul>
-				 * Example for a row with two <code>Input</code> controls where one uses four cells on small screens,
-				 * one cell on medium screens and 2 cells on larger screens (using <code>ResponsiveGridLayout</code>):
+				 * Example for a row with two {@link sap.m.Input Input} controls where one uses four cells on small screens,
+				 * one cell on medium screens and 2 cells on larger screens (using {@link sap.ui.layout.ResponsiveGridLayout ResponsiveGridLayout}):
 				 * <pre>
 				 * new sap.m.Label({text:"Label"});
 				 * new sap.m.Input({value:"auto size"}),
@@ -351,7 +354,7 @@ sap.ui.define([
 				 *
 				 * If editable controls are used as content, the <code>editable</code> property must be set to <code>true</code>,
 				 * otherwise to <code>false</code>. If the <code>editable</code> property is set incorrectly, there will be visual issues
-				 * like wrong label alignment or wrong spacing between the controls.
+				 * like wrong label alignment or wrong spacing between the controls. In addition to that, wrong screen reader announcements might occur.
 				 */
 				content : {type : "sap.ui.core.Element", multiple : true, singularName : "content"},
 
@@ -362,6 +365,12 @@ sap.ui.define([
 
 				/**
 				 * Title element of the <code>SimpleForm</code>. Can either be a <code>Title</code> element, or a string.
+				 *
+				 * <b>Note:</b> If a <code>Toolbar</code> is used, the <code>Title</code> is ignored.
+				 *
+				 * <b>Note:</b> If the title is provided as a string, the title is rendered with a theme-dependent default level.
+				 * As the <code>Form</code> control cannot know the structure of the page, this might not fit the page structure.
+				 * In this case, provide the title using a <code>Title</code> element and set its {@link sap.ui.core.Title#setLevel level} to the needed value.
 				 * @since 1.16.3
 				 */
 				title : {type : "sap.ui.core.Title", altTypes : ["string"], multiple : false},
@@ -371,15 +380,24 @@ sap.ui.define([
 				 *
 				 * <b>Note:</b> If a <code>Toolbar</code> is used, the <code>Title</code> is ignored.
 				 * If a title is needed inside the <code>Toolbar</code> it must be added at content to the <code>Toolbar</code>.
-				 * In this case add the <code>Title</code> to the <code>ariaLabelledBy</code> association.
+				 * In this case, add the <code>Title</code> to the <code>ariaLabelledBy</code> association.
 				 * @since 1.36.0
 				 */
-				toolbar : {type : "sap.ui.core.Toolbar", multiple : false}
+				toolbar : {type : "sap.ui.core.Toolbar", multiple : false,
+					forwarding: {
+						idSuffix: "--Form",
+						aggregation: "toolbar"
+					}
+				}
 			},
 			associations: {
 
 				/**
 				 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
+				 *
+				 * <b>Note:</b> Every <code>Form</code> needs to have some title or label (at least for screen reader support). If no <code>Title</code>
+				 * is set, and the <code>Form</code> is not a child or a control with a title, such as {@link sap.m.Panel Panel} or {@link sap.m.Dialog Dialog},
+				 * a label or title needs to be assigned using the <code>ariaLabelledBy</code> association.
 				 * @since 1.32.0
 				 */
 				ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
@@ -452,7 +470,7 @@ sap.ui.define([
 		_removeResize.call(this);
 
 		for (var i = 0; i < this._aLayouts.length; i++) {
-			var oLayout = sap.ui.getCore().byId(this._aLayouts[i]);
+			var oLayout = Element.getElementById(this._aLayouts[i]);
 			if (oLayout && oLayout.destroy) {
 				oLayout.destroy();
 			}
@@ -525,27 +543,16 @@ sap.ui.define([
 	SimpleForm.prototype.setToolbar = function(oToolbar) {
 
 		this._bChangedByMe = true;
-		var oForm = this.getAggregation("form");
-		oForm.setToolbar(oToolbar);
-
+		this.setAggregation("toolbar", oToolbar);
 		this._bChangedByMe = false;
 		return this;
-
-	};
-
-	SimpleForm.prototype.getToolbar = function() {
-
-		var oForm = this.getAggregation("form");
-		return oForm.getToolbar();
 
 	};
 
 	SimpleForm.prototype.destroyToolbar = function() {
 
 		this._bChangedByMe = true;
-		var oForm = this.getAggregation("form");
-		oForm.destroyToolbar();
-
+		this.destroyAggregation("toolbar");
 		this._bChangedByMe = false;
 		return this;
 
@@ -913,7 +920,7 @@ sap.ui.define([
 		if (this._aElements) {
 
 			if (typeof (vElement) == "string") { // ID of the element is given
-				vElement = sap.ui.getCore().byId(vElement);
+				vElement = Element.getElementById(vElement);
 			}
 
 			if (typeof (vElement) == "object") { // the element itself is given or has just been retrieved
@@ -1313,6 +1320,10 @@ sap.ui.define([
 			_addLayoutData.call(this);
 			if (this.getDomRef()) {
 				_updateLayout.call(this);
+				var oForm = this.getAggregation("form");
+				if (!oForm.getDomRef()) { // Form not rendered right now - invalidate to trigger rendering
+					this.invalidate();
+				}
 			}
 		}
 
@@ -1675,7 +1686,7 @@ sap.ui.define([
 			mSettings["label"] = oLabel;
 		} else {
 			sId = oFormContainer.getId() + "--FE-NoLabel"; // There can be only one FormElement without Label in a FomContainer (first one)
-			if (sap.ui.getCore().byId(sId)) {
+			if (Element.getElementById(sId)) {
 				// if ResponsiveLayout and ResponsiveFlowLayoutdata with Linebreak is used multiple FormElements without Label can exist
 				// as already deprecated just keep generatied ID in this very special case.
 				sId = undefined;
@@ -1959,7 +1970,7 @@ sap.ui.define([
 
 		if (!this._bChangedByMe) {
 			// check if content is still the same like in array
-			// maybe ca Control was destroyed or removed without using the SimpleForm API
+			// maybe a Control was destroyed or removed without using the SimpleForm API
 			// as invalidate is fired for every single object only one object can be changed
 			var aContent = _getFormContent(this.getAggregation("form"));
 			var i = 0;

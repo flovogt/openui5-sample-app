@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -16,8 +16,7 @@ sap.ui.define([
 		 *
 		 * @alias sap.f.changeHandler.MoveDynamicPageTitleActions
 		 * @author SAP SE
-		 * @version 1.120.27
-		 * @experimental Since 1.52
+		 * @version 1.141.2
 		 */
 		var MoveActions = { };
 		var ACTION_AGGREGATION_NAME = "actions";

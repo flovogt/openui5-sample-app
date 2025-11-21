@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,9 +14,7 @@ sap.ui.define([
 	"sap/base/Log",
 	"sap/base/assert",
 	"sap/ui/thirdparty/jquery",
-	"./PDFViewerRenderer",
-	"sap/ui/core/Lib",
-	"sap/m/IllustrationPool"
+	"sap/ui/core/Lib"
 ],
 	function(
 		library,
@@ -27,9 +25,7 @@ sap.ui.define([
 		Log,
 		assert,
 		jQuery,
-		PDFViewerRenderer1,
-		CoreLib,
-		IllustrationPool
+		CoreLib
 	) {
 		"use strict";
 
@@ -49,7 +45,7 @@ sap.ui.define([
 		 * @extends sap.ui.core.Control
 		 *
 		 * @author SAP SE
-		 * @version 1.120.27
+		 * @version 1.141.2
 		 * @since 1.48
 		 *
 		 * @constructor
@@ -184,12 +180,17 @@ sap.ui.define([
 						 * domain.
 						 * If you want no error message to be displayed when this event is fired, call the
 						 * preventDefault() method inside the event handler.
+						 *
+						 * Modern browsers implement strict policies for validating external resources loaded within an iframe.
+						 * PDFViewer cannot determine whether the resource inside the iframe is a valid PDF by itself.
+						 * As the validation cannot be performed the sourceValidationFailed event cannot be triggered.
+						 * @deprecated As of version 1.141.0 with no replacement.
 						 */
 						sourceValidationFailed: {}
 					}
 				},
 
-				renderer: PDFViewerRenderer1
+				renderer: PDFViewerRenderer
 			});
 
 
@@ -213,14 +214,6 @@ sap.ui.define([
 			this._initOverflowToolbarControl();
 
 			this._initControlState();
-
-			var oTntIllustrationSet = {
-				setFamily: "tnt",
-				setURI: sap.ui.require.toUrl("sap/tnt/themes/base/illustrations")
-			};
-
-			// register tnt illustration set
-			IllustrationPool.registerIllustrationSet(oTntIllustrationSet, false);
 		};
 
 		/**
@@ -338,119 +331,50 @@ sap.ui.define([
 		};
 
 		/**
-		 * @param {string} [src] - url of pdf
-		 * @param {string} [method] - GET or HEAD mothod
-		 * @returns - content-type header from the response header
-		 * @description - this method fetches response headers from server to validate content-type.
 		 * @private
+		 * Handles the iframe load event for PDFViewer.
+		 * - Checks if PDF plugin is enabled, fires error if not.
+		 * - Tries to access children of the iframe document body.
+		 * - If children exist, checks for embed tag to validate PDF rendering.
+		 * - Fires loaded event if valid, error event otherwise.
+		 * - Catches and logs any unexpected errors, fires error event in such cases.
 		 */
-		PDFViewer.prototype._getHeaderInfo = function(src, method) {
-			return new Promise((resolve, reject) => {
-				const oXMLHttpRequest = new XMLHttpRequest();
-				oXMLHttpRequest.open(method, src, false);
-				oXMLHttpRequest.onload = () => {
-					const sStatus = oXMLHttpRequest.status;
-					if (sStatus === 200) {
-						const response = oXMLHttpRequest.getAllResponseHeaders().toLowerCase().trim();
-						const items = response.split("\n");
-						const responseHeader = [];
-						for (let i = 0; i < items.length; i++) {
-							const parts = items[i].split(': ');
-							responseHeader[parts[0].trim()] = parts[1].trim();
-						}
-						resolve(responseHeader['content-type']);
-					} else {
-						reject(new Error(`Error in fetching header with method ${method}, status ${oXMLHttpRequest.status} and statusText ${oXMLHttpRequest.statusText}`));
-					}
-				};
-				oXMLHttpRequest.onerror = (error) => {
-					reject(new Error(`Error in fetching header with method ${method}, status ${oXMLHttpRequest.status}, statusText ${oXMLHttpRequest.statusText} and error ${error}`));
-				};
-				oXMLHttpRequest.send(null);
-			});
-		};
-
-		/**
-		 * @param oEvent
-		 * @private
-		 */
-		PDFViewer.prototype._onLoadListener = function (oEvent) {
+		 PDFViewer.prototype._onLoadListener = function (oEvent) {
 			try {
-				const oTarget = jQuery(oEvent.target);
-				let bContinue = true, sCurrentContentType = '';
-
-				//HTML body.children can be accessed only in scenario when chrome://flags/#pdf-oopif = disabled OR invalid path given to the iframe src
-				try {
-					var aTargetChildren = oTarget[0]?.contentWindow?.document?.body?.children;
-				} catch (error) {
-					/* Firefox
-						https://bugzilla.mozilla.org/show_bug.cgi?id=911444
-						because of the embedded pdf plugin in firefox it is not possible to check contentType of the iframe document
-						if the content is pdf. If the content is not a pdf and it is from the same origin, it can be accessed.
-						Other browsers allow access to the mimeType of the iframe's document if the content is from the same origin.
-						If browser is Firefox we triggerHEADRequest to fetch the ContentType.
-					*/
-					if (Device.browser.firefox) {
-						aTargetChildren = [];
-					}
-				}
-				//If chrome://flags/#pdf-oopif = disabled follow the existing approach to validate contentType.
-				if (aTargetChildren?.length) {
+				// Check if PDF plugin is enabled
+				if (PDFViewerRenderer._isPdfPluginEnabled()) {
+					var bContinue = true;
+					var oTarget = jQuery(oEvent.target);
 					try {
-						// browsers render pdf in iframe as html page with embed tag
+						// Try to access children of the iframe document body
+						var aTargetChildren = oTarget[0]?.contentWindow?.document?.body?.children;
+					} catch (error) {
+						// If access fails, log warning and treat as no children
+						aTargetChildren = [];
+						Log.warning("Error in fetching children entity for given source of PDFViewer.");
+					}
+					// If children exist, check for embed tag
+					if (aTargetChildren?.length) {
 						var aEmbeds = oTarget[0].contentWindow.document.embeds;
 						bContinue = !!aEmbeds && aEmbeds.length === 1;
-						if (bContinue) {
-							sCurrentContentType = aEmbeds[0].attributes.getNamedItem("type").value;
-						}
-					} catch (error) {
-						// even though the sourceValidationFailed event is fired, the default behaviour is to continue.
-						// when preventDefault is on event object is called, the rendering ends up with error
-						if (!Device.browser.firefox && this.fireEvent("sourceValidationFailed", {}, true)) {
-							this._fireLoadedEvent();
-							return;
-						}
 					}
-					/*	LoadedEvent will be triggered if all the below criteria matches and PDF is displayed
-							1. If embed tag is present.
-							2. If ContentType = "application/pdf" / "application/x-google-chrome-pdf".
-							3. If Browser PDFPlugin is enabled.
-						else the ErrorEvent will be triggered, It will also be triggered if an invalid path is proveded as src for the iframe and LoadingError IllustratedMessage is displayed.
-					*/
-					if (bContinue && PDFViewerRenderer._isSupportedMimeType(sCurrentContentType) && PDFViewerRenderer._isPdfPluginEnabled()) {
+					// If valid PDF rendering, fire loaded event; else, fire error event
+					if (bContinue) {
 						this._fireLoadedEvent();
 					} else {
 						this._fireErrorEvent(oEvent.target);
 					}
 				} else {
-					//If chrome://flags/#pdf-oopif = enabled trigger the HEAD Request
-					const sMethod = 'HEAD';
-					this._getHeaderInfo(this._sParametrizedSource, sMethod)
-					.then((sCurrentContentType) => {
-						/*	LoadedEvent will be triggered if all the below criteria matches
-								1. If ContentType = "application/pdf" / "application/x-google-chrome-pdf".
-								2. If Browser PDFPlugin is enabled.
-							else the ErrorEvent will be triggered and LoadingError IllustratedMessage is displayed.
-						*/
-						if (PDFViewerRenderer._isSupportedMimeType(sCurrentContentType) && PDFViewerRenderer._isPdfPluginEnabled()) {
-							this._fireLoadedEvent();
-						} else {
-							this._fireErrorEvent(oEvent.target);
-						}
-					}).catch((e) => {
-						//If Head Request fails ErrorEvent will be triggered and LoadingError IllustratedMessage is displayed.
-						this._fireErrorEvent(oEvent.target);
-						Log.fatal(e);
-						this.fireEvent("sourceValidationFailed", {}, true);
-					});
+					// PDF plugin not enabled, fire error event
+					this._fireErrorEvent(oEvent.target);
 				}
 			} catch (error) {
-				//Generic Error Handling
+				// Generic Error Handling: fire error event and log details
 				this._fireErrorEvent(oEvent.target);
 				Log.fatal(false, "Fatal error during the handling of load event happened.");
 				Log.fatal(false, error.message);
 			}
-		};
+        };
 
 		/**
 		 * @private

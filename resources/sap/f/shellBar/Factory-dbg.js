@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
@@ -171,9 +171,16 @@ sap.ui.define([
 				press: function (oEvent) {
 					var oSource = oEvent.getSource();
 					oSource.getIcon() === "sap-icon://da" ? oSource.setIcon("sap-icon://da-2") : oSource.setIcon("sap-icon://da");
-					this._oContext.fireEvent("copilotPressed", {image: null, button: this._oControls.oCopilot});
+					oSource.toggleStyleClass("sapFShellBarItemActive");
+					this._oContext.fireEvent("copilotPressed", {
+						/**
+						 * @deprecated Since version 1.121
+						 */
+						image: null,
+						button: this._oControls.oCopilot
+					});
 				}.bind(this)
-			})
+			}).addStyleClass("sapFShellBarAssistantBtn")
 			.setLayoutData(new OverflowToolbarLayoutData({
 				priority: OverflowToolbarPriority.Low
 			}));

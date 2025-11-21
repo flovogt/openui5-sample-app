@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
@@ -16,8 +16,12 @@ sap.ui.define([
 	function(BaseConfig, DesignTime, getCompatibilityVersion, BindingParser, BindingMode) {
 	"use strict";
 
-	// Marker to not 'forget' ui5Objects
-	var sUI5ObjectMarker = Symbol("ui5object");
+	// Marker that is used for aggregation binding. It's set on the instance
+	// cloned from the given template with value pointing to the original
+	// parent where the aggregation is defined. In case the aggregation is
+	// forwarded to another control, the original parent isn't changed and still
+	// points to the control before the aggregation gets forwarded.
+	const ORIGINAL_PARENT = Symbol("OriginalParent");
 
 	// Marker symbol for BindingInfos which already have extracted a
 	// named model from their path
@@ -52,7 +56,7 @@ sap.ui.define([
 	 * @alias sap.ui.base.BindingInfo
 	 * @namespace
 	 * @private
-	 * @ui5-restricted sap.ui.base, sap.ui.core
+	 * @ui5-restricted sap.ui.base, sap.ui.core, sap.ui.model, sap.m, sap.ui.integration, sap.ui.fl, sap.fe
 	 */
 	var BindingInfo = {
 		/**
@@ -130,7 +134,13 @@ sap.ui.define([
 			} else if (oBindingInfo.template) {
 				// if we have a template we will create a factory function
 				oBindingInfo.factory = function(sId) {
-					return oBindingInfo.template.clone(sId);
+					const oClone = oBindingInfo.template.clone(sId);
+					// This flag is currently used by FieldHelp.js and it needs to be set only when a binding template is given.
+					// When a custom factory method is provided, it's not guaranteed that all instances created from the factory
+					// are bound to the same sub-path under the given aggregation path. Therefore we can't use the parent
+					// control for showing the header of the field help.
+					oClone[ORIGINAL_PARENT] = oBindingInfo[ORIGINAL_PARENT];
+					return oClone;
 				};
 			}
 
@@ -162,14 +172,15 @@ sap.ui.define([
 				if (oValue.Type) {
 					// if value contains the 'Type' property (capital 'T'), this is not a binding info.
 					oBindingInfo = undefined;
-				} else if (oValue[sUI5ObjectMarker]) {
+				} else if (oValue[this.UI5ObjectMarker]) {
 					// no bindingInfo, delete marker
-					delete oValue[sUI5ObjectMarker];
+					delete oValue[this.UI5ObjectMarker];
 				} else if (oValue.ui5object) {
 					// if value contains ui5object property, this is not a binding info,
 					// remove it and not check for path or parts property
 					delete oValue.ui5object;
-				} else if (oValue.path != undefined || oValue.parts || (bDetectValue && oValue.value != undefined)) {
+				} else if (oValue.path != undefined || oValue.parts
+						|| (bDetectValue || oValue[this.UI5ObjectMarker] === false) && oValue.value != undefined) {
 					oBindingInfo = oValue;
 				}
 			}
@@ -177,14 +188,44 @@ sap.ui.define([
 			// property:"{path}" or "\{path\}"
 			if (typeof oValue === "string") {
 				// either returns a binding info or an unescaped string or undefined - depending on binding syntax
-				oBindingInfo = BindingInfo.parse(oValue, oScope, true);
+				const args = [oValue, oScope, true];
+				// provide variable "$control" to be used with ".bind()" in the binding string
+				// see BindingParser.complexParser
+				args[8] = { "$control": null };
+
+				oBindingInfo = BindingInfo.parse(...args);
 			}
 			return oBindingInfo;
 		},
 		escape: function () {
 			return BindingInfo.parse.escape.apply(this, arguments);
 		},
-		UI5ObjectMarker: sUI5ObjectMarker
+
+		/**
+		 * Checks whether a BindingInfo is ready to create its Binding.
+		 *
+		 * @param {sap.ui.base.ManagedObject.PropertyBindingInfo
+		 *         | sap.ui.base.ManagedObject.AggregationBindingInfo
+		 *         | sap.ui.base.ManagedObject.ObjectBindingInfo} oBindingInfo The BindingInfo to check
+		 * @param {sap.ui.base.ManagedObject} oObject The bound ManagedObject
+		 * @returns {boolean} if the BindingInfo is ready or not
+		 * @private
+		 * @ui5-restricted sap.ui.base, sap.ui.core, sap.ui.model
+		 */
+		isReady: function(oBindingInfo, oObject) {
+			const aParts = oBindingInfo.parts;
+
+			if (aParts) { // PropertyBinding
+				return oBindingInfo.parts.every((oPart) => {
+					return oPart.value !== undefined || oObject.getModel(oPart.model);
+				});
+			} else { // AggregationBinding or ObjectBinding
+				return !!oObject.getModel(oBindingInfo.model);
+			}
+		},
+
+		UI5ObjectMarker: BindingParser.UI5ObjectMarker,
+		OriginalParent: ORIGINAL_PARENT
 	};
 
 	/**
@@ -203,6 +244,12 @@ sap.ui.define([
 		return sBindingSyntax;
 	}
 
+	/**
+	 * Parses the given binding info string and returns a binding info object if valid.
+	 * @see sap.ui.base.BindingParser
+	 * @private
+	 * @ui5-restricted sap.ui.base, sap.ui.core, sap.ui.model, sap.m, sap.ui.integration, sap.ui.fl, sap.fe
+	 */
 	Object.defineProperty(BindingInfo, "parse", {
 		get: function () {
 			if (!this.oParser) {

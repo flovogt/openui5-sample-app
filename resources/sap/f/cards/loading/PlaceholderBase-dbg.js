@@ -1,13 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define([
 	"sap/ui/core/Control",
-	"sap/ui/core/Core",
 	"sap/f/cards/loading/PlaceholderBaseRenderer"
-], function (Control, Core, PlaceholderBaseRenderer) {
+], function (Control, PlaceholderBaseRenderer) {
 	"use strict";
 
 
@@ -23,7 +22,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @private
@@ -45,6 +44,7 @@ sap.ui.define([
 				/**
 				 * Indicates whether the card has any content
 				 * @private
+				 * @ui5-restricted sap.f.cards.loading.PlaceholderBase
 				 */
 				hasContent: { type: "boolean", defaultValue: true}
 			}

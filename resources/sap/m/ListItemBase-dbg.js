@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -9,11 +9,11 @@ sap.ui.define([
 	"sap/ui/base/DataType",
 	"sap/ui/model/BindingMode",
 	"sap/ui/Device",
-	"sap/ui/core/library",
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
 	"sap/ui/core/Icon",
 	"sap/ui/core/InvisibleText",
+	"sap/ui/core/message/MessageType",
 	"sap/ui/core/theming/Parameters",
 	"sap/ui/core/ShortcutHintsMixin",
 	"./library",
@@ -31,11 +31,11 @@ function(
 	DataType,
 	BindingMode,
 	Device,
-	coreLibrary,
 	Control,
 	IconPool,
 	Icon,
 	InvisibleText,
+	MessageType,
 	ThemeParameters,
 	ShortcutHintsMixin,
 	library,
@@ -49,19 +49,10 @@ function(
 ) {
 	"use strict";
 
-
-	// shortcut for sap.m.ListMode
-	var ListMode = library.ListMode;
-
-	// shortcut for sap.m.ListType
-	var ListItemType = library.ListType;
-
-	// shortcut for sap.m.ButtonType
-	var ButtonType = library.ButtonType;
-
-	// shortcut for sap.ui.core.MessageType
-	var MessageType = coreLibrary.MessageType;
-
+	const ListMode = library.ListMode;
+	const ListItemType = library.ListType;
+	const ButtonType = library.ButtonType;
+	const ListItemActionType = library.ListItemActionType;
 
 	/**
 	 * Constructor for a new ListItemBase.
@@ -75,7 +66,7 @@ function(
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -117,11 +108,12 @@ function(
 				/**
 				 * Defines the highlight state of the list items.
 				 *
-				 * Valid values for the <code>highlight</code> property are values of the enumerations {@link sap.ui.core.MessageType} or
-				 * {@link sap.ui.core.IndicationColor}.
+				 * Valid values for the <code>highlight</code> property are values of the enumerations {@link module:sap/ui/core/message/MessageType} or
+				 * {@link sap.ui.core.IndicationColor} (only values of <code>Indication01</code> to <code>Indication10</code> are supported
+				 * for accessibility contrast reasons).
 				 *
 				 * Accessibility support is provided through the associated {@link sap.m.ListItemBase#setHighlightText highlightText} property.
-				 * If the <code>highlight</code> property is set to a value of {@link sap.ui.core.MessageType}, the <code>highlightText</code>
+				 * If the <code>highlight</code> property is set to a value of {@link module:sap/ui/core/message/MessageType}, the <code>highlightText</code>
 				 * property does not need to be set because a default text is used. However, the default text can be overridden by setting the
 				 * <code>highlightText</code> property.
 				 * In all other cases the <code>highlightText</code> property must be set.
@@ -146,6 +138,16 @@ function(
 				 * @since 1.72
 				 */
 				navigated : {type : "boolean", group : "Appearance", defaultValue : false}
+			},
+			defaultAggregation: "actions",
+			aggregations : {
+
+				/**
+				 * Defines the actions contained within this control.
+				 *
+				 * @since 1.137
+				 */
+				actions : { type: "sap.m.ListItemActionBase", multiple: true, singularName: "action" }
 			},
 			associations: {
 
@@ -392,7 +394,8 @@ function(
 	};
 
 	ListItemBase.prototype.getGroupAnnouncement = function() {
-		return this.$().prevAll(".sapMGHLI:first").text();
+		const oList = this.getList();
+		return oList?.getAriaRole() === "listbox" ? this.$().prevAll(".sapMGHLI:first").text() : "";
 	};
 
 	ListItemBase.prototype.getAccessibilityDescription = function(oBundle) {
@@ -425,12 +428,11 @@ function(
 
 		if (sType == ListItemType.Navigation) {
 			aOutput.push(oBundle.getText("LIST_ITEM_NAVIGATION"));
-		} else {
-			if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
-				aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
-			}
+		} else if (sType == ListItemType.Active || sType == ListItemType.DetailAndActive) {
+			aOutput.push(oBundle.getText("LIST_ITEM_ACTIVE"));
 		}
 
+		// Do not announce group header if List
 		var sGroupAnnouncement = this.getGroupAnnouncement() || "";
 		if (sGroupAnnouncement) {
 			aOutput.push(sGroupAnnouncement);
@@ -758,8 +760,8 @@ function(
 	ListItemBase.prototype.setHighlight = function(sValue) {
 		if (sValue == null) {
 			sValue = MessageType.None;
-		} else if (!DataType.getType("sap.ui.core.MessageType").isValid(sValue) && !DataType.getType("sap.ui.core.IndicationColor").isValid(sValue)) {
-			throw new Error('"' + sValue + '" is not a value of the enums sap.ui.core.MessageType or sap.ui.core.IndicationColor for property "highlight" of ' + this);
+		} else if (!DataType.getType("sap.ui.core.message.MessageType").isValid(sValue) && !DataType.getType("sap.ui.core.IndicationColor").isValid(sValue)) {
+			throw new Error('"' + sValue + '" is not a value of the enums sap/ui/core/message/MessageType or sap.ui.core.IndicationColor for property "highlight" of ' + this);
 		}
 
 		return this.setProperty("highlight", sValue);
@@ -819,6 +821,9 @@ function(
 
 		// set the property and do not invalidate
 		this.setProperty("selected", bSelected, true);
+
+		// let the list know the selected property is changed
+		this.informList("AfterSelectedChange", bSelected);
 
 		return this;
 	};
@@ -1161,12 +1166,16 @@ function(
 	ListItemBase.prototype.onsapdelete = function(oEvent) {
 		if (oEvent.isMarked() ||
 			oEvent.srcControl !== this ||
-			this.getMode() != ListMode.Delete ||
 			oEvent.target !== this.getDomRef()) {
 			return;
 		}
 
-		this.informList("Delete");
+		if (this.getMode() === ListMode.Delete && this._getMaxActionsCount() === -1) {
+			this.informList("Delete");
+		} else {
+			const oDeleteAction = this._getActionByType(ListItemActionType.Delete);
+			oDeleteAction?._onActionPress();
+		}
 		oEvent.preventDefault();
 		oEvent.setMarked();
 	};
@@ -1177,14 +1186,17 @@ function(
 			return;
 		}
 
-		// F2 fire detail event or handle editing
-		if (oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey)) {
-			if (oEvent.target === this.getDomRef() && (this.hasListeners("detailPress") || this.hasListeners("detailTap"))) {
+		// Ctrl+E fires detail event or handle editing
+		if (oEvent.code == "KeyE" && (oEvent.metaKey || oEvent.ctrlKey) && oEvent.target === this.getDomRef()) {
+			if (this.getType().startsWith("Detail") && (this.hasListeners("detailPress") || this.hasListeners("detailTap")) && this._getMaxActionsCount() === -1) {
 				this.fireDetailTap();
 				this.fireDetailPress();
-				oEvent.preventDefault();
-				oEvent.setMarked();
+			} else {
+				const oEditAction = this._getActionByType(ListItemActionType.Edit);
+				oEditAction?._onActionPress();
 			}
+			oEvent.preventDefault();
+			oEvent.setMarked();
 		}
 
 		if (oEvent.srcControl !== this || oEvent.target !== this.getDomRef()) {
@@ -1271,9 +1283,69 @@ function(
 
 		// allow the context menu to open on the SingleSelect or MultiSelect control
 		if (oEvent.srcControl == this.getModeControl() ||
-			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow")) {
+			document.activeElement.matches(".sapMLIB,.sapMListTblCell,.sapMListTblSubRow,.sapMListTblSubCnt")) {
 			this.informList("ContextMenu", oEvent);
 		}
+	};
+
+	ListItemBase.prototype._getMaxActionsCount = function() {
+		const oList = this.getList();
+		return oList ? oList._getItemActionCount() : -1;
+	};
+
+	ListItemBase.prototype._getVisibleActions = function() {
+		return this.getActions().filter((oAction) => oAction.getVisible());
+	};
+
+	ListItemBase.prototype._getActionByType = function(sListItemActionType) {
+		return this._getVisibleActions().find((oAction) => oAction.getType() === sListItemActionType);
+	};
+
+	ListItemBase.prototype._hasOverflowActions = function() {
+		return this._getVisibleActions().length > this._getMaxActionsCount();
+	};
+
+	ListItemBase.prototype._getActionsToRender = function() {
+		const aActions = this.getActions();
+		let iMaxActionsCount = this._getMaxActionsCount();
+		if (aActions.length <= iMaxActionsCount) {
+			return aActions; // all actions fit the available space
+		}
+
+		const aVisibleActions = aActions.filter((oAction) => oAction.getVisible());
+		if (aVisibleActions.length > iMaxActionsCount) {
+			iMaxActionsCount--;	// preserve space for the overflow button
+		}
+		return aVisibleActions.slice(0, iMaxActionsCount);
+	};
+
+	ListItemBase.prototype._getOverflowActions = function() {
+		const aActionsToRender = this._getActionsToRender();
+		return this.getActions().flatMap((oAction) => {
+			return oAction.getVisible() && !aActionsToRender.includes(oAction) ? [oAction] : [];
+		});
+	};
+
+	ListItemBase.prototype._onOverflowButtonPress = function(oEvent) {
+		const ListItemAction = this.getActions()[0].constructor;
+		ListItemAction._showMenu(this._getOverflowActions(), oEvent.getSource());
+	};
+
+	ListItemBase.prototype._getOverflowButton = function() {
+		if (this._oOverflowButton) {
+			return this._oOverflowButton;
+		}
+
+		this._oOverflowButton = new Button({
+			id: this.getId() + "-overflow",
+			icon: IconPool.getIconURI("overflow"),
+			press: [this._onOverflowButtonPress, this],
+			type: ButtonType.Transparent
+		});
+
+		this._oOverflowButton.useEnabledPropagator(false);
+		this.addDependent(this._oOverflowButton);
+		return this._oOverflowButton;
 	};
 
 	return ListItemBase;

@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -32,11 +32,10 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
-	 * @experimental Since 1.73. This class is experimental and provides only limited functionality. Also the API might be changed in future.
 	 * @since 1.73
 	 * @alias sap.f.AvatarGroupItem
 	 */

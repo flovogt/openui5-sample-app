@@ -1,19 +1,19 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 /*eslint-disable max-len */
 // Provides class sap.ui.model.odata.v2.ODataAnnotations
 sap.ui.define([
 	"sap/base/assert",
+	"sap/base/i18n/Localization",
 	"sap/base/util/extend",
 	"sap/ui/base/EventProvider",
-	"sap/ui/core/Configuration",
 	"sap/ui/core/cache/CacheManager",
 	"sap/ui/model/odata/AnnotationParser",
 	"sap/ui/thirdparty/jquery"
-], function(assert, extend, EventProvider, Configuration, CacheManager, AnnotationParser, jQuery) {
+], function(assert, Localization, extend, EventProvider, CacheManager, AnnotationParser, jQuery) {
 	"use strict";
 
 	///////////////////////////////////////////////// Class Definition /////////////////////////////////////////////////
@@ -31,12 +31,14 @@ sap.ui.define([
 	 * @param {boolean} mOptions.skipMetadata Whether the metadata document will not be parsed for
 	 *   annotations
 	 * @param {string} [mOptions.cacheKey] A valid cache key
+	 * @param {boolean} [mOptions.withCredentials=false] If set to <code>true</code>, the user credentials are included
+	 *   in a cross-origin request
 	 * @public
 	 *
 	 * @class Annotation loader for OData V2 services
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @public
 	 * @since 1.37.0
@@ -49,6 +51,7 @@ sap.ui.define([
 			var that = this;
 			// Allow event subscription in constructor options
 			EventProvider.apply(this, [ mOptions ]);
+			this.bWithCredentials = mOptions?.withCredentials === true;
 			this._oMetadata = oMetadata;
 			// The promise to have (loaded,) parsed and merged the previously added source.
 			// This promise should never reject; to assign another promise "pPromise" use
@@ -474,7 +477,7 @@ sap.ui.define([
 	 * Parameters of the <code>failed</code> event.
 	 *
 	 * @typedef {object} sap.ui.model.odata.v2.ODataAnnotations.failedParameters
-	 * @property {Error[]} result An array of Errors (@see sap.ui.model.v2.ODataAnnotations#error) that occurred while
+	 * @property {Error[]} result An array of Errors, see {@link sap.ui.model.v2.ODataAnnotations#error} that occurred while
 	 *           loading a group of annotations
 	 * @public
 	 */
@@ -727,16 +730,19 @@ sap.ui.define([
 	ODataAnnotations.prototype._loadUrl = function(mSource) {
 		assert(mSource.type === "url", "Source type must be \"url\" in order to be loaded");
 
-		return new Promise(function(fnResolve, fnReject) {
+		return new Promise((fnResolve, fnReject) => {
 			var mAjaxOptions = {
-				url: mSource.data,
-				async: true,
-				headers: this._getHeaders(),
-				beforeSend: function(oXHR) {
-					// Force text/plain so the XML parser does not run twice
-					oXHR.overrideMimeType("text/plain");
-				}
-			};
+					url: mSource.data,
+					async: true,
+					headers: this._getHeaders(),
+					...(this.bWithCredentials === true
+						? {xhrFields: {withCredentials: true}}
+						: {}),
+					beforeSend: function(oXHR) {
+						// Force text/plain so the XML parser does not run twice
+						oXHR.overrideMimeType("text/plain");
+					}
+				};
 
 			var fnSuccess = function(sData, sStatusText, oXHR) {
 				mSource.xml = oXHR.responseText;
@@ -760,7 +766,7 @@ sap.ui.define([
 			};
 
 			jQuery.ajax(mAjaxOptions).done(fnSuccess).fail(fnFail);
-		}.bind(this));
+		});
 	};
 
 	/**
@@ -838,7 +844,7 @@ sap.ui.define([
 		// The 'sap-cancel-on-close' header marks the OData annotation request as cancelable. This helps to save
 		// resources at the back-end.
 		return extend({"sap-cancel-on-close": "true"}, this.getHeaders(), {
-			"Accept-Language": Configuration.getLanguageTag() // Always overwrite
+			"Accept-Language": Localization.getLanguageTag().toString() // Always overwrite
 		});
 	};
 

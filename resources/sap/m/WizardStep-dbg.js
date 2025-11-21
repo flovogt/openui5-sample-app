@@ -1,20 +1,24 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Element",
 	"sap/ui/core/InvisibleText",
 	"./WizardStepRenderer",
 	"./Button",
+	"sap/ui/events/F6Navigation",
+	"sap/ui/thirdparty/jquery",
 	"./TitlePropagationSupport",
 	"sap/base/Log",
+	"sap/ui/core/Lib",
 	"sap/ui/core/library"
 ],
-	function(library, Control, InvisibleText, WizardStepRenderer, Button, TitlePropagationSupport, Log, coreLibrary) {
+	function(library, Control, Element, InvisibleText, WizardStepRenderer, Button, F6Navigation, jQuery, TitlePropagationSupport, Log, Library, coreLibrary) {
 
 	"use strict";
 
@@ -40,7 +44,7 @@ sap.ui.define([
 	 * <li>If the execution needs to branch after a given step, you should set all possible next steps in the <code>subsequentSteps</code> aggregation.
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -90,15 +94,11 @@ sap.ui.define([
 				 * This event is fired after the user presses the Next button in the Wizard,
 				 * or on <code>nextStep</code> method call from the app developer.
 				 */
-				complete: {
-					parameters: {}
-				},
+				complete: {},
 				/**
 				 * This event is fired on next step activation from the Wizard.
 				 */
-				activate: {
-					parameters: {}
-				}
+				activate: {}
 			},
 			defaultAggregation: "content",
 			aggregations: {
@@ -138,10 +138,10 @@ sap.ui.define([
 	var ButtonType = library.ButtonType;
 
 	// Add title propagation support
-	TitlePropagationSupport.call(WizardStep.prototype, "content", function () {return this.getId() + "-title";});
+	TitlePropagationSupport.call(WizardStep.prototype, "content", function () {return this.getId() + "-Title";});
 
 	WizardStep.prototype.init = function () {
-		this._oResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		this._oResourceBundle = Library.getResourceBundleFor("sap.m");
 		this._oNumberInvisibleText = new InvisibleText({id: this.getId() + "-NumberedTitle"}).toStatic();
 
 		this._createNextButton();
@@ -157,7 +157,7 @@ sap.ui.define([
 			text: this._oResourceBundle.getText("WIZARD_STEP") + 2,
 			type: ButtonType.Emphasized,
 			press: this._complete.bind(this)
-		}).addStyleClass("sapMWizardNextButtonVisible");
+		}).addStyleClass("sapMWizardNextButton");
 
 		this.setAggregation("_nextButton", this._oNextButton);
 	};
@@ -222,6 +222,24 @@ sap.ui.define([
 	};
 
 	/**
+	 * Handler for F6 Navigation.
+	 *
+	 * @param {Object} oEvent - The event object
+	 */
+	WizardStep.prototype.onsapskipforward = function(oEvent) {
+		oEvent.preventDefault();
+		const oEventF6 = new jQuery.Event("keydown");
+		oEventF6.target = oEvent.target;
+		oEventF6.key = 'F6';
+
+		if (!this._oNextButton.hasStyleClass("sapMWizardNextButtonHidden")) {
+			this._oNextButton.focus();
+		} else {
+			F6Navigation.handleF6GroupNavigation(oEventF6);
+		}
+	};
+
+	/**
 	 * Sets the title property of the WizardStep.
 	 * @param {string} sNewTitle The new WizardStep title.
 	 * @returns {sap.m.WizardStep} this instance for method chaining.
@@ -263,11 +281,11 @@ sap.ui.define([
 
 	WizardStep.prototype._getNextStepReference = function () {
 		if (this.getNextStep() !== null) {
-			return sap.ui.getCore().byId(this.getNextStep());
+			return Element.getElementById(this.getNextStep());
 		}
 
 		if (this.getSubsequentSteps().length === 1) {
-			return sap.ui.getCore().byId(this.getSubsequentSteps()[0]);
+			return Element.getElementById(this.getSubsequentSteps()[0]);
 		}
 
 		return null;
@@ -290,7 +308,6 @@ sap.ui.define([
 	WizardStep.prototype.setLast = function(bLast){
 		this.bLast = bLast;
 		this.toggleStyleClass("sapMWizardLastActivatedStep", bLast);
-		this.setButtonVisibility();
 	};
 
 	WizardStep.prototype.setButtonVisibility = function() {
@@ -305,10 +322,14 @@ sap.ui.define([
 	};
 
 	WizardStep.prototype.displayButton = function (bShow) {
+		this._oNextButton.removeStyleClass("sapMWizardNextButtonAnimated");
 		this._oNextButton.toggleStyleClass("sapMWizardNextButtonHidden", !bShow);
-		this._oNextButton.toggleStyleClass("sapMWizardNextButtonVisible", bShow);
 
-		this._oNextButton.setVisible(bShow);
+		if (bShow) {
+			window.requestAnimationFrame(() => {
+				this._oNextButton.addStyleClass("sapMWizardNextButtonAnimated");
+			});
+		}
 	};
 
 	WizardStep.prototype._activate = function () {

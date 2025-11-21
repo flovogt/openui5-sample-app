@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -32,7 +32,8 @@ sap.ui.define([
 	'sap/base/Log',
 	'sap/ui/core/ValueStateSupport',
 	"sap/ui/core/InvisibleMessage",
-	"sap/ui/core/Lib"
+	"sap/ui/core/Lib",
+	"sap/ui/core/ResizeHandler"
 ],
 function(
 	Element,
@@ -62,7 +63,8 @@ function(
 	Log,
 	ValueStateSupport,
 	InvisibleMessage,
-	Library
+	Library,
+	ResizeHandler
 ) {
 		"use strict";
 
@@ -71,6 +73,9 @@ function(
 
 		// shortcut for sap.m.PlacementType
 		var PlacementType = library.PlacementType;
+
+		// shortcut for sap.m.SelectTwoColumnSeparator
+		var TwoColumnSeparator = library.SelectTwoColumnSeparator;
 
 		// shortcut for sap.ui.core.ValueState
 		var ValueState = coreLibrary.ValueState;
@@ -93,6 +98,13 @@ function(
 		// shortcut for sap.ui.core.TitleLevel
 		var TitleLevel = coreLibrary.TitleLevel;
 
+		// constant for two column separator
+		var TWO_COLUMN_SEPARATOR_MAP = {
+			"Dash": "\u2013", // En Dash –
+			"Bullet": "\u2022", // Bullet •
+			"VerticalLine": "\u007C" // Vertical Line |
+		};
+
 		/**
 		 * Constructor for a new <code>sap.m.Select</code>.
 		 *
@@ -105,10 +117,16 @@ function(
 		 * @see {@link fiori:https://experience.sap.com/fiori-design-web/select/ Select}
 		 *
 		 * @extends sap.ui.core.Control
-		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent
+		 * @implements sap.ui.core.IFormContent, sap.ui.core.ISemanticFormContent, sap.ui.core.ILabelable
+		 *
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormFormattedValue as #getFormFormattedValue
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormValueProperty as #getFormValueProperty
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormObservingProperties as #getFormObservingProperties
+		 * @borrows sap.ui.core.ISemanticFormContent.getFormRenderAsControl as #getFormRenderAsControl
+		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.120.27
+		 * @version 1.141.2
 		 *
 		 * @constructor
 		 * @public
@@ -224,7 +242,7 @@ function(
 					 */
 					selectedItemId: {
 						type: "string",
-						group: "Misc",
+						group: "Data",
 						defaultValue: ""
 					},
 
@@ -364,7 +382,13 @@ function(
 					 * (e.g. one label should label multiple fields).
 					 * @since 1.74
 					 */
-					required : {type : "boolean", group : "Misc", defaultValue : false}
+					required : {type : "boolean", group : "Misc", defaultValue : false},
+					/**
+					 * Defines the separator type for the two columns layout when Select is in read-only mode.
+					 * @since 1.140
+					 */
+					twoColumnSeparator: { type: "sap.m.SelectTwoColumnSeparator", group: "Appearance", defaultValue: TwoColumnSeparator.Dash }
+
 				},
 				defaultAggregation : "items",
 				aggregations: {
@@ -501,7 +525,13 @@ function(
 								type: "sap.ui.core.Item"
 							}
 						}
-					}
+					},
+
+					/**
+					 * This event is triggered prior to the opening of the <code>sap.m.SelectList</code>.
+					 * @since 1.130
+					 */
+					beforeOpen: {}
 				},
 				designtime: "sap/m/designtime/Select.designtime"
 			},
@@ -661,7 +691,27 @@ function(
 			}
 
 			if (vItem) {
-				return vItem.getText();
+				var oParent = vItem.getParent(),
+					sMainText = oParent ? vItem.getText() : null,
+					sAdditionalText,
+					sSeparatorKey,
+					sSeparator,
+					sText;
+
+				if (this.getEditable()) {
+					return sMainText;
+				} else {
+					sSeparatorKey = this.getTwoColumnSeparator();
+					sSeparator = TWO_COLUMN_SEPARATOR_MAP[sSeparatorKey];
+					sAdditionalText = oParent ? vItem.getAdditionalText?.() : null;
+					if (sAdditionalText && this.getShowSecondaryValues()) {
+						sText = `${sMainText} ${sSeparator} ${sAdditionalText}`;
+					} else {
+						sText = sMainText;
+					}
+
+					return sText;
+				}
 			}
 
 			return "";
@@ -961,6 +1011,8 @@ function(
 
 			// call the hook to add additional content to the list
 			this.addContent();
+
+			this.fireEvent("beforeOpen");
 
 			this.addContentToFlex();
 
@@ -1439,6 +1491,34 @@ function(
 			this._referencingLabelsHandlers = [];
 		};
 
+		/**
+		 * Called after rendering.
+		 *
+		 * @private
+		 */
+		Select.prototype._attachResizeHandlers = function () {
+			if (this.getAutoAdjustWidth() && this.getPicker() && this.getPickerType() === "Popover") {
+				this._iResizeHandlerId = ResizeHandler.register(this, this._onResizeRef.bind(this));
+			}
+		};
+
+		/**
+		 * Called after rendering.
+		 *
+		 * @private
+		 */
+		Select.prototype._detachResizeHandlers = function () {
+			if (this._iResizeHandlerId) {
+				ResizeHandler.deregister(this._iResizeHandlerId);
+				this._iResizeHandlerId = null;
+			}
+		};
+
+		Select.prototype._onResizeRef = function() {
+			//we make sure the repositioning of the popup, due to its openBy parent`s eidth change, is supressed
+			this.getPicker().oPopup.setFollowOf(true);
+		};
+
 		Select.prototype.onBeforeRendering = function() {
 			if (!this._oInvisibleMessage) {
 				this._oInvisibleMessage = InvisibleMessage.getInstance();
@@ -1462,6 +1542,8 @@ function(
 		};
 
 		Select.prototype.onAfterRendering = function() {
+			this._detachResizeHandlers();
+			this._attachResizeHandlers();
 
 			// rendering phase is finished
 			this.bRenderingPhase = false;
@@ -1470,6 +1552,7 @@ function(
 			this._attachHiddenSelectHandlers();
 			this._clearReferencingLabelsHandlers();
 			this._handleReferencingLabels();
+			this._updateToolTip();
 		};
 
 		Select.prototype.exit = function() {
@@ -1702,8 +1785,9 @@ function(
 				oEvent.setMarked();
 
 				this.close();
-				this._revertSelection();
 			}
+
+			this._revertSelection();
 		};
 
 		/**
@@ -1737,7 +1821,7 @@ function(
 		 * @private
 		 */
 		Select.prototype.onkeydown = function(oEvent) {
-			if (oEvent.which === KeyCodes.SPACE) {
+			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
 				this._bSpaceDown = true;
 			}
 
@@ -1764,7 +1848,7 @@ function(
 				return;
 			}
 
-			if (oEvent.which === KeyCodes.SPACE) {
+			if (oEvent.which === KeyCodes.SPACE || oEvent.which === KeyCodes.ENTER) {
 				if (!oEvent.shiftKey && !this._bSupressNextAction) {
 
 					// mark the event for components that needs to know if the event was handled
@@ -2015,7 +2099,7 @@ function(
 				return;
 			}
 
-			var oControl = Element.registry.get(oEvent.relatedControlId),
+			var oControl = Element.getElementById(oEvent.relatedControlId),
 				oFocusDomRef = oControl && oControl.getFocusDomRef();
 
 			if (Device.system.desktop && containsOrEquals(oPicker.getFocusDomRef(), oFocusDomRef)) {
@@ -2074,7 +2158,7 @@ function(
 			this.setProperty("selectedItemId", (vItem instanceof Item) ? vItem.getId() : vItem, true);
 
 			if (typeof vItem === "string") {
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			sKey = vItem ? vItem.getKey() : "";
@@ -2179,7 +2263,7 @@ function(
 			// if sText's length is 2 or more characters that means that the user is still typing.
 			// If the user is still typing and the string/word is the starting of the currently
 			// selected item we shouldn't move to the next one.
-			if (sText.length > 1 && oSelectedItem.getText().toLowerCase().startsWith(sText.toLowerCase())){
+			if (sText.length > 1 && oSelectedItem && oSelectedItem.getText().toLowerCase().startsWith(sText.toLowerCase())){
 				return oSelectedItem;
 			}
 
@@ -2419,6 +2503,14 @@ function(
 			return "selectedKey";
 		};
 
+		Select.prototype.getFormObservingProperties = function() {
+			return ["selectedKey"];
+		};
+
+		Select.prototype.getFormRenderAsControl = function () {
+			return false;
+		};
+
 		/**
 		 * Retrieves an item by searching for the given property/value from the aggregation named <code>items</code>.
 		 *
@@ -2627,7 +2719,9 @@ function(
 				}
 				oDelegate = {
 					ontap: function () {
-						that.focus();
+						if (window.getSelection().type !== "Range") {
+							that.focus();
+						}
 					}
 				};
 				that._referencingLabelsHandlers.push({
@@ -2641,7 +2735,7 @@ function(
         Select.prototype._clearReferencingLabelsHandlers = function () {
 			var oLabel;
             this._referencingLabelsHandlers.forEach(function (oHandler) {
-				oLabel = Element.registry.get(oHandler.sLabelId);
+				oLabel = Element.getElementById(oHandler.sLabelId);
 				if (oLabel) {
 					oLabel.removeEventDelegate(oHandler.oDelegate);
 				}
@@ -2664,7 +2758,7 @@ function(
 				return aLabelIDs.indexOf(sId) === iIndex;
 			})
 			.map(function(sLabelID) {
-				return Element.registry.get(sLabelID);
+				return Element.getElementById(sLabelID);
 			})
 			.filter(Boolean);
 
@@ -2829,7 +2923,7 @@ function(
 		 *
 		 * Default value is <code>null</code>.
 		 *
-		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
+		 * @param {sap.ui.core.ID | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code>.
 		 * If the value of <code>null</code> is provided, the first enabled item will be selected (if any items exist).
@@ -2841,7 +2935,7 @@ function(
 
 			if (typeof vItem === "string") {
 				this.setAssociation("selectedItem", vItem, true);
-				vItem = Element.registry.get(vItem);
+				vItem = Element.getElementById(vItem);
 			}
 
 			if (!(vItem instanceof Item) && vItem !== null) {
@@ -3030,7 +3124,7 @@ function(
 		 */
 		Select.prototype.getSelectedItem = function() {
 			var vSelectedItem = this.getAssociation("selectedItem");
-			return (vSelectedItem === null) ? null : Element.registry.get(vSelectedItem) || null;
+			return (vSelectedItem === null) ? null : Element.getElementById(vSelectedItem) || null;
 		};
 
 		/**
@@ -3087,7 +3181,7 @@ function(
 		/**
 		 * Removes an item from the aggregation named <code>items</code>.
 		 *
-		 * @param {int | string | sap.ui.core.Item} vItem The item to be removed or its index or ID.
+		 * @param {int | sap.ui.core.ID | sap.ui.core.Item} vItem The item to be removed or its index or ID.
 		 * @returns {sap.ui.core.Item|null} The removed item or <code>null</code>.
 		 * @public
 		 */
@@ -3244,6 +3338,54 @@ function(
 			return oInfo;
 		};
 
+		Select.prototype._updateToolTip = function() {
+			var sTooltip = this.getTooltip_AsString(),
+				oFocusableDomRef = this.getFocusDomRef(),
+				bIconOnly = this.getType() === SelectType.IconOnly,
+				oIconInfo;
+
+			if (!this.getEnabled()) {
+				return;
+			}
+
+			if (!sTooltip && bIconOnly) {
+				oIconInfo = IconPool.getIconInfo(this.getIcon());
+				if (oIconInfo) {
+					sTooltip = oIconInfo.text;
+				}
+			}
+
+			if (sTooltip) {
+				this._setTooltip(sTooltip);
+				bIconOnly && oFocusableDomRef.setAttribute("aria-label", sTooltip);
+			} else if (!this.getEditable() && this._isTextTruncated() && !bIconOnly) {
+				// if the control is not editable and the text is truncated, set the tooltip to the selected item text
+				this._setTooltip(this._getSelectedItemText());
+			}
+		};
+
+		Select.prototype._setTooltip = function (sTooltip) {
+			var oFocusableDomRef = this.getFocusDomRef();
+
+			oFocusableDomRef.setAttribute("title", sTooltip);
+			this.$().find(".sapMSltLabel").attr("title", sTooltip);
+			this.$().find(".sapMSltArrow").attr("title", sTooltip); //IconOnly does not have arrow
+		};
+
+		Select.prototype._isTextTruncated = function () {
+			var oLabel = this.getDomRef().querySelector(".sapMSltLabel");
+
+			if (!oLabel) {
+				return false;
+			}
+
+			if (oLabel.scrollWidth > oLabel.clientWidth) {
+				return true;
+			}
+
+			return false;
+		};
+
 		/**
 		 * Required by the {@link sap.m.IToolbarInteractiveControl} interface.
 		 * Determines if the Control is interactive.
@@ -3258,13 +3400,20 @@ function(
 		};
 
 		/**
-		 * Returns the DOMNode Id of the labelable HTML element for the <code>sap.m.Select</code>.
+		 * @override
+		 */
+		Select.prototype.getIdForLabel = function () {
+			return this.getId() + "-hiddenInput";
+		};
+
+		/**
+		 * Returns if the control can be bound to a label
 		 *
-		 * @return {string} Id of the labelable HTML element
+		 * @returns {boolean} <code>true</code> if the control can be bound to a label
 		 * @public
 		 */
 		Select.prototype.hasLabelableHTMLElement = function () {
-			return this.getId() + "-hiddenSelect";
+			return true;
 		};
 
 		/**

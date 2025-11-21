@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 //Provides class sap.ui.model.odata.v4.ODataUtils
 sap.ui.define([
-	"sap/ui/core/CalendarType",
+	"sap/base/i18n/date/CalendarType",
 	"sap/ui/core/format/DateFormat",
 	"sap/ui/model/odata/ODataUtils",
 	"sap/ui/model/odata/v4/lib/_Batch",
@@ -14,7 +14,7 @@ sap.ui.define([
 ], function (CalendarType, DateFormat, BaseODataUtils, _Batch, _Helper) {
 	"use strict";
 
-	// see http://docs.oasis-open.org/odata/odata/v4.0/errata02/os/complete/abnf/odata-abnf-construction-rules.txt
+	// see https://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/abnf/
 	var oDateFormatter,
 		oDateTimeOffsetFormatter,
 		sDateValue = "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])",
@@ -140,7 +140,7 @@ sap.ui.define([
 			 *
 			 * @param {any} vValue
 			 *   The value according to <a href=
-			 *   "https://docs.oasis-open.org/odata/odata-json-format/v4.0/os/odata-json-format-v4.0-os.html#_Primitive_Value"
+			 *   "https://docs.oasis-open.org/odata/odata-json-format/v4.0/odata-json-format-v4.0.html#_Primitive_Value"
 			 *   >"OData JSON Format Version 4.0" section "7.1 Primitive Value"</a>
 			 * @param {string} sType
 			 *   The OData primitive type, for example "Edm.String"

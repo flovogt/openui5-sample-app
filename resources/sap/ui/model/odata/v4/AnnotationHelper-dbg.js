@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -14,7 +14,7 @@ sap.ui.define([
 		rCount = /\/\$count$/,
 		rPaths = /\$(?:(?:Annotation)|(?:(?:Navigation)?Property))?Path/,
 		rSplitPathSegment = /^(.+?\/(\$(?:Annotation)?Path))(\/?)(.*)$/,
-		rUnsupportedPathSegments = /\$(?:Navigation)?PropertyPath/,
+		rUnsupportedPathSegments = /\$(?:(?:Any|Navigation)?Property|ModelElement)Path/,
 		/**
 		 * @classdesc
 		 * A collection of methods which help to consume <a href=
@@ -99,6 +99,8 @@ sap.ui.define([
 			 *     Since 1.78.0, both "edm:Path" and "edm:PropertyPath" are also supported if
 			 *     <code>vRawValue</code> is the path itself, and not the object wrapping it.
 			 * </ul>
+			 * <b>Note: Import the <code>sap/ui/model/odata/ODataExpressionAddons</code> module when
+			 * using 14.5.1 or 14.5.3</b>
 			 *
 			 * <h3>$AnnotationPath and $Path</h3>
 			 * If <code>oDetails.context.getPath()</code> contains a single "$AnnotationPath" or
@@ -155,7 +157,7 @@ sap.ui.define([
 			 * Since 1.71.0, for annotations on an operation or a parameter, the binding parameter's
 			 * name is stripped off any dynamic "14.5.12 Expression edm:Path" and
 			 * "14.5.13 Expression edm:PropertyPath" where it might be used as a first segment.
-			 * Since 1.76.0 this does not apply to annotations on a parameter.
+			 * Since 1.76.0, this does not apply to annotations on a parameter.
 			 * In the former case, we assume that the resulting data binding is
 			 * relative to the parent context of the operation binding, that is, to the context
 			 * representing the binding parameter itself.
@@ -253,9 +255,9 @@ sap.ui.define([
 			 *   resolving with that string, for example if not all type information is already
 			 *   available
 			 * @throws {Error}
-			 *   If <code>oDetails.context.getPath()</code> contains a "$PropertyPath" or a
-			 *   "$NavigationPropertyPath" segment, or if it contains more than one
-			 *   "$AnnotationPath" or "$Path" segment
+			 *   If <code>oDetails.context.getPath()</code> contains a "$AnyPropertyPath",
+			 *   "$ModelElementPath", "$NavigationPropertyPath", or a "$PropertyPath" segment, or if
+			 *   it contains more than one "$AnnotationPath" or "$Path" segment
 			 *
 			 * @public
 			 * @see sap.ui.model.odata.v4.AnnotationHelper.resolve$Path
@@ -693,7 +695,7 @@ sap.ui.define([
 			 * Since 1.71.0, for annotations on an operation or a parameter, the binding parameter's
 			 * name is stripped off any dynamic "14.5.12 Expression edm:Path" and
 			 * "14.5.13 Expression edm:PropertyPath" where it might be used as a first segment.
-			 * Since 1.76.0 this does not apply to annotations on a parameter.
+			 * Since 1.76.0, this does not apply to annotations on a parameter.
 			 * In the former case, we assume that the resulting data binding is
 			 * relative to the parent context of the operation binding, that is, to the context
 			 * representing the binding parameter itself.
@@ -785,6 +787,10 @@ sap.ui.define([
 			 *   "14.5.12 Expression edm:Path" and "14.5.13 Expression edm:PropertyPath" where it
 			 *   might be used as a first segment (since 1.72.0). This does not apply to annotations
 			 *   on a parameter (since 1.76.0).
+			 * @param {string} [oDetails.prefix=""]
+			 *   Optional prefix to be added to each dynamic "14.5.12 Expression edm:Path" and
+			 *   "14.5.13 Expression edm:PropertyPath"; is either an empty string or a path ending
+			 *   with a "/" (since 1.141.0)
 			 * @returns {string}
 			 *   A data binding or a fixed text or a sequence thereof
 			 *
@@ -816,7 +822,7 @@ sap.ui.define([
 						model : oDetails.context.getModel(),
 						parameters : oDetails.arguments && oDetails.arguments[0],
 						path : sPath,
-						prefix : "",
+						prefix : oDetails.prefix ?? "",
 						value : vRawValue,
 						$$valueAsPromise : oDetails.$$valueAsPromise
 					});

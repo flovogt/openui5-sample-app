@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,6 +8,7 @@
 sap.ui.define([
 	"./library",
 	"sap/ui/core/Control",
+	"sap/ui/core/Lib",
 	"sap/ui/core/delegate/ItemNavigation",
 	"sap/ui/dom/units/Rem",
 	"./AvatarGroupRenderer",
@@ -15,8 +16,9 @@ sap.ui.define([
 	"sap/m/library",
 	"sap/ui/core/ResizeHandler",
 	"sap/ui/events/KeyCodes",
-	"sap/ui/core/Core"
-], function(library, Control, ItemNavigation, Rem, AvatarGroupRenderer, Button, mLibrary, ResizeHandler, KeyCodes, Core) {
+	"sap/ui/core/Core",
+	"sap/ui/core/Theming"
+], function(library, Control, Library, ItemNavigation, Rem, AvatarGroupRenderer, Button, mLibrary, ResizeHandler, KeyCodes, Core, Theming) {
 	"use strict";
 
 	var AvatarGroupType = library.AvatarGroupType;
@@ -34,7 +36,7 @@ sap.ui.define([
 	};
 
 	var AVATAR_MARGIN_GROUP = {
-		XS: 0.75,
+		XS: 0.5,
 		S: 1.25,
 		M: 1.625,
 		L: 2,
@@ -98,11 +100,10 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
-	 * @experimental Since 1.73. This class is experimental and provides only limited functionality. Also the API might be changed in future.
 	 * @since 1.73
 	 * @alias sap.f.AvatarGroup
 	 */
@@ -253,7 +254,7 @@ sap.ui.define([
 		this._detachResizeHandlers();
 		this._attachResizeHandlers();
 
-		if (Core.isThemeApplied()) {
+		if (this._isThemeApplied()) {
 			this._onResize();
 		}
 
@@ -270,6 +271,24 @@ sap.ui.define([
 		this._updateAccState();
 	};
 
+	/**
+	 * Informs whether the current theme is fully applied already.
+	 * Replacement for Core#isThemeApplied.
+	 * Based on sap/m/table/Util#isThemeApplied
+	 *
+	 * @returns {boolean} true if theme is applied
+	 * @private
+	 */
+	AvatarGroup.prototype._isThemeApplied = function() {
+		var bIsApplied = false;
+		var fnOnThemeApplied = function() {
+			bIsApplied = true;
+		};
+		Theming.attachApplied(fnOnThemeApplied); // Will be called immediately when theme is applied
+		Theming.detachApplied(fnOnThemeApplied);
+		return bIsApplied;
+	};
+
 	AvatarGroup.prototype.onThemeChanged = function () {
 		if (!this.getDomRef()) {
 			return;
@@ -279,7 +298,7 @@ sap.ui.define([
 	};
 
 	AvatarGroup.prototype._getResourceBundle = function () {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.f");
+		return Library.getResourceBundleFor("sap.f");
 	};
 
 	AvatarGroup.prototype._updateAccState = function () {

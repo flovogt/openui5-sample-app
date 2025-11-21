@@ -1,11 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.m.SegmentedButton.
 sap.ui.define([
+	"sap/ui/core/Element",
 	'sap/ui/core/Lib',
 	'./library',
 	'./Button',
@@ -20,6 +21,7 @@ sap.ui.define([
 	'./SegmentedButtonRenderer'
 ],
 function(
+	Element,
 	Library,
 	library,
 	Button,
@@ -32,7 +34,7 @@ function(
 	ListItem,
 	IconPool,
 	SegmentedButtonRenderer
-	) {
+) {
 	"use strict";
 
 	// lazy dependency to sap/m/Image
@@ -57,7 +59,7 @@ function(
 	 * @implements sap.ui.core.IFormContent
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -195,6 +197,9 @@ function(
 		// Used to store individual button widths
 		this._aWidths = [];
 
+		// Used to store previous button width
+		this._previousWidth = undefined;
+
 		// Delegate keyboard processing to ItemNavigation, see commons.SegmentedButton
 		this._oItemNavigation = new ItemNavigation();
 		this._oItemNavigation.setCycling(false);
@@ -237,8 +242,7 @@ function(
 	};
 
 	SegmentedButton.prototype.onAfterRendering = function () {
-		var aButtons = this._getVisibleButtons(),
-			oParentDom;
+		var oParentDom;
 
 		//register resize listener on parent
 		if (!this._sResizeListenerId) {
@@ -252,8 +256,23 @@ function(
 		// Keyboard
 		this._setItemNavigation();
 
-		// Calculate and apply widths
-		this._aWidths = this._getRenderedButtonWidths(aButtons);
+		// Use fonts.ready Promise to detect when fonts are loaded
+		// to avoid getting incorrect button widths
+		if (document.fonts && document.fonts.ready && document.fonts.status !== "loaded") {
+			document.fonts.ready.then(() => {
+				this._adjustButtonWidth();
+			});
+		} else {
+			this._adjustButtonWidth();
+		}
+    };
+
+	/**
+	 * Calculates and applies button width.
+	 * @private
+	 */
+	SegmentedButton.prototype._adjustButtonWidth = function () {
+		this._aWidths = this._getRenderedButtonWidths(this._getVisibleButtons());
 		this._updateWidth();
 	};
 
@@ -333,10 +352,18 @@ function(
 				if (sWidth) {
 					if (sWidth.indexOf("%") !== -1) {
 						// Width in Percent
-						iSumPercents += parseInt(sWidth.slice(0, -1));
-					} else {
+						iSumPercents += parseFloat(sWidth.slice(0, -1));
+					} else if (sWidth.indexOf("px") !== -1) {
 						// Width in Pixels
 						iSumPixels += parseInt(sWidth.slice(0, -2));
+					} else {
+						// Handle other units (em, rem, vw, vh, etc.)
+						var oButtonDomRef = aButtons[i].getDomRef();
+						if (oButtonDomRef) {
+							var oComputedStyle = window.getComputedStyle(oButtonDomRef);
+							var iComputedWidth = parseFloat(oComputedStyle.width);
+							iSumPixels += iComputedWidth;
+						}
 					}
 				} else {
 					iNoWidths++;
@@ -344,7 +371,7 @@ function(
 				i++;
 			}
 
-			// If there are no buttons without width setted return
+			// If there are no buttons without width set, return
 			if (iNoWidths === 0) {
 				return false;
 			}
@@ -352,7 +379,7 @@ function(
 			iPercent = (100 - iSumPercents) / iNoWidths;
 			iPixels = (iSumPixels / iNoWidths);
 
-			// Handle invalid negative numbers or other button occupying more than 100% of the width
+			// Handle invalid negative numbers or other buttons occupying more than 100% of the width
 			if (iPercent < 0) {
 				iPercent = 0;
 			}
@@ -810,7 +837,7 @@ function(
 	/**
 	 * Setter for association <code>selectedButton</code>.
 	 *
-	 * @param {string | sap.m.Button | null | undefined} vButton New value for association <code>setSelectedButton</code>
+	 * @param {sap.ui.core.ID | sap.m.Button | null | undefined} vButton New value for association <code>setSelectedButton</code>
 	 *    An sap.m.Button instance which becomes the new target of this <code>selectedButton</code> association.
 	 *    Alternatively, the ID of an sap.m.Button instance may be given as a string.
 	 *    If the value of null, undefined, or an empty string is provided the first item will be selected.
@@ -838,7 +865,7 @@ function(
 	/**
 	 * Setter for association <code>selectedItem</code>.
 	 *
-	 * @param {string | sap.m.SegmentedButtonItem | null | undefined} vItem New value for association <code>setSelectedItem</code>
+	 * @param {sap.ui.core.ID | sap.m.SegmentedButtonItem | null | undefined} vItem New value for association <code>setSelectedItem</code>
 	 *    An sap.m.SegmentedButtonItem instance which becomes the new target of this <code>selectedItem</code> association.
 	 *    Alternatively, the ID of an <code>sap.m.SegmentedButtonItem</code> instance may be given as a string.
 	 *    If the value of null, undefined, or an empty string is provided, the first item will be selected.
@@ -847,7 +874,7 @@ function(
 	 * @override
 	 */
 	SegmentedButton.prototype.setSelectedItem = function (vItem) {
-		var oItem = typeof vItem === "string" && vItem !== "" ? sap.ui.getCore().byId(vItem) : vItem,
+		var oItem = typeof vItem === "string" && vItem !== "" ? Element.getElementById(vItem) : vItem,
 			oItemInstanceOfSegBtnItem = oItem instanceof SegmentedButtonItem,
 			vButton = oItemInstanceOfSegBtnItem ? oItem.oButton : vItem;
 

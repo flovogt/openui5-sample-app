@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -8,6 +8,7 @@
 sap.ui.define([
 	"sap/ui/core/Control",
 	"sap/ui/core/IconPool",
+	"sap/ui/core/Lib",
 	"sap/ui/core/message/MessageMixin",
 	"sap/ui/core/format/NumberFormat",
 	"sap/ui/model/ValidateException",
@@ -22,6 +23,7 @@ sap.ui.define([
 function(
 	Control,
 	IconPool,
+	Library,
 	MessageMixin,
 	NumberFormat,
 	ValidateException,
@@ -119,7 +121,7 @@ function(
 		 * @implements sap.ui.core.IFormContent
 		 *
 		 * @author SAP SE
-		 * @version 1.120.27
+		 * @version 1.141.2
 		 *
 		 * @constructor
 		 * @public
@@ -299,7 +301,7 @@ function(
 		});
 
 		// get resource translation bundle;
-		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m");
+		var oLibraryResourceBundle = Library.getResourceBundleFor("sap.m");
 		StepInput.STEP_INPUT_INCREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_INCREASE_BTN");
 		StepInput.STEP_INPUT_DECREASE_BTN_TOOLTIP = oLibraryResourceBundle.getText("STEP_INPUT_DECREASE_BTN");
 
@@ -345,7 +347,7 @@ function(
 
 			this._iRealPrecision = this._getRealValuePrecision();
 
-			this._getInput().setValue(this._getFormattedValue(vValue));
+			!this.bLiveChange && this._getInput().setValue(this._getFormattedValue(vValue));
 			this._getInput().setValueState(this.getValueState());
 			this._getOrCreateDecrementButton().setVisible(bEditable);
 			this._getOrCreateIncrementButton().setVisible(bEditable);
@@ -356,6 +358,8 @@ function(
 				this._verifyValue();
 				this._bNeedsVerification = false;
 			}
+
+			this.bLiveChange = false;
 		};
 
 		StepInput.prototype.onAfterRendering = function () {
@@ -581,7 +585,7 @@ function(
 					enabled: this.getEnabled(),
 					description: this.getDescription(),
 					fieldWidth: this.getFieldWidth(),
-					liveChange: this._inputLiveChangeHandler
+					liveChange: this._inputLiveChangeHandler.bind(this)
 				});
 				this.setAggregation("_input", oNumericInput);
 			}
@@ -727,8 +731,9 @@ function(
 			var min = this._getMin(),
 				max = this._getMax(),
 				value = this._parseNumber(this._getInput().getValue()),
-				oCoreMessageBundle = sap.ui.getCore().getLibraryResourceBundle("sap.ui.core"),
+				oCoreMessageBundle = Library.getResourceBundleFor("sap.ui.core"),
 				oBinding = this.getBinding("value"),
+				oBindingValueState = this.getBinding("valueState"),
 				oBindingType = oBinding && oBinding.getType && oBinding.getType(),
 				sBindingConstraintMax = oBindingType && oBindingType.oConstraints && oBindingType.oConstraints.maximum,
 				sBindingConstraintMin = oBindingType && oBindingType.oConstraints && oBindingType.oConstraints.minimum,
@@ -736,6 +741,10 @@ function(
 				aViolatedConstraints = [],
 				bHasValidationErrorListeners = false,
 				oEventProvider;
+
+			if (oBindingValueState) {
+				return;
+			}
 
 			if (!this._isNumericLike(value)) {
 				return;
@@ -751,16 +760,16 @@ function(
 				if (bHasValidationErrorListeners && sBindingConstraintMax) {
 					return;
 				}
-				sMessage = oCoreMessageBundle.getText("EnterNumberMax", [max]);
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMax", [max]);
 				aViolatedConstraints.push("maximum");
 			} else if (this._isLessThanMin(value)) {
 				if (bHasValidationErrorListeners && sBindingConstraintMin) {
 					return;
 				}
-				sMessage = oCoreMessageBundle.getText("EnterNumberMin", [min]);
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("EnterNumberMin", [min]);
 				aViolatedConstraints.push("minimum");
 			} else if (this._areFoldChangeRequirementsFulfilled() && (value % this.getStep() !== 0)) {
-				sMessage = oCoreMessageBundle.getText("Float.Invalid");
+				sMessage = this.getValueStateText() ? this.getValueStateText() : oCoreMessageBundle.getText("Float.Invalid");
 			}
 
 			if (sMessage) {
@@ -1278,9 +1287,9 @@ function(
 		 * @private
 		 */
 		StepInput.prototype._inputLiveChangeHandler = function (oEvent) {
-			var iValue = this.getParent()._restrictCharsWhenDecimal(oEvent);
-
-			this.setProperty("value", iValue ? iValue : oEvent.getParameter("newValue"), true);
+			var iValue = this._restrictCharsWhenDecimal(oEvent);
+			this.bLiveChange = true;
+			this._getInput().setProperty("value", iValue ? iValue : oEvent.getParameter("newValue"), true);
 		};
 
 		/**
@@ -1623,7 +1632,7 @@ function(
 
 		StepInput.prototype.getAccessibilityInfo = function() {
 			return {
-				type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
+				type: Library.getResourceBundleFor("sap.m").getText("ACC_CTR_TYPE_STEPINPUT"),
 				description: this.getValue() || "",
 				focusable: this.getEnabled(),
 				enabled: this.getEnabled(),

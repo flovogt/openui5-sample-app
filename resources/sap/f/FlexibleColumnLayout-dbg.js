@@ -1,11 +1,15 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides control sap.f.FlexibleColumnLayout.
 sap.ui.define([
+	"sap/base/i18n/Localization",
+	"sap/ui/core/ControlBehavior",
+	"sap/ui/core/Lib",
+	"sap/ui/core/RenderManager",
 	"sap/ui/thirdparty/jquery",
 	"./library",
 	"sap/ui/core/library",
@@ -23,8 +27,13 @@ sap.ui.define([
 	"sap/base/util/isEmptyObject",
 	"sap/base/util/merge",
 	"sap/ui/core/InvisibleMessage",
-	"sap/ui/dom/jquery/Focusable" // provides jQuery.fn.firstFocusableDomRef
+	// provides jQuery.fn.firstFocusableDomRef
+	"sap/ui/dom/jquery/Focusable"
 ], function(
+	Localization,
+	ControlBehavior,
+	Library,
+	RenderManager,
 	jQuery,
 	library,
 	coreLibrary,
@@ -67,7 +76,9 @@ sap.ui.define([
 	 * three columns (referred to as <code>Begin</code>, <code>Mid</code> and <code>End</code>) rather than two
 	 * (<code>Master</code>, <code>Detail</code>). The width of the three columns is variable.
 	 *
-	 * There are several possible layouts that can be changed either with the control's API, or by the user with the help of layout arrows.
+	 * There are several possible layouts that can be changed either with the control's API, or by the user with the help of the draggable column separators.
+	 * The draggable column separators allow the user to customize the column widths for the current layout, or to switch to a new layout (if the user drags the column separator past a breakpoint that delimits two different layouts).
+	 * After the user customized the column widths for a given layout, these user preferences are internally saved and automatically re-applied whenever the user re-visits the same layout.
 	 *
 	 * Internally the control makes use of three instances of {@link sap.m.NavContainer}, thus forming the three columns.
 	 *
@@ -97,7 +108,7 @@ sap.ui.define([
 	 *
 	 * @extends sap.ui.core.Control
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -213,8 +224,8 @@ sap.ui.define([
 				 * Fired when there is a change in the <code>layout</code> property or in the maximum number of columns that can be displayed at once.
 				 * <br/></br>
 				 * <ul>The interactions that may lead to a state change are:
-				 *  <li>the property <code>layout</code> was changed indirectly by the user clicking a layout arrow</li>
-				 *  <li>the user resized the browser beyond a breakpoint, thus changing the maximum number of columns that can be displayed at once.</li></ul>
+				 *  <li>The property <code>layout</code> was changed indirectly by the user dragging the column separator or clicking on its arrow (where arrow is available).</li>
+				 *  <li>The user resized the browser window beyond a breakpoint, thus changing the maximum number of columns that can be displayed at once.</li></ul>
 				 * <br/><br/>
 				 * <b>Note: </b>The event is suppressed while the control has zero width and will be fired the first time it gets a non-zero width
 				 *
@@ -239,13 +250,13 @@ sap.ui.define([
 							type: "int"
 						},
 						/**
-						 * Indicates whether the layout changed as a result of the user clicking a layout arrow
+						 * Indicates whether the layout changed as a result of the user clicking a column separator's arrow or dragging the column separators
 						 */
 						isNavigationArrow: {
 							type: "boolean"
 						},
 						/**
-						 * Indicates whether the maximum number of columns that can be displayed at once changed
+						 * Indicates whether the maximum number of columns that can be displayed at once changed due to resize of the entire browser window
 						 */
 						isResize: {
 							type: "boolean"
@@ -639,6 +650,27 @@ sap.ui.define([
 						 */
 						endColumn : {type : "boolean"}
 					}
+				},
+
+				/**
+				 * Fired when user resize columns.
+				 * @since 1.128
+				 */
+				columnsDistributionChange : {
+					parameters : {
+						/**
+						 * The current <code>media</code> - dekstop or tablet.
+						 */
+						media: { type: "string" },
+						/**
+						 * The value of the <code>layout</code> property.
+						 */
+						layout: { type: "string" },
+						/**
+						 * Sizes of all columns in percentages, separated by '/'.
+						 */
+						columnsSizes : {type : "string"}
+					}
 				}
 			}
 		},
@@ -701,21 +733,12 @@ sap.ui.define([
 		this._boundColumnSeparatorMove = this._onColumnSeparatorMove.bind(this);
 		this._boundColumnSeparatorMoveEnd = this._onColumnSeparatorMoveEnd.bind(this);
 		this._oLocalStorage = {};
-		this._bNeverRendered = true;
-	};
+		this._bInitialColumnsResizeDone = false;
 
-	FlexibleColumnLayout.prototype._getLocalStorage = function (iMaxColumnsCount) {
-		if (!iMaxColumnsCount) {
-			iMaxColumnsCount = this.getMaxColumnsCount();
-		}
-		var sKey = (iMaxColumnsCount === 3) ? "desktop" : "tablet";
-		if (!this._oLocalStorage[sKey]) {
-			var sPrefix = sKey === 'desktop' ?
-				FlexibleColumnLayout.STORAGE_PREFIX_DESKTOP :
-				FlexibleColumnLayout.STORAGE_PREFIX_TABLET;
-			this._oLocalStorage[sKey] = new Storage(Storage.Type.local, sPrefix);
-		}
-		return this._oLocalStorage[sKey];
+		this._oBeginColumnWidth =  {
+			tablet: 0,
+			desktop: 0
+		};
 	};
 
 	FlexibleColumnLayout.prototype._announceMessage = function (sResourceBundleKey) {
@@ -730,9 +753,13 @@ sap.ui.define([
 	 * Connects the keyboard event listeners so resizing via keyboard will be possible
 	 */
 	FlexibleColumnLayout.prototype._enableKeyboardListeners = function() {
-		this.onsaprightmodifiers     = this._keyListeners.increase;
-		this.onsapleftmodifiers      = this._keyListeners.decrease;
+		this.onsaprightmodifiers     = this._keyListeners.increase; //right or down key to increase column width
+		this.onsapdownmodifiers      = this._keyListeners.increase;
+		this.onsapleftmodifiers      = this._keyListeners.decrease; //left or up key to decrease column width
+		this.onsapupmodifiers        = this._keyListeners.decrease;
 		this.onsapright              = this._keyListeners.increaseMore;
+		this.onsapdown               = this._keyListeners.increaseMore;
+		this.onsapup                 = this._keyListeners.decreaseMore;
 		this.onsapleft               = this._keyListeners.decreaseMore;
 		this.onsapend                = this._keyListeners.max;
 		this.onsaphome               = this._keyListeners.min;
@@ -754,6 +781,7 @@ sap.ui.define([
 
 		if (this._hasAnyColumnPagesRendered() !== bHadAnyColumnPagesRendered) {
 			this._hideShowColumnSeparators();
+			this._updateSeparatorsAriaPositionInfo();
 		}
 	};
 
@@ -789,6 +817,21 @@ sap.ui.define([
 		return oNavContainer;
 	};
 
+	FlexibleColumnLayout.prototype.setLandmarkInfo = function (oLandmarkInfo) {
+		this.setAggregation("landmarkInfo", oLandmarkInfo);
+		oLandmarkInfo?.attachEvent("_changeColumnsLabel", this._onColumnsLabelChanged, this);
+
+		return this;
+	};
+
+	FlexibleColumnLayout.prototype.destroyLandmarkInfo = function () {
+		var oLandmarkInfo = this.getLandmarkInfo();
+
+		oLandmarkInfo?.detachEvent("_changeColumnsLabel", this._onColumnsLabelChanged, this);
+
+		return this.destroyAggregation("landmarkInfo");
+	};
+
 	/**
 	 * Formats <code>FlexibleColumnLayoutAccessibleLandmarkInfo</code> role and label of the provided <code>FlexibleColumnLayout</code> column.
 	 *
@@ -807,6 +850,14 @@ sap.ui.define([
 			role: "region",
 			label: sLabel || FlexibleColumnLayout._getResourceBundle().getText(FlexibleColumnLayout.DEFAULT_COLUMN_LABELS[sColumnName])
 		};
+	};
+
+	FlexibleColumnLayout.prototype._onColumnsLabelChanged = function (oEvent) {
+		var sColumn = oEvent.getParameter("column"),
+			sLabel = oEvent.getParameter("label"),
+			$Column = this._$columns?.[sColumn];
+
+		$Column?.length && $Column.attr("aria-label", sLabel);
 	};
 
 	/**
@@ -882,7 +933,7 @@ sap.ui.define([
 	 */
 	FlexibleColumnLayout.prototype._flushColumnContent = function (sColumn) {
 		var oControl = this.getAggregation("_" + sColumn + "ColumnNav"),
-			oRm = sap.ui.getCore().createRenderManager();
+			oRm = new RenderManager().getInterface();
 
 		oRm.renderControl(oControl);
 		oRm.flush(this._$columns[sColumn].find(".sapFFCLColumnContent")[0], undefined, true);
@@ -951,7 +1002,64 @@ sap.ui.define([
 		this._flushColumnContent("end");
 
 		this._fireStateChange(false, false);
-		this._bNeverRendered = false;
+	};
+
+	FlexibleColumnLayout.prototype.setLayoutData = function (oLayoutData) {
+		if (oLayoutData.isA("sap.f.FlexibleColumnLayoutData")) {
+			oLayoutData.attachEvent("_layoutDataPropertyChanged", this._layoutDataPropertyChanged, this);
+		}
+
+		return this.setAggregation("layoutData", oLayoutData);
+	};
+
+	FlexibleColumnLayout.prototype.destroyLayoutData = function (oLayoutData) {
+		if (oLayoutData.isA("sap.f.FlexibleColumnLayoutData")) {
+			oLayoutData.dettachEvent("_layoutDataPropertyChanged", this._layoutDataPropertyChanged, this);
+		}
+
+		return this.destroyAggregation("layoutData", oLayoutData);
+	};
+
+	/**
+	 * Handles the case, when initial values of layoutData were not set before FCL is rendered for the first time
+	 * @private
+	 */
+	FlexibleColumnLayout.prototype._layoutDataPropertyChanged = function (oEvent) {
+		var oSource = oEvent.getParameter("srcControl"),
+			oLayoutData = this.getLayoutData(),
+			sMediaKey = this._getMediaKey(),
+			sNewColumnsDistribution = oEvent.getParameter("newValue"),
+			oCurrentColumnsWidth,
+			sCurrentColumnsWidth;
+
+		if (oEvent.getParameter("layout") === this.getLayout() &&
+			((oSource === oLayoutData?.getDesktopLayoutData() && sMediaKey === "desktop") || (oSource === oLayoutData?.getTabletLayoutData() && sMediaKey === "tablet"))) {
+
+			// As some of the columns may not be fully resized at this point, we use the oMoveInfo, if available (during interactive resize), to check the current columns' widths
+			if (this._oMoveInfo) {
+				oCurrentColumnsWidth = this._convertColumnPxWidthToPercent(this._oMoveInfo.columnWidths, this.getLayout());
+				sCurrentColumnsWidth = Object.values(oCurrentColumnsWidth).join("/");
+			}
+
+			if (!sNewColumnsDistribution || sCurrentColumnsWidth === oEvent.getParameter("newValue")) {
+				// Prevent second resize when applications update the layout data properties after columnsDistributionChange event is fired
+				return;
+			}
+
+			// No animations for performance optimization in case properties are set after the initial rendering
+			this._resizeColumns({ hasAnimations: false });
+		}
+	};
+
+	/**
+	 * Handles the case, when new desktopLayoutData/tabletLayoutData aggregations of FlexibleColumnLayoutData are set
+	 */
+	FlexibleColumnLayout.prototype.onLayoutDataChange = function (oEvent) {
+		var oSource = oEvent.srcControl;
+
+		if (oSource.isA("sap.f.FlexibleColumnLayoutData")) {
+			this.invalidate();
+		}
 	};
 
 	FlexibleColumnLayout.prototype.onmousedown = function (oEvent) {
@@ -1080,6 +1188,7 @@ sap.ui.define([
 		this._oLocalStorage = null;
 		this._deregisterResizeHandler();
 		this._handleEvent(jQuery.Event("Destroy"));
+		this._detachMoveListeners();
 	};
 
 	FlexibleColumnLayout.prototype._removeNavContainersFocusOutDelegate = function () {
@@ -1120,7 +1229,7 @@ sap.ui.define([
 	};
 
 	/**
-	 * Saves the DOM references of the columns and layout arrows.
+	 * Saves the DOM references of the columns and column separators.
 	 * @private
 	 */
 	FlexibleColumnLayout.prototype._cacheDOMElements = function () {
@@ -1166,7 +1275,8 @@ sap.ui.define([
 	 */
 	FlexibleColumnLayout.prototype._getVisibleColumnsForLayout = function (sLayout) {
 		return FlexibleColumnLayout.COLUMN_ORDER.filter(function (sColumn) {
-			return this._getColumnSizeForLayout(sColumn, sLayout) > 0;
+			// Different than 0, as when we are storing the begin column size, it may happen that it's too big, leading to a negative size of the mid column
+			return this._getColumnSizeForLayout(sColumn, sLayout) !== 0;
 		}, this);
 	};
 
@@ -1310,6 +1420,14 @@ sap.ui.define([
 		if (oOptions.updateDetailedActiveClasses) {
 			this._addDetailedActiveClasses(sLayout);
 		}
+
+		if (bHasAnimations) {
+			this._attachAfterAllColumnsResizedOnce(this._updateSeparatorsAriaPositionInfo.bind(this));
+		} else {
+			this._updateSeparatorsAriaPositionInfo();
+		}
+
+		this._bInitialColumnsResizeDone = true;
 	};
 
 	/**
@@ -1341,11 +1459,11 @@ sap.ui.define([
 			sNewWidth = convertPxToCSSSizeString(iNewWidth, this._getControlWidth(), oColumnConfig.shouldInsetColumn),
 			bAutoSize = oColumnConfig.autoSize,
 			bAnimationsEnabled = oColumnConfig.hasAnimations,
-			bPinned = oColumnConfig.shouldRevealColumn || oColumnConfig.shouldConcealColumn,
+			bHidden = !iNewWidth,
 			bResizeColumnWithAnimation = this._canResizeColumnWithAnimation(sColumn, oColumnConfig),
-			bSuspendResizeHandler = bAnimationsEnabled && (bResizeColumnWithAnimation || bAutoSize) && !bPinned,
+			bSuspendResizeHandler = bAnimationsEnabled,
 			fnAfterResizeCallback = this._afterColumnResize.bind(this, sColumn, merge(oColumnConfig, {
-				resumeResizeHandler: bSuspendResizeHandler // toggle back after resize
+				resumeResizeHandler: bSuspendResizeHandler && !bHidden // toggle back after resize
 			})),
 			fnResizeErrorCallback = function() {
 				ResizeHandler.resume(oColumnDomRef);
@@ -1384,10 +1502,10 @@ sap.ui.define([
 			}
 
 			// For tablet and desktop - notify child controls to render with reduced container size, if they need to
-			if (oColumnConfig.updateContextualSettings && !Device.system.phone) {
+			if (oColumnConfig.updateContextualSettings && !Device.system.phone && iNewWidth) {
 				this._updateColumnContextualSettings(sColumn, iNewWidth);
 			}
-			if (oColumnConfig.updateMediaCSSClases && !Device.system.phone) {
+			if (oColumnConfig.updateMediaCSSClases && !Device.system.phone && iNewWidth) {
 				this._updateColumnCSSClasses(sColumn, iNewWidth);
 			}
 	};
@@ -1412,7 +1530,10 @@ sap.ui.define([
 			iNewWidth = oOptions.width,
 			bShouldRestoreFocus = oOptions.shouldRestoreFocus;
 
-		if (bShouldRevealColumn || bShouldConcealColumn ) {
+		//BCP: 1980006195
+		oColumn.toggleClass("sapFFCLColumnHidden", iNewWidth === 0);
+
+		if (bShouldRevealColumn || bShouldConcealColumn || oOptions.autoSize) {
 			oColumn[0].querySelector(".sapFFCLColumnContent").style.width = "";
 		}
 		oColumn.toggleClass(FlexibleColumnLayout.PINNED_COLUMN_CLASS_NAME, false);
@@ -1422,9 +1543,6 @@ sap.ui.define([
 			// The column does not show anything anymore, so we can remove the active class
 			oColumn.removeClass("sapFFCLColumnActive");
 		}
-
-		//BCP: 1980006195
-		oColumn.toggleClass("sapFFCLColumnHidden", iNewWidth === 0);
 
 		if (oOptions.resumeResizeHandler) {
 			ResizeHandler.resume(oColumn[0]);
@@ -1444,13 +1562,13 @@ sap.ui.define([
 				oColumn = this._$columns[sColumn],
 				oColumnDomRef = oColumn[0];
 
-			oColumn.toggleClass(FlexibleColumnLayout.PINNED_COLUMN_CLASS_NAME, bShouldPin);
-
 			if (bShouldRevealColumn) {
-				oColumnDomRef.querySelector(".sapFFCLColumnContent").style.width = convertPxToCSSSizeString(oColumnWidths[sColumn], this._getControlWidth());
+				oColumnDomRef.querySelector(".sapFFCLColumnContent").style.width = oColumnWidths[sColumn] + "px";
 			} else if (bShouldConcealColumn) {
 				oColumnDomRef.querySelector(".sapFFCLColumnContent").style.width = oColumnDomRef.offsetWidth + "px";
 			}
+
+			oColumn.toggleClass(FlexibleColumnLayout.PINNED_COLUMN_CLASS_NAME, bShouldPin);
 
 		}, this);
 	};
@@ -1482,7 +1600,7 @@ sap.ui.define([
 	};
 
 	FlexibleColumnLayout.prototype._getDefaultResizeOptions = function () {
-		var sAnimationMode = Configuration.getAnimationMode();
+		var sAnimationMode = ControlBehavior.getAnimationMode();
 		return {
 			layout: this.getLayout(),
 			previousLayout: this._getPreviousLayout(),
@@ -1500,7 +1618,7 @@ sap.ui.define([
 
 	FlexibleColumnLayout.prototype._addDetailedActiveClasses = function (sLayout) {
 		var aColumns = FlexibleColumnLayout.COLUMN_ORDER.slice(),
-			bRtl = Configuration.getRTL(),
+			bRtl = Localization.getRTL(),
 			aActiveColumns = aColumns.filter(function (sColumn) {
 				return this._getColumnSizeForLayout(sColumn, sLayout) > 0;
 			}, this);
@@ -1571,7 +1689,7 @@ sap.ui.define([
 
 	FlexibleColumnLayout.prototype._onColumnSeparatorMoveStart = function (oEvent, oSeparator, bTouch) {
 		// needed to position the separator presizely
-		var bRtl = Configuration.getRTL(),
+		var bRtl = Localization.getRTL(),
 			iStartOffset = this._getDraggedSeparatorStartOffset(oSeparator, bRtl);
 
 		this._oMoveInfo = {
@@ -1660,7 +1778,21 @@ sap.ui.define([
 		this.toggleStyleClass("sapFFLActiveResize", true);
 		this._$overlaySeparator.css(oSeparatorPosition.direction, oSeparatorPosition.x);
 		this._oMoveInfo.separator.style.visibility = "hidden";
+		this._attachMoveListeners(bTouch);
+	};
 
+	FlexibleColumnLayout.prototype._exitInteractiveResizeMode = function () {
+		this.toggleStyleClass("sapFFLActiveResize", false);
+		this._oMoveInfo.separator.style.visibility = "";
+		this._oMoveInfo.separator.focus();
+		this._updateAriaPositionInfo(this._oMoveInfo.separator);
+		this._ignoreMouse = false;
+		this._ignoreTouch = false;
+		this._oMoveInfo = null;
+		this._detachMoveListeners();
+	};
+
+	FlexibleColumnLayout.prototype._attachMoveListeners = function (bTouch) {
 		if (bTouch) {
 			document.addEventListener("touchend", this._boundColumnSeparatorMoveEnd);
 			document.addEventListener("touchmove", this._boundColumnSeparatorMove);
@@ -1670,13 +1802,7 @@ sap.ui.define([
 		}
 	};
 
-	FlexibleColumnLayout.prototype._exitInteractiveResizeMode = function () {
-		this.toggleStyleClass("sapFFLActiveResize", false);
-		this._oMoveInfo.separator.style.visibility = "";
-		this._oMoveInfo.separator.focus();
-		this._ignoreMouse = false;
-		this._ignoreTouch = false;
-		this._oMoveInfo = null;
+	FlexibleColumnLayout.prototype._detachMoveListeners = function () {
 		document.removeEventListener("mouseup", this._boundColumnSeparatorMoveEnd);
 		document.removeEventListener("mousemove", this._boundColumnSeparatorMove);
 		document.removeEventListener("touchend", this._boundColumnSeparatorMoveEnd);
@@ -1705,6 +1831,7 @@ sap.ui.define([
 			sSeparator = getSeparatorName(this._oMoveInfo.separator),
 			bForwardResizeDirection = this._oMoveInfo.offsetFromStartPosition > 0,
 			sColumnEnlargedByDragging = aResizedColumns[bForwardResizeDirection ? 0 : 1],
+			sInitiallyHiddenColumn = aResizedColumns.find((sColumn) => this._oMoveInfo.columnWidths[sColumn] === 0),
 			iSeparatorsCount = this._getVisibleColumnSeparatorsCount(),
 			iSeparatorsCountDiff = 0,
 			iOffsetOnSeparatorsCountChange = 0,
@@ -1714,6 +1841,10 @@ sap.ui.define([
 			bLayoutChange,
 			oNewColumnWidths,
 			bResizeWithPinning;
+
+		if (sInitiallyHiddenColumn && sInitiallyHiddenColumn !== sColumnEnlargedByDragging) {
+			return; // atempt to resize in direction that is not allowed
+		}
 
 		this._oMoveInfo.columnWidths[aResizedColumns[0]] += this._oMoveInfo.offsetFromPreviousPosition;
 		this._oMoveInfo.columnWidths[aResizedColumns[1]] -= this._oMoveInfo.offsetFromPreviousPosition;
@@ -1766,15 +1897,15 @@ sap.ui.define([
 
 		this._oMoveInfo.columnWidths = oNewColumnWidths;
 
-		if (bResizeWithPinning) {
+		if (bResizeWithPinning || bIsResizeEnd) {
 			// call the dedicated function in order to resize with reveal/conceal effect
+			// or update CSS classes on resizeEnd
 			this._resizeColumns({
 				columnWidths: oNewColumnWidths,
 				layout: sLayout,
 				previousLayout: sPreviousLayout,
-				updateContextualSettings: false,
-				updateMediaCSSClases: false,
-				updateDetailedActiveClasses: false,
+				updateMediaCSSClases: bIsResizeEnd,
+				updateDetailedActiveClasses: bIsResizeEnd,
 				restoreFocusOnBackNavigation: false
 			});
 		} else {
@@ -2004,11 +2135,30 @@ sap.ui.define([
 	FlexibleColumnLayout.prototype._saveResizedColumWidths = function() {
 		var sNewLayout = this._oMoveInfo.layout,
 			oColumnPercentWidths = this._convertColumnPxWidthToPercent(this._oMoveInfo.columnWidths, sNewLayout),
-			sNewWidthsDistribution = Object.values(oColumnPercentWidths).join("/");
+			sNewWidthsDistribution = Object.values(oColumnPercentWidths).join("/"),
+			sMediaKey;
 
 		if (this._isValidWidthDistributionForLayout(sNewWidthsDistribution, sNewLayout)) {
-			this._getLocalStorage().put(sNewLayout, sNewWidthsDistribution);
+			sMediaKey = this._getMediaKey();
+			this.fireColumnsDistributionChange({
+				media: sMediaKey,
+				layout: sNewLayout,
+				columnsSizes: sNewWidthsDistribution
+			});
+
+			this._oBeginColumnWidth[sMediaKey] = oColumnPercentWidths.begin;
 		}
+	};
+
+	FlexibleColumnLayout.prototype._getMediaKey = function (iMaxColumnsCount) {
+		var sKey;
+
+		if (!iMaxColumnsCount) {
+			iMaxColumnsCount = this.getMaxColumnsCount();
+		}
+		sKey = (iMaxColumnsCount === 3) ? "desktop" : "tablet";
+
+		return sKey;
 	};
 
 	FlexibleColumnLayout.prototype._getNextLayoutOnResizeByDrag = function (oColumnWidths,
@@ -2148,6 +2298,78 @@ sap.ui.define([
 	};
 
 	/**
+	 * Obtains the range of the possible possitions along the X-axis of this separator (allowed by the current layout)
+	 * where the start of the axis is the edge of the FlexibleColumnLayout closest to the begin column.
+	 * @param {object} oSeparator the separator HTML element
+	 * @returns {object} the start and end positions
+	 */
+	FlexibleColumnLayout.prototype._getSeparatorMovementRange = function (oSeparator) {
+		var sSeparator = getSeparatorName(oSeparator),
+			sLayout = this.getLayout(),
+			iMaxColumnsForWidth = this.getMaxColumnsCount(),
+			iMaxColumnsForLayoutType = this._getMaxColumnsCountForLayout(sLayout, FlexibleColumnLayout.DESKTOP_BREAKPOINT),
+			bDesktop = iMaxColumnsForWidth === 3,
+			bTablet = iMaxColumnsForWidth === 2,
+			bIsThreeColumnLayout = iMaxColumnsForLayoutType === 3,
+			iTotalSpace = this._iWidth,
+			iSpaceBeforeRange = FlexibleColumnLayout.COLUMN_MIN_WIDTH, // space for the preceding column
+			iSpaceAfterRange = FlexibleColumnLayout.COLUMN_MIN_WIDTH, // space for the suceeding column
+			iRangeLength;
+
+		if (bDesktop && sSeparator === "end") {
+			// (the width of the 'begin' column is fixed, as the user cannot resize it by moving the 'end' separator)
+			iSpaceBeforeRange = this._$columns["begin"].get(0).offsetWidth + FlexibleColumnLayout.COLUMN_MIN_WIDTH; // space for the preceding columns
+			if (sLayout === LT.ThreeColumnsMidExpandedEndHidden) {
+				iSpaceAfterRange = 0; // the 'end' separator is adjacent to the FCL edge, nothing follows it
+			}
+		}
+
+		if (bTablet) {
+			if (sSeparator === "begin" & bIsThreeColumnLayout) {
+				iSpaceBeforeRange = 0; // the 'begin' separator is adjacent to the FCL edge, nothing precedes it
+			}
+			if (sSeparator === "end" && sLayout === LT.ThreeColumnsMidExpandedEndHidden) {
+				iSpaceAfterRange = 0; // the 'end' separator is adjacent to the FCL edge, nothing follows it
+			}
+		}
+
+		// provision space to render the separator itself
+		iSpaceAfterRange += FlexibleColumnLayout.COLUMN_SEPARATOR_WIDTH;
+
+		iRangeLength = iTotalSpace - iSpaceBeforeRange - iSpaceAfterRange;
+
+		return {
+			from: iSpaceBeforeRange,
+			to: iSpaceBeforeRange + iRangeLength
+		};
+	};
+
+	FlexibleColumnLayout.prototype._updateAriaPositionInfo = function (oSeparator) {
+		// obtain the range [fromX ... toX] of the possible positions along the X-axis
+		// of this separator (as allowed by the current layout)
+		var oRange = this._getSeparatorMovementRange(oSeparator),
+			iRangeLength = oRange.to - oRange.from,
+			iSeparatorEarliestPossibleX = oRange.from,
+			iSeparatorCurrentX = oSeparator.offsetLeft,
+			iSeparatorAdvanceInsideRange = iSeparatorCurrentX - iSeparatorEarliestPossibleX,
+			 // convert to value inside [0, ..., 100] interval
+			iSeparatorRelativePositionInsideRange = iSeparatorAdvanceInsideRange / iRangeLength * 100,
+			sSeparatorRelativePositionInsideRange = iSeparatorRelativePositionInsideRange.toFixed(2);
+		oSeparator.setAttribute("aria-valuenow", sSeparatorRelativePositionInsideRange);
+	};
+
+	FlexibleColumnLayout.prototype._updateSeparatorsAriaPositionInfo = function () {
+		if (!this._oColumnSeparators) {
+			return;
+		}
+		Object.values(this._oColumnSeparators).forEach(function($separator) {
+			if ($separator.get(0).style.display !== "none") {
+				this._updateAriaPositionInfo($separator.get(0));
+			}
+		}, this);
+	};
+
+	/**
 	 * Obtains the current width of a column
 	 *
 	 * @param {string} sColumn the column name
@@ -2239,12 +2461,19 @@ sap.ui.define([
 		var iVisibleColumnsCount = this._getMaxColumnsCountForLayout(sLayout, FlexibleColumnLayout.DESKTOP_BREAKPOINT),
 			sLastVisibleColumn = this._getLastVisibleColumnForLayout(sLayout),
 			bIsLastColumn = sColumn === sLastVisibleColumn,
+			sPreviousLastVisibleColumn = this._getLastVisibleColumnForLayout(sPreviousLayout),
 			iPreviousVisibleColumnsCount = this._getMaxColumnsCountForLayout(sPreviousLayout, FlexibleColumnLayout.DESKTOP_BREAKPOINT),
-			bWasFullScreen = (sPreviousLayout === LT.MidColumnFullScreen || sPreviousLayout === LT.EndColumnFullScreen);
+			bWasFullScreen = this._isFullScreenLayout(sPreviousLayout),
+			bIsFullscreen = this._isFullScreenLayout(sLayout);
 
-		return (iVisibleColumnsCount > iPreviousVisibleColumnsCount) &&
-			!bWasFullScreen &&
-			bIsLastColumn;
+		return ((iVisibleColumnsCount > iPreviousVisibleColumnsCount)
+			&& !(sPreviousLayout === LT.MidColumnFullScreen || sPreviousLayout === LT.EndColumnFullScreen)
+			&& bIsLastColumn
+			|| (bWasFullScreen && bIsFullscreen && sPreviousLastVisibleColumn !== sColumn && bIsLastColumn));
+	};
+
+	FlexibleColumnLayout.prototype._isFullScreenLayout = function (sLayout) {
+		return sLayout === LT.OneColumn || sLayout === LT.MidColumnFullScreen || sLayout === LT.EndColumnFullScreen;
 	};
 
 	FlexibleColumnLayout.prototype._isInteractivelyResizedColumn = function (sColumn) {
@@ -2271,12 +2500,15 @@ sap.ui.define([
 		var iVisibleColumnsCount = this._getMaxColumnsCountForLayout(sLayout, FlexibleColumnLayout.DESKTOP_BREAKPOINT),
 			iPreviousVisibleColumnsCount = this._getMaxColumnsCountForLayout(sPreviousLayout, FlexibleColumnLayout.DESKTOP_BREAKPOINT),
 			sPreviousLastVisibleColumn = this._getLastVisibleColumnForLayout(sPreviousLayout),
-			bWasFullScreen = (sPreviousLayout === LT.MidColumnFullScreen || sPreviousLayout === LT.EndColumnFullScreen);
+			sLastVisibleColumn = this._getLastVisibleColumnForLayout(sLayout),
+			bWasFullScreen = this._isFullScreenLayout(sPreviousLayout),
+			bIsFullscreen = this._isFullScreenLayout(sLayout);
 
-		return (iVisibleColumnsCount < iPreviousVisibleColumnsCount
+		return ((iVisibleColumnsCount < iPreviousVisibleColumnsCount
 			&& sColumn === sPreviousLastVisibleColumn
-			&& !bWasFullScreen
-			&& this._getColumnSizeForLayout(sColumn, sLayout) === 0);
+			&& !(sPreviousLayout === LT.MidColumnFullScreen || sPreviousLayout === LT.EndColumnFullScreen)
+			&& this._getColumnSizeForLayout(sColumn, sLayout) === 0)
+			|| (bWasFullScreen && bIsFullscreen && sColumn !== sLastVisibleColumn && sPreviousLastVisibleColumn === sColumn));
 	};
 
 	/**
@@ -2313,8 +2545,8 @@ sap.ui.define([
 			return oColumn.width() !== iNewWidth;
 		}
 
-		if (this._bNeverRendered || oOptions.autoSize) {
-			return false; // initial rendering or autosized
+		if (!this._bInitialColumnsResizeDone || oOptions.autoSize) {
+			return false; // initial columns-resize or autosized
 		}
 
 		return this._getColumnWidth(sColumn) !== iNewWidth;
@@ -2465,7 +2697,7 @@ sap.ui.define([
 		// Always resize the columns when the browser is resized
 		this._resizeColumns();
 
-		// Only update the arrows and fire the event if the maximum number of columns that can be shown has changed
+		// only fire the event if the maximum number of columns that can be shown has changed
 		if (iMaxColumnsCount !== iOldMaxColumnsCount) {
 			this._fireStateChange(false, true);
 		}
@@ -2509,7 +2741,7 @@ sap.ui.define([
 
 		iMaxColumnsCount = this.getMaxColumnsCount();
 
-		// Only show arrows if 2 or 3 columns can be displayed at a time
+		// Only show separators if 2 or 3 columns can be displayed at a time
 		if (iMaxColumnsCount > 1) {
 			oMap[LT.TwoColumnsBeginExpanded] = ["begin"];
 			oMap[LT.TwoColumnsMidExpanded] = ["begin"];
@@ -2535,7 +2767,7 @@ sap.ui.define([
 		var aNeededSeparators = [],
 			bIsNavContainersContentRendered;
 
-		// Stop here if the control isn't rendered yet or in phone mode, where arrows aren't necessary
+		// Stop here if the control isn't rendered yet or in phone mode, where separators aren't necessary
 		if (!this.isActive() || Device.system.phone) {
 			return;
 		}
@@ -2563,7 +2795,7 @@ sap.ui.define([
 		this._oColumnSeparators[sKey].data("visible", bShow);
 	};
 
-	FlexibleColumnLayout.prototype._fireStateChange = function (bIsNavigationArrow, bIsResize) {
+	FlexibleColumnLayout.prototype._fireStateChange = function (bIsColumnSeparatorInteraction, bIsResize) {
 
 		// The event should not be fired if the control has zero width as all relevant layout calculations are size-based
 		if (this._getControlWidth() === 0) {
@@ -2571,7 +2803,7 @@ sap.ui.define([
 		}
 
 		this.fireStateChange({
-			isNavigationArrow: bIsNavigationArrow,
+			isNavigationArrow: bIsColumnSeparatorInteraction,
 			isResize: bIsResize,
 			layout: this.getLayout(),
 			maxColumnsCount: this.getMaxColumnsCount()
@@ -2967,16 +3199,24 @@ sap.ui.define([
 	/**
 	 * Returns a string, representing the relative percentage sizes of the columns for the given layout in the format "begin/mid/end" (f.e. "33/67/0")
 	 * @param {string} sLayout - the layout
-	 * @param {boolean} bAsArray - return an array in the format [33, 67, 0] instead of a string "33/67/0"
+	 * @param {boolean} bAsIntArray - return an array in the format [33, 67, 0] instead of a string "33/67/0"
 	 * @param {number} [iMaxColumnsCount] the maximun number of columns. If not provided, the result of
 	 * <code>getMaxColumnsCount</code> will be taken
 	 * @returns {string|array}
 	 * @private
 	 * @ui5-restricted sap.f.FlexibleColumnLayoutSemanticHelper
 	 */
-	FlexibleColumnLayout.prototype._getColumnWidthDistributionForLayout = function (sLayout, bAsArray, iMaxColumnsCount) {
-		var sColumnWidthDistribution = this._getLocalStorage(iMaxColumnsCount).get(sLayout),
-			vResult;
+	FlexibleColumnLayout.prototype._getColumnWidthDistributionForLayout = function (sLayout, bAsIntArray, iMaxColumnsCount) {
+		var oLayoutData = this.getLayoutData(),
+			sMediaKey = this._getMediaKey(iMaxColumnsCount),
+			oLayoutDataPerMedia = oLayoutData?.isA("sap.f.FlexibleColumnLayoutData")
+				&& (sMediaKey === "desktop" ? oLayoutData.getDesktopLayoutData() : oLayoutData.getTabletLayoutData()),
+			sGetterNameLayout = "get" + sLayout,
+			sColumnWidthDistribution = oLayoutDataPerMedia?.[sGetterNameLayout]?.(),
+			bIsValidDistribution = sColumnWidthDistribution && this._isValidWidthDistributionForLayout(sColumnWidthDistribution, sLayout),
+			iBeginWidth = this._oBeginColumnWidth[sMediaKey],
+			vResult,
+			vResultAsArray;
 
 		iMaxColumnsCount || (iMaxColumnsCount = this.getMaxColumnsCount());
 
@@ -2984,20 +3224,37 @@ sap.ui.define([
 
 			vResult = "0/0/0";
 
-		} else if (iMaxColumnsCount > 1
-			&& sColumnWidthDistribution) {
+		} else if (iMaxColumnsCount > 1 && sColumnWidthDistribution && bIsValidDistribution) {
 			vResult = sColumnWidthDistribution;
 		} else {
 			vResult = this._getDefaultColumnWidthDistributionForLayout(sLayout, iMaxColumnsCount);
 		}
 
-		if (bAsArray) {
-			vResult = vResult.split("/").map(function (sColumnWidth) {
-				return parseInt(sColumnWidth);
+		vResultAsArray = vResult.split("/");
+
+		iBeginWidth = normalizeBeginColumnWidth(iBeginWidth, sLayout);
+
+		// Used stored begin column width, if not fullscreen layout and the begin column should be shown
+		if (iBeginWidth && !this._isFullScreenLayout(sLayout) && parseInt(vResultAsArray[0]) !== 0) {
+			vResultAsArray[0] = iBeginWidth;
+			vResultAsArray = vResultAsArray.map(function (sColumnWidth) {
+				return parseFloat(sColumnWidth);
 			});
+			normalizeColumnPercentWidths(vResultAsArray);
 		}
 
-		return vResult;
+		if (bAsIntArray) {
+			vResult = vResultAsArray.map(function (sColumnWidth) {
+				return Math.round(parseFloat(sColumnWidth));
+			});
+			normalizeColumnPercentWidths(vResult);
+		}
+
+		if (bAsIntArray) {
+			return vResult;
+		} else {
+			return vResultAsArray.join("/");
+		}
 	};
 
 	/**
@@ -3075,7 +3332,7 @@ sap.ui.define([
 	 * @returns {Object} the resource bundle object
 	 */
 	FlexibleColumnLayout._getResourceBundle = function () {
-		return sap.ui.getCore().getLibraryResourceBundle("sap.f");
+		return Library.getResourceBundleFor("sap.f");
 	};
 
 
@@ -3380,6 +3637,42 @@ sap.ui.define([
 			oConfig = oConfig.changedTouches[0];
 		}
 		return oConfig.pageX;
+	}
+
+	/**
+	 * Ensures the sum of all column percent widths is 100.
+	 * (Used after converting all the column widths from floats to integers,
+	 * to avoid inconsistency of the final sum due to rounding.)
+	 *
+	 * @param {object} aColumnPercentWidths the percent widths of all three columns
+	 */
+	function normalizeColumnPercentWidths(aColumnPercentWidths) {
+		var oColumnIndex = {
+			begin: 0,
+			mid: 1,
+			end: 2
+		},
+		iSum = aColumnPercentWidths.reduce((a, b) => a + b, 0);
+		if (iSum !== 100) {
+			// the CSS of the mid column always causes it take the space that remained
+			// after sizing the begin and end columns
+			aColumnPercentWidths[oColumnIndex.mid] = 100 -
+			(aColumnPercentWidths[oColumnIndex.begin] + aColumnPercentWidths[oColumnIndex.end]);
+		}
+	}
+
+	/**
+	 * Ensures width of begin column is correct for specific layouts
+	 *
+	 * @param {number} iBeginWidth
+	 * @param {string} sLayout
+	 */
+	function normalizeBeginColumnWidth(iBeginWidth, sLayout) {
+		if ((sLayout === LT.ThreeColumnsMidExpanded ||  sLayout == LT.ThreeColumnsEndExpanded) && Math.floor(iBeginWidth) >= 33) {
+			return 32;
+		}
+
+		return iBeginWidth;
 	}
 
 	return FlexibleColumnLayout;

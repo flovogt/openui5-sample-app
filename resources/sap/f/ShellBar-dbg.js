@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -55,10 +55,10 @@ function(
 	 * positioned in dedicated places of the control.
 	 *
 	 * @extends sap.ui.core.Control
-	 * @implements sap.f.IShellBar, sap.m.IBar, sap.tnt.IToolHeader
+	 * @implements sap.f.IShellBar, sap.m.IBar
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -70,8 +70,7 @@ function(
 			library: "sap.f",
 			interfaces: [
 				"sap.f.IShellBar",
-				"sap.m.IBar",
-				"sap.tnt.IToolHeader"
+				"sap.m.IBar"
 			],
 			properties: {
 				/**
@@ -199,7 +198,7 @@ function(
 					parameters: {
 						/**
 						 * Reference to the button that has been pressed
-						 * @deprecated Since version 1.120
+						 * @deprecated Since version 1.121
 						 */
 						image : {type: "sap.m.Image"},
 						/**
@@ -527,7 +526,7 @@ function(
 		return this.setProperty("showMenuButton", bShow);
 	};
 
-	/**
+	/*
 	 * Sets the number of upcoming notifications.
 	 *
 	 * @override

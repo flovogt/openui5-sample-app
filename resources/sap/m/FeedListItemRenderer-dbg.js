@@ -1,12 +1,12 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
 // Provides default renderer for the sap.m.FeedListItem
-sap.ui.define(["./ListItemBaseRenderer", "sap/ui/core/Renderer", "sap/ui/Device", "sap/ui/core/Configuration"],
-	function(ListItemBaseRenderer, Renderer, Device, Configuration) {
+sap.ui.define(["./ListItemBaseRenderer", "sap/base/i18n/Localization", "sap/ui/core/Renderer", "sap/ui/Device"],
+	function(ListItemBaseRenderer, Localization, Renderer, Device) {
 	"use strict";
 
 
@@ -126,7 +126,7 @@ sap.ui.define(["./ListItemBaseRenderer", "sap/ui/core/Renderer", "sap/ui/Device"
 			if (oControl.getInfo() || oControl.getTimestamp()) {
 				// info and date
 				oRm.openStart('p').class("sapMFeedListItemFooter").class("sapUiSelectable").openEnd();
-				if (!Configuration.getRTL()) {
+				if (!Localization.getRTL()) {
 					if (oControl.getInfo()) {
 						this._writeInfo(oRm, oControl, sMyId);
 						// Write Interpunct separator if necessary (with spaces before and after)

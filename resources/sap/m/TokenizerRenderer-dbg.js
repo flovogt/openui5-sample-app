@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
@@ -23,17 +23,20 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 	 * @param {sap.ui.core.RenderManager} oRm the RenderManager that can be used for writing to the render output buffer
 	 * @param {sap.m.Tokenizer} oControl an object representation of the control that should be rendered
 	 */
-	TokenizerRenderer.render = function(oRm, oControl){
+	TokenizerRenderer.render = function(oRm, oControl) {
+		this.renderOpenTag(oRm, oControl);
+		this.renderInnerContent(oRm, oControl);
+	};
+
+	/**
+	 * Renders the inner content of the Tokenizer control.
+	 *
+	 * @protected
+	 * @param {sap.ui.core.RenderManager} oRm The RenderManager that can be used for writing to the render output buffer.
+	 * @param {sap.m.Tokenizer} oControl An object representation of the control that should be rendered.
+	 */
+	TokenizerRenderer.renderInnerContent = function(oRm, oControl) {
 		var aTokens = oControl.getTokens();
-
-		//write the HTML into the render manager
-		oRm.openStart("div", oControl);
-
-
-		if (oControl.getEffectiveTabIndex()) {
-			oRm.attr("tabindex", "0");
-		}
-
 
 		oRm.class("sapMTokenizer");
 
@@ -43,6 +46,7 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 
 		if (!oControl.getEnabled()) {
 			oRm.class("sapMTokenizerDisabled");
+
 		}
 
 		if (!aTokens.length) {
@@ -50,12 +54,7 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 			oRm.attr("aria-hidden", "true");
 		}
 
-		oRm.style("max-width", oControl.getMaxWidth());
-
-		var sPixelWdth = oControl.getWidth();
-		if (sPixelWdth) {
-			oRm.style("width", sPixelWdth);
-		}
+		this.addWidthStyles(oRm, oControl);
 
 		var oAccAttributes = {
 			role: "listbox"
@@ -66,10 +65,9 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 			value: InvisibleText.getStaticId("sap.m", "TOKENIZER_ARIA_LABEL"),
 			append: true
 		};
+
 		// aria-readonly is not valid for the current role of the tokenizer.
-
 		oRm.accessibilityState(oControl, oAccAttributes);
-
 		oRm.openEnd(); // div element
 		oRm.renderControl(oControl.getAggregation("_tokensInfo"));
 
@@ -96,12 +94,24 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 		}
 
 		oRm.openEnd();
-
 		this._renderTokens(oRm, oControl);
 
 		oRm.close("div");
 		this._renderIndicator(oRm, oControl);
 		oRm.close("div");
+	};
+
+	TokenizerRenderer.renderOpenTag = function(oRm, oControl) {
+		oRm.openStart("div", oControl);
+	};
+
+	TokenizerRenderer.addWidthStyles = function(oRm, oControl) {
+		oRm.style("max-width", oControl.getMaxWidth());
+
+		var sPixelWdth = oControl.getWidth();
+		if (sPixelWdth) {
+			oRm.style("width", sPixelWdth);
+		}
 	};
 
 	/**
@@ -127,6 +137,9 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 	 * @param {sap.m.Tokenizer} oControl an object representation of the control that should be rendered
 	 */
 	TokenizerRenderer._renderIndicator = function(oRm, oControl){
+		var bExpanded = oControl._oPopup?.isOpen();
+		var sPopoverId = oControl._oPopup?.getDomRef() && oControl._oPopup?._oControl.getId();
+
 		oRm.openStart("span");
 		oRm.class("sapMTokenizerIndicator");
 
@@ -135,6 +148,15 @@ sap.ui.define(['sap/ui/Device', 'sap/ui/core/InvisibleText'],
 		if (oControl.getHiddenTokensCount() === 0) {
 			oRm.class("sapUiHidden");
 		}
+
+		oRm.attr("role", "button")
+			.attr("aria-haspopup", "dialog")
+			.attr("aria-expanded", bExpanded);
+
+		if (sPopoverId) {
+			oRm.attr("aria-controls", sPopoverId);
+		}
+
 		oRm.openEnd().close("span");
 	};
 

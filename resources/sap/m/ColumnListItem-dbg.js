@@ -1,6 +1,6 @@
 /*!
  * OpenUI5
- * (c) Copyright 2009-2025 SAP SE or an SAP affiliate company.
+ * (c) Copyright 2025 SAP SE or an SAP affiliate company.
  * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
  */
 
@@ -43,7 +43,7 @@ sap.ui.define([
 	 * @implements sap.m.ITableItem
 	 *
 	 * @author SAP SE
-	 * @version 1.120.27
+	 * @version 1.141.2
 	 *
 	 * @constructor
 	 * @public
@@ -89,7 +89,7 @@ sap.ui.define([
 				return oEvent.stopImmediatePropagation(true);
 			}
 			if (oEvent.srcControl === this || !jQuery(oEvent.target).is(":sapFocusable")) {
-				this.getParent().focus();
+				this.getParent().focus({ preventScroll: true });
 			}
 		}
 	});
@@ -121,6 +121,10 @@ sap.ui.define([
 
 		ListItemBase.prototype.onAfterRendering.call(this);
 		this._checkTypeColumn();
+
+		if (this.bOutput !== false && document.activeElement.id === this.getId()) {
+			this.getTable()?._setFirstLastVisibleCells(document.activeElement);
+		}
 	};
 
 	ColumnListItem.prototype.exit = function() {
@@ -269,6 +273,13 @@ sap.ui.define([
 		return aOutput.filter(Boolean).join(" . ").trim();
 	};
 
+	ColumnListItem.prototype.getContentAnnouncementOfRowAction = function() {
+		// Only if the item is inactive, to announce empty row action cell
+		if (this.getType() === ListItemType.Inactive) {
+			return ListItemBase.getAccessibilityText(null, true);
+		}
+	};
+
 	ColumnListItem.prototype.getContentAnnouncement = function() {
 		const oTable = this.getTable();
 		if (!oTable) {
@@ -281,6 +292,10 @@ sap.ui.define([
 		});
 
 		return aOutput.filter(Boolean).join(" . ").trim();
+	};
+
+	ColumnListItem.prototype.getGroupAnnouncement = function() {
+		return this.$().prevAll(".sapMGHLI:first").text();
 	};
 
 	// update the aria-selected for the cells
@@ -304,12 +319,20 @@ sap.ui.define([
 
 		const oTable = this.getTable();
 		const oTarget = oEvent.target;
+		let sInvisibleText;
+
 		if (oTarget.classList.contains("sapMListTblCell")) {
 			const oColumn = Element.getElementById(oTarget.getAttribute("data-sap-ui-column"));
-			oTable.updateInvisibleText(this.getContentAnnouncementOfCell(oColumn));
-			oEvent.setMarked("contentAnnouncementGenerated");
+
+			sInvisibleText = this.getContentAnnouncementOfCell(oColumn);
 		} else if (oTarget.classList.contains("sapMListTblSubCnt")) {
-			oTable.updateInvisibleText(this.getContentAnnouncementOfPopin());
+			sInvisibleText = this.getContentAnnouncementOfPopin();
+		} else if (oTarget.classList.contains("sapMListTblNavCol")) {
+			sInvisibleText = this.getContentAnnouncementOfRowAction();
+		}
+
+		if (sInvisibleText) {
+			oTable.updateInvisibleText(sInvisibleText);
 			oEvent.setMarked("contentAnnouncementGenerated");
 		}
 
@@ -381,13 +404,12 @@ sap.ui.define([
 
 	// determines whether type column for this item is necessary or not
 	ColumnListItem.prototype._needsTypeColumn = function() {
-		var sType = this.getType();
+		if (!this.getVisible()) {
+			return false;
+		}
 
-		return this.getVisible() && (
-			sType == ListItemType.Detail ||
-			sType == ListItemType.Navigation ||
-			sType == ListItemType.DetailAndActive
-		);
+		var sType = this.getType();
+		return sType === ListItemType.Navigation ? true : sType.startsWith(ListItemType.Detail) && this._getMaxActionsCount() === -1;
 	};
 
 	// Adds cloned header to the local collection
