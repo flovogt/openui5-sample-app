@@ -82,7 +82,7 @@ sap.ui.define([
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
-	 * @version 1.141.2
+	 * @version 1.143.0
 	 *
 	 * @public
 	 * @abstract
@@ -233,6 +233,12 @@ sap.ui.define([
 
 		const oModel = new JSONModel({});
 		this.setModel(oModel, this.LOCALIZATION_MODEL);
+
+		// relevant for RangeSelect handling:
+		// if RangeSelect is performed using Shift+ArrowKeys
+		// and the focus is outside the table,
+		// resetting the _bShiftKeyPressed flag could not work correctly
+		document.addEventListener("keyup", this._keyupHandler.bind(this));
 	};
 
 	BasePanel.prototype.onAfterRendering = function() {
@@ -510,8 +516,16 @@ sap.ui.define([
 			oRow.addEventDelegate({
 				onmouseover: this._hoverHandler.bind(this),
 				onfocusin: this._focusHandler.bind(this),
-				onkeydown: this._keydownHandler.bind(this)
+				onkeydown: this._keydownHandler.bind(this),
+				onkeyup: this._keyupHandler.bind(this)
 			});
+		}
+	};
+
+
+	BasePanel.prototype._keyupHandler = function(oEvent) {
+		if (oEvent.key === "Shift") {
+			this._bShiftKeyPressed = false;
 		}
 	};
 
@@ -525,6 +539,10 @@ sap.ui.define([
 		}
 
 		// Log.info("onKeyDown", oEvent.ctrlKey  + " | " + oEvent.which + " | " + oEvent.key);
+
+		if (oEvent.key === "Shift" || oEvent.shiftKey) {
+			this._bShiftKeyPressed = true;
+		}
 
 		if ((oEvent.metaKey || oEvent.ctrlKey)) {
 			let oButton;
@@ -721,16 +739,28 @@ sap.ui.define([
 		}
 	};
 
-	function flattenFilters(aFilters) {
-		return aFilters.reduce((aResult, oFilter) => {
-			const aFilters = oFilter.getFilters();
-			if (aFilters) {
-				aResult.push(...flattenFilters(aFilters));
+	/**
+	 * Evaluates a given filter recursively including its subfilters against a given item.
+	 * @param {sap.ui.model.Filter} oFilter Filter to evaluate
+	 * @param {object} oItem p13n item to evaluate the filter against
+	 * @returns {boolean} Whether the filter matched the item
+	 */
+	function evaluateFilter(oFilter, oItem) {
+		const aSubFilters = oFilter.getFilters && oFilter.getFilters();
+		if (aSubFilters && aSubFilters.length > 0) {
+			if (oFilter.bAnd) {
+				return aSubFilters.every((oSubFilter) => evaluateFilter(oSubFilter, oItem));
 			} else {
-				aResult.push(oFilter);
+				return aSubFilters.some((oSubFilter) => evaluateFilter(oSubFilter, oItem));
 			}
-			return aResult;
-		}, []);
+		} else {
+			let sValue = oItem[oFilter.getPath()];
+			if (typeof sValue === "string") {
+				sValue = sValue.toUpperCase();
+			}
+			// If a Filter is build like this, "new Filter([], true)" it won't have a test function. As fallback, true should be returned, as an "empty" filter matches everything.
+			return oFilter.getTest()?.(sValue) ?? true;
+		}
 	}
 
 	BasePanel.prototype._onSelectionChange = function(oEvent) {
@@ -743,10 +773,18 @@ sap.ui.define([
 		if (sSpecialChangeReason) {
 			let aModelItems = [];
 			if (sSpecialChangeReason === this.CHANGE_REASON_DESELECTALL || sSpecialChangeReason === this.CHANGE_REASON_SELECTALL) {
-				const aFilters = flattenFilters(this._oListControl.getBinding("items").getFilters("Control"));
-				const oFilter = aFilters?.find((oFilter) => oFilter.getPath() === "label");
+				const aFilters = this._oListControl.getBinding("items").getFilters("Control");
+				aModelItems = this.getP13nData();
 
-				aModelItems = this.getP13nData().filter((oItem) => oFilter?.getTest()(oItem.label.toUpperCase()) ?? true).map((oItem) => {
+				if (aFilters.length > 0) {
+					aModelItems = aModelItems.filter((oItem) => {
+						return aFilters.reduce((bResult, oFilter) => {
+							return bResult || evaluateFilter(oFilter, oItem);
+						}, false);
+					});
+				}
+
+				aModelItems = aModelItems.map((oItem) => {
 					oItem[this.PRESENCE_ATTRIBUTE] = sSpecialChangeReason === this.CHANGE_REASON_SELECTALL;
 					return oItem;
 				});
@@ -789,7 +827,7 @@ sap.ui.define([
 			sSpecialChangeReason = this.CHANGE_REASON_SELECTALL;
 		} else if (!bSelectAll && aListItems.length > 1 && !aListItems[0].getSelected()) {
 			sSpecialChangeReason = this.CHANGE_REASON_DESELECTALL;
-		} else if (aListItems.length > 1 && aListItems.length < this._oListControl.getItems().length) {
+		} else if (aListItems.length < this._oListControl.getItems().length && (aListItems.length > 1 || (aListItems.length >= 1 && (this._bShiftKeyPressed ?? false)))) {
 			sSpecialChangeReason = this.CHANGE_REASON_RANGESELECT;
 		}
 
@@ -977,6 +1015,8 @@ sap.ui.define([
 		this._oMoveDownButton = null;
 		this._oMoveBottomButton = null;
 		this._oSearchField = null;
+
+		document.removeEventListener("keyup", this._keyupHandler.bind(this));
 	};
 
 	return BasePanel;

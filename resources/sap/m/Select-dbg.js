@@ -126,7 +126,7 @@ function(
 		 * @borrows sap.ui.core.ILabelable.hasLabelableHTMLElement as #hasLabelableHTMLElement
 		 *
 		 * @author SAP SE
-		 * @version 1.141.2
+		 * @version 1.143.0
 		 *
 		 * @constructor
 		 * @public
@@ -683,6 +683,20 @@ function(
 			}
 		};
 
+		/**
+		 * Handles immediate selection of the initially highlighted item for accessibility.
+		 * This eliminates the confusing "highlighted but not selectable" state for keyboard users.
+		 *
+		 * @private
+		 */
+		Select.prototype._selectInitialHighlightedItem = function() {
+			if (this._oInitialHighlightedItem && !this.getSelectedItem() && !this.getForceSelection()) {
+				this.setSelection(this._oInitialHighlightedItem);
+				this.setValue(this._getSelectedItemText(this._oInitialHighlightedItem));
+				this._oInitialHighlightedItem = null;
+			}
+		};
+
 		Select.prototype._getSelectedItemText = function(vItem) {
 			vItem = vItem || this.getSelectedItem();
 
@@ -1046,6 +1060,16 @@ function(
 				// when the currently active descendant is visible and in view
 				oDomRef.setAttribute("aria-activedescendant", oItem.getId());
 				this.scrollToItem(oItem);
+			} else if (!this.getForceSelection()) {
+				// For forceSelection=false, highlight first item to make it immediately selectable
+				// This ensures keyboard/screen reader users can select the highlighted item with Enter/Space
+				// without requiring arrow key navigation first
+				var oFirstItem = this.getSelectableItems()[0];
+				if (oFirstItem) {
+					oDomRef.setAttribute("aria-activedescendant", oFirstItem.getId());
+					this.scrollToItem(oFirstItem);
+					this._oInitialHighlightedItem = oFirstItem;
+				}
 			}
 		};
 
@@ -1071,6 +1095,9 @@ function(
 					this.openValueStateMessage();
 				}
 			}
+
+			// Clean up accessibility state
+			this._oInitialHighlightedItem = null;
 
 			// remove the expanded states of the field
 			this.removeStyleClass(CSS_CLASS + "Expanded");
@@ -1342,7 +1369,12 @@ function(
 				sWidth = this.$().outerWidth() + "px"; // set popover content min-width in px due to rendering issue in Chrome and small %
 
 			if (oPopover) {
-				oPopover.setContentMinWidth(sWidth);
+				// Don't set min-width for wrapped items - let them size to content
+				if (!this.getWrapItemsText()) {
+					oPopover.setContentMinWidth(sWidth);
+				} else {
+					oPopover.setContentMinWidth("");
+				}
 			}
 		};
 
@@ -1808,6 +1840,7 @@ function(
 			// mark the event for components that needs to know if the event was handled
 			if (this.isOpen()) {
 				oEvent.setMarked();
+				this._selectInitialHighlightedItem();
 			}
 
 			this.close();
@@ -1855,6 +1888,11 @@ function(
 					oEvent.setMarked();
 
 					if (this.isOpen()) {
+						// Allow immediate Space selection of initially highlighted item
+						if (oEvent.which === KeyCodes.SPACE) {
+							this._selectInitialHighlightedItem();
+						}
+
 						this._checkSelectionChange();
 					}
 
@@ -1884,6 +1922,9 @@ function(
 			// note: prevent document scrolling when arrow keys are pressed
 			oEvent.preventDefault();
 
+			// Clear initial highlight state when user navigates
+			this._oInitialHighlightedItem = null;
+
 			this.selectNextSelectableItem();
 		};
 
@@ -1905,6 +1946,9 @@ function(
 
 			// note: prevent document scrolling when arrow keys are pressed
 			oEvent.preventDefault();
+
+			// Clear initial highlight state when user navigates
+			this._oInitialHighlightedItem = null;
 
 			var oPrevSelectableItem,
 				aSelectableItems = this.getSelectableItems();
@@ -2241,6 +2285,11 @@ function(
 						onAfterRendering: this.onAfterRenderingPicker
 					}, this)
 					.addContent(this.getSimpleFixFlex());
+
+			// Apply the wrapItemsText styling if the property is already set
+			if (sPickerType === "Popover" && this.getWrapItemsText()) {
+				oPicker.addStyleClass("sapMPickerWrappedItems");
+			}
 
 					return oPicker;
 		};

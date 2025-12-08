@@ -782,8 +782,7 @@ sap.ui.define([
 						return invalidSegment(sSegment);
 					}
 					if (oProperty.$Type === "Edm.Stream" && !sPropertyName) {
-						sReadLink = oValue[sSegment + "@odata.mediaReadLink"]
-							|| oValue[sSegment + "@mediaReadLink"];
+						sReadLink = oValue[sSegment + "@odata.mediaReadLink"];
 						if (sReadLink) {
 							return sReadLink;
 						}
@@ -804,7 +803,7 @@ sap.ui.define([
 							oEntity = oData;
 							iEntityPathLength = 0;
 						}
-						if (oEntity && !bAgain) {
+						if (oEntity && !bAgain && !that.isAggregated?.(oEntity)) {
 							vResult = that.fetchLateProperty(oGroupLock, oEntity,
 								aSegments.slice(0, iEntityPathLength).join("/"),
 								aSegments.slice(iEntityPathLength).join("/"));
@@ -2612,31 +2611,29 @@ sap.ui.define([
 			}
 
 			Object.keys(oInstance).forEach(function (sProperty) {
-				var sCount,
-					sPropertyMetaPath = sMetaPath + "/" + sProperty,
-					vPropertyValue = oInstance[sProperty],
-					sPropertyPath = _Helper.buildPath(sInstancePath, sProperty);
+				var sPropertyMetaPath = sMetaPath + "/" + sProperty,
+					sPropertyPath = _Helper.buildPath(sInstancePath, sProperty),
+					vPropertyValue = oInstance[sProperty];
 
-				if (sProperty.endsWith("@odata.mediaReadLink")
-						|| sProperty.endsWith("@mediaReadLink")) {
-					oInstance[sProperty] = _Helper.makeAbsolute(vPropertyValue, sContextUrl);
+				if (sProperty.includes("@")) {
+					if (sProperty.endsWith("@odata.mediaReadLink")) {
+						oInstance[sProperty] = _Helper.makeAbsolute(vPropertyValue, sContextUrl);
+					}
+					return; // ignore other annotations
 				}
-				if (sProperty === sMessageProperty || sProperty.includes("@")) {
-					return; // ignore message property and other annotations
-				}
-				if (Array.isArray(vPropertyValue)) {
+				if (Array.isArray(vPropertyValue) && sProperty !== sMessageProperty) {
 					vPropertyValue.$created = 0; // number of (client-side) created elements
 					// compute count
-					sCount = oInstance[sProperty + "@odata.count"];
+					const sCount = oInstance[sProperty + "@odata.count"];
 					// Note: ignore change listeners, because any change listener that is already
 					// registered, is still waiting for its value and gets it via fetchValue
 					if (sCount) {
 						vPropertyValue.$count = parseInt(sCount);
-					} else if (!oInstance[sProperty + "@odata.nextLink"]) {
+					} else if (oInstance[sProperty + "@odata.nextLink"]) {
+						vPropertyValue.$count = undefined; // see _Helper.setCount
+					} else {
 						// Note: This relies on the fact that $skip/$top is not used on nested lists
 						vPropertyValue.$count = vPropertyValue.length;
-					} else {
-						vPropertyValue.$count = undefined; // see _Helper.setCount
 					}
 					visitArray(vPropertyValue, sPropertyMetaPath, sPropertyPath,
 						buildContextUrl(sContextUrl, oInstance[sProperty + "@odata.context"]));
@@ -3795,7 +3792,9 @@ sap.ui.define([
 	 */
 	_CollectionCache.prototype.requestSeparateProperties = async function (iStart, iEnd,
 			oMainPromise, fnSeparateReceived) {
-		if (!this.aSeparateProperties.length) {
+		const mExpand = this.mQueryOptions.$expand ?? {};
+		const aProperties = this.aSeparateProperties.filter((sProperty) => sProperty in mExpand);
+		if (!aProperties.length) {
 			return;
 		}
 
@@ -3805,7 +3804,7 @@ sap.ui.define([
 		// This function resolves at no defined point in time as it is not (yet) relevant for the
 		// function caller. This may changes in the future. The completion of each separate property
 		// can be observed with the below oReadRange.promise
-		this.aSeparateProperties.forEach(async (sProperty) => {
+		aProperties.forEach(async (sProperty) => {
 			let fnResolve;
 			let fnReject;
 			const oReadRange = {
@@ -3881,9 +3880,9 @@ sap.ui.define([
 	 *   A lock for the ID of the group that is associated with the request;
 	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string[]} aPaths
-	 *   The "14.5.11 Expression edm:NavigationPropertyPath" or
-	 *   "14.5.13 Expression edm:PropertyPath" strings describing which properties need to be loaded
-	 *   because they may have changed due to side effects of a previous update
+	 *   The "14.4.1.5 Expression edm:NavigationPropertyPath" or
+	 *   "14.4.1.6 Expression edm:PropertyPath" strings describing which properties need to be
+	 *   loaded because they may have changed due to side effects of a previous update
 	 * @param {string[]} aPredicates
 	 *   The key predicates of the root elements to request side effects for
 	 * @param {boolean} bSingle
@@ -4624,9 +4623,9 @@ sap.ui.define([
 	 *   A lock for the ID of the group that is associated with the request;
 	 *   see {@link sap.ui.model.odata.v4.lib._Requestor#request} for details
 	 * @param {string[]} aPaths
-	 *   The "14.5.11 Expression edm:NavigationPropertyPath" or
-	 *   "14.5.13 Expression edm:PropertyPath" strings describing which properties need to be loaded
-	 *   because they may have changed due to side effects of a previous update
+	 *   The "14.4.1.5 Expression edm:NavigationPropertyPath" or
+	 *   "14.4.1.6 Expression edm:PropertyPath" strings describing which properties need to be
+	 *   loaded because they may have changed due to side effects of a previous update
 	 * @param {string} [sResourcePath=this.sResourcePath]
 	 *   A resource path relative to the service URL; it must not contain a query string
 	 * @returns {sap.ui.base.SyncPromise<void>}

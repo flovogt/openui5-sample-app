@@ -24,7 +24,7 @@ sap.ui.define(['./ViewSettingsItem', './library'],
 	 * @extends sap.m.ViewSettingsItem
 	 *
 	 * @author SAP SE
-	 * @version 1.141.2
+	 * @version 1.143.0
 	 *
 	 * @constructor
 	 * @public

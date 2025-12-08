@@ -53,13 +53,12 @@ sap.ui.define([
 	"sap/ui/model/odata/OperationMode",
 	"sap/ui/model/odata/UpdateMethod",
 	"sap/ui/thirdparty/datajs",
-	"sap/ui/thirdparty/URI",
 	"sap/ui/util/isCrossOriginURL"
 ], function(_CreatedContextsCache, Context, ODataAnnotations, ODataContextBinding, ODataListBinding, ODataTreeBinding,
 		assert, Log, Localization, encodeURL, deepEqual, deepExtend, each, extend, isEmptyObject, isPlainObject, merge,
 		uid, SyncPromise, Messaging, Message, MessageParser, MessageType, Supportability, _Helper, BindingMode,
 		BaseContext, FilterProcessor, Model, CountMode, MessageScope, ODataMetadata, ODataMetaModel, ODataMessageParser,
-		ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData, URI, isCrossOriginURL
+		ODataPropertyBinding, ODataUtils, OperationMode, UpdateMethod, OData, isCrossOriginURL
 ) {
 
 	"use strict";
@@ -219,7 +218,7 @@ sap.ui.define([
 	 * This model is not prepared to be inherited from.
 	 *
 	 * @author SAP SE
-	 * @version 1.141.2
+	 * @version 1.143.0
 	 *
 	 * @public
 	 * @alias sap.ui.model.odata.v2.ODataModel
@@ -1407,15 +1406,13 @@ sap.ui.define([
 	};
 
 	/**
-	 * Extracts the server base URL from the service URL
+	 * Computes and returns the server base URL from the service URL.
+	 *
 	 * @returns {string} The server base URL
 	 * @private
 	 */
-	ODataModel.prototype._getServerUrl = function() {
-		var oServiceURI, sURI;
-		oServiceURI = new URI(this.sServiceUrl).absoluteTo(document.baseURI);
-		sURI = new URI("/").absoluteTo(oServiceURI).toString();
-		return sURI;
+	ODataModel.prototype._getServerUrl = function () {
+		return new URL("/", new URL(this.sServiceUrl, document.baseURI)).href;
 	};
 
 	/**
@@ -1979,6 +1976,10 @@ sap.ui.define([
 	 *   Map of changed entities
 	 * @param {boolean} bMetaModelOnly
 	 *   Whether to only update metamodel bindings
+	 * @returns {number|undefined}
+	 *   The number of bindings which were checked synchronously for updates; 0 if <code>bAsync</code> is set.
+	 *   Subclasses overwriting this method may also return <code>undefined</code>.
+	 *
 	 * @private
 	 */
 	ODataModel.prototype.checkUpdate = function(bForceUpdate, bAsync, mChangedEntities, bMetaModelOnly) {
@@ -1990,7 +1991,7 @@ sap.ui.define([
 					this.checkUpdate(this.bForceUpdate, false, this.mChangedEntities4checkUpdate);
 				}.bind(this), 0);
 			}
-			return;
+			return 0;
 		}
 		bForceUpdate = this.bForceUpdate || bForceUpdate;
 		if (this.sUpdateTimer) {
@@ -2006,6 +2007,8 @@ sap.ui.define([
 			}
 		}.bind(this));
 		this._processAfterUpdate();
+
+		return aBindings.length;
 	};
 
 	/**
@@ -2230,8 +2233,6 @@ sap.ui.define([
 	 *   {@link sap.ui.model.odata.OperationMode.Server OperationMode.Server} or
 	 *   {@link sap.ui.model.odata.OperationMode.Auto OperationMode.Auto} is used.
 	 * @param {boolean} [mParameters.restoreTreeStateAfterChange]
-	 *   This parameter is experimental as of version 1.141.0.
-	 *
 	 *   Whether the tree state is restored on hierarchy maintenance, such as adding, removing, or deleting a node.
 	 *   This is only supported if the following conditions are met: <ul>
 	 *   <li>The binding has to use {@link sap.ui.model.odata.OperationMode.Server OperationMode.Server}</li>
@@ -2239,6 +2240,7 @@ sap.ui.define([
 	 *     or provided via <code>treeAnnotationProperties.hierarchyNodeDescendantCountFor</code></li>
 	 *   <li>The <code>"hierarchy-preorder-rank-for"</code> annotation must be present in the service metadata or
 	 *     provided via <code>treeAnnotationProperties.hierarchyPreorderRankFor</code></li>
+	 *   <li>The hierarchy maintenance is performed on the client side</li>
 	 *   </ul>
 	 * @param {sap.ui.model.odata.CountMode} [mParameters.countMode]
 	 *   Defines the count mode of this binding; if not specified, the default count mode of the
@@ -2725,10 +2727,11 @@ sap.ui.define([
 	 * Create URL parameters from custom parameters
 	 *
 	 * @param {map} mParameters Map of custom parameters
+	 * @param {boolean} [bIgnoreExpandSelect] Whether to ignore the expand and select parameters
 	 * @returns {string} sCustomParameters & joined parameters
 	 * @private
 	 */
-	ODataModel.prototype.createCustomParams = function(mParameters) {
+	ODataModel.prototype.createCustomParams = function(mParameters, bIgnoreExpandSelect) {
 		var aCustomParams = [],
 		mCustomQueryOptions,
 		mSupportedParams = {
@@ -2736,7 +2739,7 @@ sap.ui.define([
 				select: true
 		};
 		for (var sName in mParameters) {
-			if (sName in mSupportedParams) {
+			if (sName in mSupportedParams && !bIgnoreExpandSelect) {
 				aCustomParams.push("$" + sName + "=" + encodeURL(mParameters[sName]));
 			}
 			if (sName === "custom") {
@@ -6843,6 +6846,10 @@ sap.ui.define([
 	 * {@link #setDeferredGroups deferred}, changes could be submitted with {@link #submitChanges}.
 	 * Otherwise the change will be submitted directly.
 	 *
+	 * Consecutive calls of this method which update bindings <em>synchronously</em> may cause performance issues; see
+	 * {@link topic:6c47b2b39db9404582994070ec3d57a2#loioadd47c3966dd40489e952bb4f5f74a7c Accessing Data from an OData Model}
+	 * for details.
+	 *
 	 * @param {string} sPath
 	 *   Path of the property to set
 	 * @param {any} oValue
@@ -6850,7 +6857,7 @@ sap.ui.define([
 	 * @param {sap.ui.model.Context} [oContext=null]
 	 *   The context which will be used to set the property
 	 * @param {boolean} [bAsyncUpdate]
-	 *   Whether to update other bindings dependent on this property asynchronously
+	 *   Whether to update bindings dependent on this property asynchronously
 	 * @returns {boolean}
 	 *   <code>true</code> if the value was set correctly and <code>false</code> if errors occurred
 	 *   like the entry was not found or another entry was already updated.
@@ -7018,7 +7025,8 @@ sap.ui.define([
 		});
 
 		mChangedEntities[sKey] = true;
-		this.checkUpdate(false, bAsyncUpdate, mChangedEntities);
+		const iUpdatedBindings = this.checkUpdate(false, bAsyncUpdate, mChangedEntities);
+		this.checkPerformanceOfUpdate(iUpdatedBindings, bAsyncUpdate);
 		return true;
 	};
 

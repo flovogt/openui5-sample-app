@@ -16,7 +16,7 @@ sap.ui.define([
 		 *
 		 * @alias sap.f.changeHandler.MoveDynamicPageTitleActions
 		 * @author SAP SE
-		 * @version 1.141.2
+		 * @version 1.143.0
 		 */
 		var MoveActions = { };
 		var ACTION_AGGREGATION_NAME = "actions";
