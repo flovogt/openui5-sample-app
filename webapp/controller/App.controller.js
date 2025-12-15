@@ -4,11 +4,10 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/json/JSONModel",
-	"sap/ui/core/BarColor",
 	"sap/ui/demo/todo/util/Helper",
 	"sap/ui/core/Element",
 	"sap/base/strings/formatMessage"
-], (Controller, Device, Filter, FilterOperator, JSONModel, BarColor, Helper, Element, formatMessage) => {
+], (Controller, Device, Filter, FilterOperator, JSONModel, Helper, Element, formatMessage) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -16,7 +15,6 @@ sap.ui.define([
 		onInit() {
 			this.aSearchFilters = [];
 			this.aTabFilters = [];
-			this.BarColor = BarColor;
 
 			this.getView().setModel(new JSONModel({
 				isMobile: Device.browser.mobile
