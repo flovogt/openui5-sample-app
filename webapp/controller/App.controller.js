@@ -5,9 +5,8 @@ sap.ui.define([
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/demo/todo/util/Helper",
-	"sap/ui/core/Element",
 	"sap/base/strings/formatMessage"
-], (Controller, Device, Filter, FilterOperator, JSONModel, Helper, Element, formatMessage) => {
+], (Controller, Device, Filter, FilterOperator, JSONModel, Helper, formatMessage) => {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -22,7 +21,7 @@ sap.ui.define([
 		},
 
 		onAfterRendering() {
-			const avatarCtr = Element.closestTo("#container-todo---app--avatar-profile");
+			const avatarCtr = this.byId("avatar-profile");
 			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
 
 			sap.ui.require(["sap/m/Button"], (Button) => {
@@ -31,7 +30,7 @@ sap.ui.define([
 					enabled: "{/itemsRemovable}",
 					icon: "sap-icon://delete",
 					text: "{i18n>CLEAR_COMPLETED}",
-					press: this.onClearCompleted.bind(this),
+					press: [this.onClearCompleted, this]
 				});
 
 				this.byId("toolbar").addContent(clearBtn);
@@ -151,7 +150,7 @@ sap.ui.define([
 		},
 
 		_applyListFilters() {
-			const oList = Element.getElementById("container-todo---app--todoList");
+			const oList = this.byId("todoList");
 			const oBinding = oList.getBinding("items");
 
 			oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
