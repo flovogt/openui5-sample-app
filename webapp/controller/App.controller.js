@@ -1,29 +1,31 @@
-jQuery.sap.declare("sap.ui.demo.todo.controller.App");
+sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/Device",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator",
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/core/BarColor",
+	"sap/ui/demo/todo/util/Helper",
+	"sap/ui/core/Element"
+], (Controller, Device, Filter, FilterOperator, JSONModel, BarColor, Helper, Element) => {
+	"use strict";
 
-jQuery.sap.require("sap.ui.Device");
-jQuery.sap.require("sap.ui.core.mvc.Controller");
-jQuery.sap.require("sap.ui.model.Filter");
-jQuery.sap.require("sap.ui.model.FilterOperator");
-jQuery.sap.require("sap.ui.model.json.JSONModel");
-jQuery.sap.require("sap.ui.core.BarColor");
-jQuery.sap.require("sap.ui.demo.todo.util.Helper");
-sap.ui.controller("sap.ui.demo.todo.controller.App", {
+	return Controller.extend("sap.ui.demo.todo.controller.App", {
 
-	onInit() {
-		this.aSearchFilters = [];
-		this.aTabFilters = [];
-		this.BarColor = sap.ui.core.BarColor;
+		onInit() {
+			this.aSearchFilters = [];
+			this.aTabFilters = [];
+			this.BarColor = BarColor;
 
-		this.getView().setModel(new sap.ui.model.json.JSONModel({
-			isMobile: sap.ui.Device.browser.mobile
-		}), "view");
-	},
+			this.getView().setModel(new JSONModel({
+				isMobile: Device.browser.mobile
+			}), "view");
+		},
 
-	onAfterRendering() {
-		const avatarDOM = jQuery("#container-todo---app--avatar-profile");
-		const avatarCtr = avatarDOM.control(0);
-		avatarCtr.setSrc(sap.ui.demo.todo.util.Helper.resolvePath('./img/logo_ui5.png'));
-	},
+		onAfterRendering() {
+			const avatarCtr = Element.closestTo("container-todo---app--avatar-profile");
+			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+		},
 
 	/**
 	 * Get the default model from the view
@@ -138,8 +140,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 	},
 
 	_applyListFilters() {
-		const oList = sap.ui.getCore().byId("container-todo---app--todoList");
-		// const oList = this.byId("todoList");
+		const oList = this.byId("todoList");
 		const oBinding = oList.getBinding("items");
 
 		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
@@ -167,4 +168,5 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 			return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
 		}
 	}
+});
 });
