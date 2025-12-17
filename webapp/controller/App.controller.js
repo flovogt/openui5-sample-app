@@ -4,11 +4,14 @@ sap.ui.define([
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/json/JSONModel",
-	"sap/ui/core/BarColor",
+	"sap/ui/core/library",
 	"sap/ui/demo/todo/util/Helper",
-	"sap/ui/core/Element"
-], (Controller, Device, Filter, FilterOperator, JSONModel, BarColor, Helper, Element) => {
+	"sap/ui/core/Element",
+	"sap/base/strings/formatMessage"
+], (Controller, Device, Filter, FilterOperator, JSONModel, coreLibrary, Helper, Element, formatMessage) => {
 	"use strict";
+
+	const BarColor = coreLibrary.BarColor;
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
 
@@ -24,7 +27,9 @@ sap.ui.define([
 
 		onAfterRendering() {
 			const avatarCtr = Element.closestTo("container-todo---app--avatar-profile");
-			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+			if (avatarCtr) {
+				avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+			}
 		},
 
 	/**
