@@ -1,29 +1,36 @@
-jQuery.sap.declare("sap.ui.demo.todo.controller.App");
+sap.ui.define([
+	"sap/ui/core/mvc/Controller",
+	"sap/ui/Device",
+	"sap/ui/model/Filter",
+	"sap/ui/model/FilterOperator",
+	"sap/ui/model/json/JSONModel",
+	"sap/ui/core/library",
+	"sap/ui/demo/todo/util/Helper",
+	"sap/ui/core/Element",
+	"sap/base/strings/formatMessage"
+], (Controller, Device, Filter, FilterOperator, JSONModel, coreLibrary, Helper, Element, formatMessage) => {
+	"use strict";
 
-jQuery.sap.require("sap.ui.Device");
-jQuery.sap.require("sap.ui.core.mvc.Controller");
-jQuery.sap.require("sap.ui.model.Filter");
-jQuery.sap.require("sap.ui.model.FilterOperator");
-jQuery.sap.require("sap.ui.model.json.JSONModel");
-jQuery.sap.require("sap.ui.core.BarColor");
-jQuery.sap.require("sap.ui.demo.todo.util.Helper");
-sap.ui.controller("sap.ui.demo.todo.controller.App", {
+	const BarColor = coreLibrary.BarColor;
 
-	onInit() {
-		this.aSearchFilters = [];
-		this.aTabFilters = [];
-		this.BarColor = sap.ui.core.BarColor;
+	return Controller.extend("sap.ui.demo.todo.controller.App", {
 
-		this.getView().setModel(new sap.ui.model.json.JSONModel({
-			isMobile: sap.ui.Device.browser.mobile
-		}), "view");
-	},
+		onInit() {
+			this.aSearchFilters = [];
+			this.aTabFilters = [];
+			this.BarColor = BarColor;
 
-	onAfterRendering() {
-		const avatarDOM = jQuery("#container-todo---app--avatar-profile");
-		const avatarCtr = avatarDOM.control(0);
-		avatarCtr.setSrc(sap.ui.demo.todo.util.Helper.resolvePath('./img/logo_ui5.png'));
-	},
+			this.getView().setModel(new JSONModel({
+				isMobile: Device.browser.mobile
+			}), "view");
+		},
+
+		onAfterRendering() {
+			const avatarCtr = Element.closestTo("container-todo---app--avatar-profile");
+			if (avatarCtr) {
+				avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+			}
+		},
 
 	/**
 	 * Get the default model from the view
@@ -138,8 +145,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 	},
 
 	_applyListFilters() {
-		const oList = sap.ui.getCore().byId("container-todo---app--todoList");
-		// const oList = this.byId("todoList");
+		const oList = this.byId("todoList");
 		const oBinding = oList.getBinding("items");
 
 		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
@@ -167,4 +173,5 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 			return "COMPLETED_ITEMS" + (sSearchQuery ? "_CONTAINING" : "");
 		}
 	}
+});
 });
