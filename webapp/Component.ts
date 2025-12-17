@@ -5,7 +5,7 @@ import "sap/ui/core/ComponentSupport";
  * @namespace sap.ui.demo.todo
  */
 export default class Component extends UIComponent {
-	public static metadata = {
+	public static readonly metadata = {
 		manifest: "json"
 	};
 }

@@ -37,9 +37,8 @@ export default class App extends Controller {
 	}
 
 	public onAfterRendering(): void {
-		const avatarDOM = jQuery("#container-todo---app--avatar-profile");
-		const avatarCtr = avatarDOM.control(0) as Avatar;
-		avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
+		const oAvatar = this.byId("avatar-profile") as Avatar;
+		oAvatar.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
 	}
 
 	/**
@@ -155,8 +154,7 @@ export default class App extends Controller {
 	}
 
 	private _applyListFilters(): void {
-		const oList = sap.ui.getCore().byId("container-todo---app--todoList") as List;
-		// const oList = this.byId("todoList");
+		const oList = this.byId("todoList") as List;
 		const oBinding = oList.getBinding("items") as ListBinding;
 
 		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters));
