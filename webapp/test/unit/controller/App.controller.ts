@@ -46,6 +46,7 @@ QUnit.test("getTodos", (assert) => {
 		}
 	};
 	const oGetViewStub = sinon.stub(oAppController, "getView");
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	oGetViewStub.returns(oViewStub as any);
 
 	// Act

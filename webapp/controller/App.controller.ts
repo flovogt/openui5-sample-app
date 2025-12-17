@@ -3,9 +3,7 @@ import Device from "sap/ui/Device";
 import Filter from "sap/ui/model/Filter";
 import FilterOperator from "sap/ui/model/FilterOperator";
 import JSONModel from "sap/ui/model/json/JSONModel";
-import BarColor from "sap/ui/core/BarColor";
 import Helper from "sap/ui/demo/todo/util/Helper";
-import View from "sap/ui/core/mvc/View";
 import formatMessage from "sap/base/strings/formatMessage";
 import List from "sap/m/List";
 import ListBinding from "sap/ui/model/ListBinding";
@@ -13,6 +11,7 @@ import { SearchField$SearchEvent } from "sap/m/SearchField";
 import { SegmentedButton$SelectionChangeEvent } from "sap/m/SegmentedButton";
 import Toolbar from "sap/m/Toolbar";
 import Label from "sap/m/Label";
+import Avatar from "sap/m/Avatar";
 
 interface Todo {
 	title: string;
@@ -25,14 +24,12 @@ interface Todo {
 export default class App extends Controller {
 	private aSearchFilters: Filter[];
 	private aTabFilters: Filter[];
-	private BarColor: typeof BarColor;
 	private sSearchQuery: string;
 	private sFilterKey: string;
 
 	public onInit(): void {
 		this.aSearchFilters = [];
 		this.aTabFilters = [];
-		this.BarColor = BarColor;
 
 		this.getView().setModel(new JSONModel({
 			isMobile: Device.browser.mobile
@@ -41,7 +38,7 @@ export default class App extends Controller {
 
 	public onAfterRendering(): void {
 		const avatarDOM = jQuery("#container-todo---app--avatar-profile");
-		const avatarCtr = avatarDOM.control(0);
+		const avatarCtr = avatarDOM.control(0) as Avatar;
 		avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
 	}
 
@@ -162,7 +159,7 @@ export default class App extends Controller {
 		// const oList = this.byId("todoList");
 		const oBinding = oList.getBinding("items") as ListBinding;
 
-		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters), "todos");
+		oBinding.filter(this.aSearchFilters.concat(this.aTabFilters));
 
 		const sI18nKey = this.getI18NKey(this.sFilterKey, this.sSearchQuery);
 

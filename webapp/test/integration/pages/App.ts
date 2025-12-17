@@ -5,12 +5,6 @@ import PropertyStrictEquals from "sap/ui/test/matchers/PropertyStrictEquals";
 import Properties from "sap/ui/test/matchers/Properties";
 import EnterText from "sap/ui/test/actions/EnterText";
 import Press from "sap/ui/test/actions/Press";
-import List from "sap/m/List";
-import CustomListItem from "sap/m/CustomListItem";
-import CheckBox from "sap/m/CheckBox";
-import Text from "sap/m/Text";
-import Toolbar from "sap/m/Toolbar";
-import ToggleButton from "sap/m/ToggleButton";
 
 const sViewName = "sap.ui.demo.todo.view.App";
 const sAddToItemInputId = "addTodoItemInput";
@@ -21,108 +15,123 @@ const sClearCompletedId = Device.browser.mobile ? "clearCompleted-footer" : "cle
 
 export default class AppPage extends Opa5 {
 
-	public iStartMyApp(): Opa5 {
-		return this.iStartMyUIComponent({
+	public iStartMyApp(): this {
+		this.iStartMyUIComponent({
 			componentConfig: {
 				name: "sap.ui.demo.todo",
 				async: true,
 				manifest: true
 			}
 		});
+		return this;
 	}
 
-	public iEnterTextForNewItemAndPressEnter(text: string): Opa5 {
-		return this.waitFor({
+	public iEnterTextForNewItemAndPressEnter(text: string): this {
+		this.waitFor({
 			id: sAddToItemInputId,
 			viewName: sViewName,
 			actions: [new EnterText({ text: text })],
 			errorMessage: "The text cannot be entered"
 		});
+		return this;
 	}
 
-	public iEnterTextForSearchAndPressEnter(text: string): Opa5 {
+	public iEnterTextForSearchAndPressEnter(text: string): this {
 		this._waitForToolbar();
-		return this.waitFor({
+		this.waitFor({
 			id: sSearchTodoItemsInputId,
 			viewName: sViewName,
 			actions: [new EnterText({ text: text })],
 			errorMessage: "The text cannot be entered"
 		});
+		return this;
 	}
 
-	public iSelectTheLastItem(bSelected: boolean): Opa5 {
-		return this.waitFor({
+	public iSelectTheLastItem(bSelected: boolean): this {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
 			// selectionChange
-			actions: [(oList: List) => {
+			actions: [(oList: any) => {
 				const iLength = oList.getItems().length;
-				const oListItem = (oList.getItems()[iLength - 1] as CustomListItem).getContent()[0].getItems()[0] as CheckBox;
+				const oListItem = oList.getItems()[iLength - 1].getContent()[0].getItems()[0];
 				this._triggerCheckboxSelection(oListItem, bSelected);
 			}],
 			errorMessage: "Last checkbox cannot be pressed"
 		});
+		return this;
 	}
 
-	public iSelectAllItems(bSelected: boolean): Opa5 {
-		return this.waitFor({
+	public iSelectAllItems(bSelected: boolean): this {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
-			actions: [(oList: List) => {
-
-				oList.getItems().forEach((oListItem) => {
-					const oCheckbox = (oListItem as CustomListItem).getContent()[0].getItems()[0] as CheckBox;
+			actions: [(oList: any) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				oList.getItems().forEach((oListItem: any) => {
+					const oCheckbox = oListItem.getContent()[0].getItems()[0];
 					this._triggerCheckboxSelection(oCheckbox, bSelected)
 
 				});
 			}],
 			errorMessage: "checkbox cannot be pressed"
 		});
+		return this;
 	}
 
-	private _triggerCheckboxSelection(oListItem: CheckBox, bSelected: boolean): void {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private _triggerCheckboxSelection(oListItem: any, bSelected: boolean): void {
 		//determine existing selection state and ensure that it becomes <code>bSelected</code>
 		if (oListItem.getSelected() && !bSelected || !oListItem.getSelected() && bSelected) {
 			const oPress = new Press();
 			//search within the CustomListItem for the checkbox id ending with 'selectMulti-CB'
-			oPress.controlAdapters["sap.m.CustomListItem"] = "selectMulti-CB";
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(oPress as any).controlAdapters["sap.m.CustomListItem"] = "selectMulti-CB";
 			oPress.executeOn(oListItem);
 		}
 	}
 
-	public iClearTheCompletedItems(): Opa5 {
+	public iClearTheCompletedItems(): this {
 		this._waitForToolbar();
-		return this.waitFor({
+		this.waitFor({
 			id: sClearCompletedId,
 			viewName: sViewName,
 			actions: [new Press()],
 			errorMessage: "checkbox cannot be pressed"
 		});
+		return this;
 	}
 
-	public iFilterForItems(filterKey: string): Opa5 {
+	public iFilterForItems(filterKey: string): this {
 		this._waitForToolbar();
-		return this.waitFor({
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			viewName: sViewName,
 			controlType: "sap.m.SegmentedButtonItem",
 			matchers: [
-				new Properties({ key: filterKey })
+				new Properties({ key: filterKey }) as any
 			],
 			actions: [new Press()],
 			errorMessage: "SegmentedButton can not be pressed"
 		});
+		return this;
 	}
 
 	private _waitForToolbar(): void {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.waitFor({
 			id: sToolbarId,
 			viewName: sViewName,
-			success: (oToolbar: Toolbar) => {
+			success: (oToolbar: any) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				return this.waitFor({
 					controlType: "sap.m.ToggleButton",
 					visible: false,
-					success: (aToggleButtons: ToggleButton[]) => {
-						const oToggleButton = aToggleButtons.find((oButton) => oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar)
+					success: (aToggleButtons: any) => {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const oToggleButton = aToggleButtons.find((oButton: any) => oButton.getId().startsWith(oToolbar.getId()) && oButton.getParent() === oToolbar)
 						if (oToggleButton) {
 							this.waitFor({
 								id: oToggleButton.getId(),
@@ -137,16 +146,17 @@ export default class AppPage extends Opa5 {
 		});
 	}
 
-	public iShouldSeeTheItemBeingAdded(iItemCount: number, sLastAddedText: string): Opa5 {
-		return this.waitFor({
+	public iShouldSeeTheItemBeingAdded(iItemCount: number, sLastAddedText: string): this {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
 			matchers: [new AggregationLengthEquals({
 				name: "items",
 				length: iItemCount
-			}), (oControl: List) => {
+			}), (oControl: any) => {
 				const iLength = oControl.getItems().length;
-				const oInput = ((oControl.getItems()[iLength - 1] as CustomListItem).getContent()[0].getItems()[1] as any).getItems()[0] as Text;
+				const oInput = oControl.getItems()[iLength - 1].getContent()[0].getItems()[1].getItems()[0];
 				return new PropertyStrictEquals({
 					name: "text",
 					value: sLastAddedText
@@ -157,15 +167,17 @@ export default class AppPage extends Opa5 {
 			},
 			errorMessage: "List does not have expected entry '" + sLastAddedText + "'."
 		});
+		return this;
 	}
 
-	public iShouldSeeTheLastItemBeingCompleted(bSelected: boolean): Opa5 {
-		return this.waitFor({
+	public iShouldSeeTheLastItemBeingCompleted(bSelected: boolean): this {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
-			matchers: [(oControl: List) => {
+			matchers: [(oControl: any) => {
 				const iLength = oControl.getItems().length;
-				const oCheckbox = (oControl.getItems()[iLength - 1] as CustomListItem).getContent()[0].getItems()[0] as CheckBox;
+				const oCheckbox = oControl.getItems()[iLength - 1].getContent()[0].getItems()[0];
 				return bSelected && oCheckbox.getSelected() || !bSelected && !oCheckbox.getSelected();
 			}],
 			success() {
@@ -173,17 +185,19 @@ export default class AppPage extends Opa5 {
 			},
 			errorMessage: "The last item is not disabled."
 		});
+		return this;
 	}
 
-	public iShouldSeeAllButOneItemBeingRemoved(sLastItemText: string): Opa5 {
-		return this.waitFor({
+	public iShouldSeeAllButOneItemBeingRemoved(sLastItemText: string): this {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
 			matchers: [new AggregationLengthEquals({
 				name: "items",
 				length: 1
-			}), (oControl: List) => {
-				const oInput = ((oControl.getItems()[0] as CustomListItem).getContent()[0].getItems()[1] as any).getItems()[0] as Text;
+			}), (oControl: any) => {
+				const oInput = oControl.getItems()[0].getContent()[0].getItems()[1].getItems()[0];
 				return new PropertyStrictEquals({
 					name: "text",
 					value: sLastItemText
@@ -194,10 +208,11 @@ export default class AppPage extends Opa5 {
 			},
 			errorMessage: "List does not have expected entry '" + sLastItemText + "'."
 		});
+		return this;
 	}
 
-	public iShouldSeeItemCount(iItemCount: number): Opa5 {
-		return this.waitFor({
+	public iShouldSeeItemCount(iItemCount: number): this {
+		this.waitFor({
 			id: sItemListId,
 			viewName: sViewName,
 			matchers: [new AggregationLengthEquals({
@@ -209,5 +224,6 @@ export default class AppPage extends Opa5 {
 			},
 			errorMessage: "List does not have expected number of items '" + iItemCount + "'."
 		});
+		return this;
 	}
 }

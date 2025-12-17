@@ -5,6 +5,7 @@
 		"moduleResolution": "node",
 		"skipLibCheck": true,
 		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
 		"strict": true,
 		"strictNullChecks": false,
 		"strictPropertyInitialization": false,
