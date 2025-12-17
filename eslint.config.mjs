@@ -1,8 +1,11 @@
 import globals from "globals";
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config(
     js.configs.recommended,
+    ...tseslint.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
     {
         languageOptions: {
             globals: {
@@ -10,7 +13,10 @@ export default [
                 sap: "readonly"
             },
             ecmaVersion: 2023,
-            sourceType: "script"
+            parserOptions: {
+                project: true,
+                tsconfigRootDir: import.meta.dirname
+            }
         },
         rules: {
             "brace-style": [2, "1tbs", { "allowSingleLine": true }],
@@ -51,7 +57,19 @@ export default [
             "no-irregular-whitespace": 0,
             "no-var": 2,
             "no-const-assign": 2,
-            "prefer-const": 2
+            "prefer-const": 2,
+            "@typescript-eslint/no-explicit-any": 1,
+            "@typescript-eslint/no-unsafe-member-access": 0,
+            "@typescript-eslint/no-unsafe-assignment": 0,
+            "@typescript-eslint/no-unsafe-call": 0,
+            "@typescript-eslint/no-unsafe-return": 0,
+            "@typescript-eslint/no-unsafe-argument": 0,
+            "@typescript-eslint/no-floating-promises": 0,
+            "@typescript-eslint/no-redundant-type-constituents": 0,
+            "@typescript-eslint/only-throw-error": 0
         }
+    },
+    {
+        ignores: ["eslint.config.mjs", "dist/", "node_modules/"]
     }
-]
+);
