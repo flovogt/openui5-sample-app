@@ -1,3 +1,53 @@
+/**
+ * UI5 Data Binding Overview
+ *
+ * Data Binding in UI5 creates a live connection between UI controls and data models.
+ * When the underlying data changes, the UI updates automatically - and with two-way
+ * binding, UI interactions are reflected back into the model as well.
+ *
+ * --- Models ---
+ * A model is the data container. This app uses three model types:
+ *   - JSONModel (default/unnamed ""):  Holds local app state (todos, newTodo, itemsRemovable, ...).
+ *                                     Loaded from model/todoitems.json via manifest.json.
+ *   - ResourceModel ("i18n"):         Provides translated strings, accessed as {i18n>KEY}.
+ *   - JSONModel ("view"):             Created programmatically in onInit() for view-specific
+ *                                     state like the isMobile flag.
+ *
+ * --- Binding Types ---
+ * 1. Property Binding – links a control property directly to a model path.
+ *    Syntax in XML view:  value="{/newTodo}"
+ *    Programmatic:        control.bindProperty("text", { path: "/newTodo" })
+ *
+ * 2. Aggregation / List Binding – binds a list or table to an array in the model.
+ *    The framework creates one child control per array entry automatically.
+ *    Syntax in XML view:  items="{ path: '/todos', events: { change: '.onUpdateItemsLeftCount' } }"
+ *    Programmatic:        oList.getBinding("items").filter([...])
+ *
+ * 3. Expression Binding – evaluates a JavaScript-like expression at binding time.
+ *    Useful for simple conditional or computed properties without a separate formatter.
+ *    Example:  visible="{= !${view>/isMobile} }"
+ *
+ * 4. Named Model Binding – when a model is registered under a name, that name is used
+ *    as a prefix separated by ">" in binding paths.
+ *    Example:  text="{i18n>TITLE}"   (named model "i18n")
+ *              visible="{= !!${view>/isMobile} }"  (named model "view")
+ *
+ * --- Binding Modes ---
+ * - One-Way:  Model → View only. Default for JSONModel.
+ * - Two-Way:  Model ↔ View. Changes in the UI propagate back to the model.
+ * - One-Time: Model → View once at binding creation, no further updates.
+ *
+ * --- Formatters ---
+ * A formatter function transforms the raw model value before it is displayed.
+ * Example in this controller:
+ *   this.byId("filterLabel").bindProperty("text", {
+ *       path: sI18nKey, model: "i18n",
+ *       formatter: (text) => formatMessage(text, [this.sSearchQuery])
+ *   });
+ *
+ * For further details see the Data Binding documentation: https://ui5.sap.com/#/topic/e5310932a71f42daa41f3a6143efca9c
+ */
+
 jQuery.sap.declare("sap.ui.demo.todo.controller.App");
 
 jQuery.sap.require("sap.ui.Device");
