@@ -106,7 +106,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 		this.sSearchQuery = oEvent.getSource().getValue();
 		if (this.sSearchQuery && this.sSearchQuery.length > 0) {
 			oModel.setProperty("/itemsRemovable", false);
-			const filter = new Filter("title", FilterOperator.Contains, this.sSearchQuery);
+			const filter = new sap.ui.model.Filter("title", sap.ui.model.FilterOperator.Contains, this.sSearchQuery);
 			this.aSearchFilters.push(filter);
 		} else {
 			oModel.setProperty("/itemsRemovable", true);
@@ -124,10 +124,10 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 
 		switch (this.sFilterKey) {
 			case "active":
-				this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, false));
+				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, false));
 				break;
 			case "completed":
-				this.aTabFilters.push(new Filter("completed", FilterOperator.EQ, true));
+				this.aTabFilters.push(new sap.ui.model.Filter("completed", sap.ui.model.FilterOperator.EQ, true));
 				break;
 			case "all":
 			default:
@@ -152,7 +152,7 @@ sap.ui.controller("sap.ui.demo.todo.controller.App", {
 				path: sI18nKey,
 				model: "i18n",
 				formatter: (textWithPlaceholder) => {
-					return formatMessage(textWithPlaceholder, [this.sSearchQuery]);
+					return jQuery.sap.formatMessage(textWithPlaceholder, [this.sSearchQuery]);
 				}
 			});
 		}

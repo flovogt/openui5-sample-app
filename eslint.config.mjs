@@ -7,6 +7,7 @@ export default [
         languageOptions: {
             globals: {
                 ...globals.browser,
+                jQuery: "readonly",
                 sap: "readonly"
             },
             ecmaVersion: 2023,
