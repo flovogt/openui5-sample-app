@@ -1,11 +1,12 @@
 sap.ui.define([
+	"sap/ui/demo/todo/util/Helper",
 	"sap/ui/Device",
 	"sap/ui/core/mvc/Controller",
 	"sap/ui/model/Filter",
 	"sap/ui/model/FilterOperator",
 	"sap/ui/model/json/JSONModel",
 	"sap/base/strings/formatMessage"
-], (Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) => {
+], function(Helper, Device, Controller, Filter, FilterOperator, JSONModel, formatMessage) {
 	"use strict";
 
 	return Controller.extend("sap.ui.demo.todo.controller.App", {
@@ -17,6 +18,11 @@ sap.ui.define([
 			this.getView().setModel(new JSONModel({
 				isMobile: Device.browser.mobile
 			}), "view");
+		},
+
+		onAfterRendering() {
+			const avatarCtr = this.byId("avatar-profile");
+			avatarCtr.setSrc(Helper.resolvePath('./img/logo_ui5.png'));
 		},
 
 		/**
@@ -73,7 +79,7 @@ sap.ui.define([
 		 *
 		 * @returns {object[]} The todo list
 		 */
-		getTodos(){
+		getTodos() {
 			const oModel = this.getModel();
 			return oModel && oModel.getProperty("/todos") || [];
 		},
@@ -161,5 +167,4 @@ sap.ui.define([
 			}
 		}
 	});
-
 });

@@ -1,9 +1,12 @@
-sap.ui.define(["require"], (require) => {
+sap.ui.define([], function() {
 	"use strict";
-	return {
+
+	var Helper = {
 		resolvePath(sPath) {
 			// Relative to application root
-			return require.toUrl("../") + sPath;
+			return sap.ui.require.toUrl("sap/ui/demo/todo/" + sPath);
 		}
 	};
+
+	return Helper;
 });

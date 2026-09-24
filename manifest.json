@@ -3,6 +3,15 @@
 	"sap.app": {
 		"id": "sap.ui.demo.todo",
 		"type": "application",
+		"dataSources": {
+			"businessData": {
+				"uri": "/api/odata-4/",
+				"type": "OData",
+				"settings": {
+					"odataVersion": "4.0"
+				}
+			}
+		},
 		"i18n": {
 			"bundleUrl": "i18n/i18n.properties",
 			"supportedLocales": [
@@ -42,6 +51,9 @@
 			"": {
 				"type": "sap.ui.model.json.JSONModel",
 				"uri": "model/todoitems.json"
+			},
+			"businessData": {
+				"dataSource": "businessData"
 			}
 		},
 		"resources": {
